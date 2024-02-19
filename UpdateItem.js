@@ -52,7 +52,7 @@ export default function AddItem(props) {
             <TextInput value={itemTitle} onChangeText={setItemTitle} />
             <Text>Description: </Text>
             <TextInput value={itemDes} onChangeText={setItemDes} />
-            <Button title='Add' onPress={addToDatabase}/>
+            <Button title='Add' onPress={updateDatabase}/>
         </ScrollView>
     );
 }

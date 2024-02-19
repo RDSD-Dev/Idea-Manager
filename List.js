@@ -70,6 +70,7 @@ export default function List(props) {
         (txObj, error) => console.log(error)
         );
         });
+        
     }
 
     const displayItems = () => {
@@ -80,7 +81,7 @@ export default function List(props) {
                     <Text>{name.name}</Text>
                     <Text>{name.description}</Text>
                     <Button title='Delete' onPress={() => deleteItem(name.id)} />
-                    <Button title='Update' onPress={navigateUpdateItem(name.id)} />
+                    <Button title='Update' onPress={() => navigateUpdateItem(name.id)} />
                 </View>
             );
         });

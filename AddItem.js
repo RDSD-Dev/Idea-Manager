@@ -14,7 +14,6 @@ export default function AddItem(props) {
     const [itemDes, setItemDes] = useState(undefined);
 
     const navigateList = () => {
-        //props.navigation.state.params.refreshFunction();
         navigation.goBack();
     }
 
