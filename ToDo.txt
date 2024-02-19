@@ -1,0 +1,5 @@
+SQL Structure:
+    rootList:
+        Id: The id key and is auto incremented, Title: VarChar(32), 
+        Description: Text, makeDate: Date, completeDate: Date, 
+        RemakeNum: How many days from origin or from completed date will the item need to be remade Is set to 0 if it will not be re set, IsFromOrigin: Boolean States wether the item is reset from origin or completion date.
