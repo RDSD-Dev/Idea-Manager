@@ -7,6 +7,7 @@ import {createStackNavigator} from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import ToDoLists from './ToDoLists';
+import AddList from './AddList';
 import List from './List';
 import AddItem from './AddItem';
 import UpdateItem from './UpdateItem';
@@ -31,196 +32,42 @@ function ToDoListNav(){
       }
       else{
         if(value != undefined){
+
           setListArr(JSON.parse(value));
+        }
+        else{
+          console.log("Fail: ", value);
         }
       }
     });
 }
 else{
-  switch(listArr.length){
-    default:
-      return (
-        <Stack.Navigator >
-          <Stack.Screen name="To Do Lists" component={ToDoLists} />
-          <Stack.Screen name={listArr[0]} component = {List} />
-          <Stack.Screen name="Add Item" component={AddItem} />
-          <Stack.Screen name="Update Item" component={UpdateItem} />
-        </Stack.Navigator>
-    );
-      break;
-    case 2:
-      return (
-        <Stack.Navigator >
-          <Stack.Screen name="To Do Lists" component={ToDoLists}/>
-          <Stack.Screen name={listArr[0]} component = {List}/>
-          <Stack.Screen name={listArr[1]} component = {List}/>
-          <Stack.Screen name="Add Item" component={AddItem} />
-          <Stack.Screen name="Update Item" component={UpdateItem} />
-        </Stack.Navigator>
-    );
-      break;
-    case 3:
-      return (
-        <Stack.Navigator >
-          <Stack.Screen name="To Do Lists" component={ToDoLists}/>
-          <Stack.Screen name={listArr[0]} component = {List}/>
-          <Stack.Screen name={listArr[1]} component = {List}/>
-          <Stack.Screen name={listArr[2]} component = {List}/>
-          <Stack.Screen name="Add Item" component={AddItem} />
-          <Stack.Screen name="Update Item" component={UpdateItem} />
-        </Stack.Navigator>
-    );
-      break;
-    case 4:
-      return (
-        <Stack.Navigator >
-          <Stack.Screen name="To Do Lists" component={ToDoLists}/>
-          <Stack.Screen name={listArr[0]} component = {List}/>
-          <Stack.Screen name={listArr[1]} component = {List}/>
-          <Stack.Screen name={listArr[2]} component = {List}/>
-          <Stack.Screen name={listArr[3]} component = {List}/>
-          <Stack.Screen name="Add Item" component={AddItem} />
-          <Stack.Screen name="Update Item" component={UpdateItem} />
-        </Stack.Navigator>
-    );
-      break;
-    case 5:
-      return (
-        <Stack.Navigator >
-          <Stack.Screen name="To Do Lists" component={ToDoLists}/>
-          <Stack.Screen name={listArr[0]} component = {List}/>
-          <Stack.Screen name={listArr[1]} component = {List}/>
-          <Stack.Screen name={listArr[2]} component = {List}/>
-          <Stack.Screen name={listArr[3]} component = {List}/>
-          <Stack.Screen name={listArr[4]} component = {List}/>
-          <Stack.Screen name="Add Item" component={AddItem} />
-          <Stack.Screen name="Update Item" component={UpdateItem} />
-        </Stack.Navigator>
-    );
-      break;
-    case 6:
-      return (
-        <Stack.Navigator >
-          <Stack.Screen name="To Do Lists" component={ToDoLists}/>
-          <Stack.Screen name={listArr[0]} component = {List}/>
-          <Stack.Screen name={listArr[1]} component = {List}/>
-          <Stack.Screen name={listArr[2]} component = {List}/>
-          <Stack.Screen name={listArr[3]} component = {List}/>
-          <Stack.Screen name={listArr[4]} component = {List}/>
-          <Stack.Screen name={listArr[5]} component = {List}/>
-          <Stack.Screen name="Add Item" component={AddItem} />
-          <Stack.Screen name="Update Item" component={UpdateItem} />
-        </Stack.Navigator>
-    );
-      break;
-    case 7:
-      return (
-        <Stack.Navigator >
-          <Stack.Screen name="To Do Lists" component={ToDoLists}/>
-          <Stack.Screen name={listArr[0]} component = {List}/>
-          <Stack.Screen name={listArr[1]} component = {List}/>
-          <Stack.Screen name={listArr[2]} component = {List}/>
-          <Stack.Screen name={listArr[3]} component = {List}/>
-          <Stack.Screen name={listArr[4]} component = {List}/>
-          <Stack.Screen name={listArr[5]} component = {List}/>
-          <Stack.Screen name={listArr[6]} component = {List}/>
-          <Stack.Screen name="Add Item" component={AddItem} />
-          <Stack.Screen name="Update Item" component={UpdateItem} />
-        </Stack.Navigator>
-    );
-      break;
-    case 8:
-      return (
-        <Stack.Navigator >
-          <Stack.Screen name="To Do Lists" component={ToDoLists}/>
-          <Stack.Screen name={listArr[0]} component = {List}/>
-          <Stack.Screen name={listArr[1]} component = {List}/>
-          <Stack.Screen name={listArr[2]} component = {List}/>
-          <Stack.Screen name={listArr[3]} component = {List}/>
-          <Stack.Screen name={listArr[4]} component = {List}/>
-          <Stack.Screen name={listArr[5]} component = {List}/>
-          <Stack.Screen name={listArr[6]} component = {List}/>
-          <Stack.Screen name={listArr[7]} component = {List}/>
-          <Stack.Screen name="Add Item" component={AddItem} />
-          <Stack.Screen name="Update Item" component={UpdateItem} />
-        </Stack.Navigator>
-    );
-      break;
-    case 9:
-      return (
-        <Stack.Navigator >
-          <Stack.Screen name="To Do Lists" component={ToDoLists}/>
-          <Stack.Screen name={listArr[0]} component = {List}/>
-          <Stack.Screen name={listArr[1]} component = {List}/>
-          <Stack.Screen name={listArr[2]} component = {List}/>
-          <Stack.Screen name={listArr[3]} component = {List}/>
-          <Stack.Screen name={listArr[4]} component = {List}/>
-          <Stack.Screen name={listArr[5]} component = {List}/>
-          <Stack.Screen name={listArr[6]} component = {List}/>
-          <Stack.Screen name={listArr[7]} component = {List}/>
-          <Stack.Screen name={listArr[8]} component = {List}/>
-          <Stack.Screen name="Add Item" component={AddItem} />
-          <Stack.Screen name="Update Item" component={UpdateItem} />
-        </Stack.Navigator>
-    );
-      break;
-    case 10:
-      return (
-        <Stack.Navigator >
-          <Stack.Screen name="To Do Lists" component={ToDoLists}/>
-          <Stack.Screen name={listArr[0]} component = {List}/>
-          <Stack.Screen name={listArr[1]} component = {List}/>
-          <Stack.Screen name={listArr[2]} component = {List}/>
-          <Stack.Screen name={listArr[3]} component = {List}/>
-          <Stack.Screen name={listArr[4]} component = {List}/>
-          <Stack.Screen name={listArr[5]} component = {List}/>
-          <Stack.Screen name={listArr[6]} component = {List}/>
-          <Stack.Screen name={listArr[7]} component = {List}/>
-          <Stack.Screen name={listArr[8]} component = {List}/>
-          <Stack.Screen name={listArr[9]} component = {List}/>
-          <Stack.Screen name="Add Item" component={AddItem} />
-          <Stack.Screen name="Update Item" component={UpdateItem} />
-        </Stack.Navigator>
-    );
-      break;
-  }
+  console.log("Lists: ", listArr);
+  return (
+    <Stack.Navigator >
+      <Stack.Screen name="To Do Lists" component={ToDoLists} />
+      <Stack.Screen name="Add List" component={AddList} />
+      <Stack.Screen name="To Do List" component={List} />
+      <Stack.Screen name="Add Item" component={AddItem} />
+      <Stack.Screen name="Update Item" component={UpdateItem} />
+    </Stack.Navigator>
+);
 }
 }
 
 // Root Navigator Tab 
 export default function App() {
-  const [listArr, setListArr] = useState([]);
-
-  if(listArr.length <= 0){
-  const value = AsyncStorage.getItem('Lists').then((value) => {
-    if(!value){
-      console.log('Making New Lists Key');
-      const listArr = ['rootList1'];
-      AsyncStorage.setItem('Lists', JSON.stringify(listArr));
-    }
-    else{
-      if(value != undefined){
-        setListArr(JSON.parse(value));
-      }
-    }
-    
-  });
-}
-else{
-  return(
-    <NavigationContainer>
-      <Tab.Navigator>
-        <Tab.Screen name="To Do" component={ToDoListNav} options={{headerShown: false}}/>
-        <Tab.Screen name="Notes" component={Notes} options={{headerShown: false}}/>
-        <Tab.Screen name="Settings" component={Settings}/>
-      </Tab.Navigator>
-    </NavigationContainer>
-  );
-}
-
-    return (
-      <View></View>
+  
+return(
+  <NavigationContainer>
+    <Tab.Navigator>
+      <Tab.Screen name="To Do" component={ToDoListNav} options={{headerShown: false}}/>
+      <Tab.Screen name="Notes" component={Notes} options={{headerShown: false}}/>
+      <Tab.Screen name="Settings" component={Settings}/>
+    </Tab.Navigator>
+  </NavigationContainer>
 );
+
 
 
 }

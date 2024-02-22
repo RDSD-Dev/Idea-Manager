@@ -28,10 +28,16 @@ export default function ToDoLists(props) {
         //ToDoLists(props);
     });
 
+    const navigateAddList = () => {
+        //navigation.header = "";
+        console.log("Navigate: Add List");
+        navigation.navigate("Add List");
+    }
+
     const navigateList = (name) => {
         //navigation.header = "";
         console.log("Navigate: ",name);
-        navigation.navigate(name, {table: name});
+        navigation.navigate("To Do List", {table: name});
     }
 
     const moveListUp = (name) => {
@@ -104,7 +110,7 @@ export default function ToDoLists(props) {
     else{
         return (
             <ScrollView>
-                <Button title="+"/>
+                <Button title="+" onPress={() => navigateAddList()}/>
                 {displayLists()}
             </ScrollView>
         );

@@ -1,10 +1,7 @@
 import { StyleSheet, Text, View, TextInput, Button, ScrollView } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 import { useState, useEffect } from 'react';
-import {createStackNavigator} from '@react-navigation/stack';
 import { useNavigation } from '@react-navigation/native';
-
-const Stack = createStackNavigator();
 
 export default function AddItem(props) {
     const db = SQLite.openDatabase('ToDo.db');

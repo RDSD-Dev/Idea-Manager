@@ -11,6 +11,8 @@ export default function List(props) {
     const [isUpdatingData, setIsUpdatingData] = useState(false);
     const navigation = useNavigation();
 
+    navigation.setOptions({title: table});
+
     useEffect (() => {
         db.transaction(tx => {
             // Dates are Y-M-D
