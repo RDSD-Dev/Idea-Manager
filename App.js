@@ -11,8 +11,11 @@ import AddList from './AddList';
 import List from './List';
 import AddItem from './AddItem';
 import UpdateItem from './UpdateItem';
+import UpdateList from './UpdateList';
 
 import Notes from './Notes';
+import Note from './Note';
+import AddNote from './AddNote';
 
 import Settings from './Settings';
 
@@ -47,29 +50,59 @@ else{
     <Stack.Navigator >
       <Stack.Screen name="To Do Lists" component={ToDoLists} />
       <Stack.Screen name="Add List" component={AddList} />
+      <Stack.Screen name="Update List" component={UpdateList} />
       <Stack.Screen name="To Do List" component={List} />
       <Stack.Screen name="Add Item" component={AddItem} />
       <Stack.Screen name="Update Item" component={UpdateItem} />
     </Stack.Navigator>
-);
+  );
+}
+}
+
+function NotesNav(){
+  const [NoteArr, setNoteArr] = useState([]);
+
+  if(NoteArr.length <= 0){
+    const value = AsyncStorage.getItem('Notes').then((value) => {
+      if(!value){
+        console.log('Making New Notes Key');
+        const NoteArr = ['rootNote1'];
+        AsyncStorage.setItem('Notes', JSON.stringify(NoteArr));
+      }
+      else{
+        if(value != undefined){
+
+          setNoteArr(JSON.parse(value));
+        }
+        else{
+          console.log("Fail: ", value);
+        }
+      }
+    });
+}
+else{
+  console.log("Notes: ", NoteArr);
+  return (
+    <Stack.Navigator >
+      <Stack.Screen name="Notes" component={Notes} />
+      <Stack.Screen name="Note" component={Note} />
+      <Stack.Screen name="Add Note" component={AddNote} />
+    </Stack.Navigator>
+  );
 }
 }
 
 // Root Navigator Tab 
 export default function App() {
-  
 return(
   <NavigationContainer>
     <Tab.Navigator>
       <Tab.Screen name="To Do" component={ToDoListNav} options={{headerShown: false}}/>
-      <Tab.Screen name="Notes" component={Notes} options={{headerShown: false}}/>
+      <Tab.Screen name="Notes" component={NotesNav} options={{headerShown: false}}/>
       <Tab.Screen name="Settings" component={Settings}/>
     </Tab.Navigator>
   </NavigationContainer>
 );
-
-
-
 }
 
 const styles = StyleSheet.create({

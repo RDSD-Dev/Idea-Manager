@@ -2,9 +2,12 @@ import { StyleSheet, Text, View, TextInput, Button, ScrollView } from 'react-nat
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import * as SQLite from 'expo-sqlite';
 
-export default function AddList() {
-    const [listName, setListName] = useState(undefined);
+export default function UpdateList(props) {
+    const db = SQLite.openDatabase('ToDo.db');
+    const originalTitle = props.route.params.list;
+    const [listName, setListName] = useState(originalTitle);
     const navigation = useNavigation();
 
     const navigateToDoLists = () => {
@@ -12,11 +15,15 @@ export default function AddList() {
         navigation.goBack();
     }
 
-    const addList = () => {
+    const updateList = () => {
         const value = AsyncStorage.getItem('Lists').then((value) => {
             let listArr = JSON.parse(value);
-            listArr.push(listName);
-            console.log(listArr);
+            const index = listArr.indexOf(originalTitle);
+            listArr[index] = listName;
+            db.transaction(tx => {
+                // Dates are Y-M-D
+                tx.executeSql('ALTER TABLE '+originalTitle+' RENAME TO '+ listName, []);
+            });
             AsyncStorage.setItem('Lists', JSON.stringify(listArr)).then(navigateToDoLists());
         });
     }
@@ -25,7 +32,7 @@ export default function AddList() {
     <View>
         <Text>Title: </Text>
         <TextInput value={listName} onChangeText={setListName}/>
-        <Button title='Add' onPress={() => addList()}/>
+        <Button title='Update' onPress={() => updateList()}/>
     </View>
   );
 }
@@ -37,6 +44,5 @@ export default function AddList() {
       alignItems: 'center',
       justifyContent: 'center',
     },
-
   });
   

@@ -1,5 +1,9 @@
-SQL Structure:
-    rootList:
-        Id: The id key and is auto incremented, Title: VarChar(32), 
-        Description: Text, makeDate: Date, completeDate: Date, 
-        RemakeNum: How many days from origin or from completed date will the item need to be remade Is set to 0 if it will not be re set, IsFromOrigin: Boolean States wether the item is reset from origin or completion date.
+SQL Structure: ToDo.db
+    id: INTEGER PRIMARY KEY AUTOINCREMENT
+    name: VarChar(32)
+    description: Text
+    makeDate: Date Year-month-Date
+    completeDate: DateYear-month-Date
+    remakeNum: int
+
+        SQL Structure: Note.db

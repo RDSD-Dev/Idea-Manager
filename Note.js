@@ -4,7 +4,7 @@ import * as SQLite from 'expo-sqlite';
 import { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
 
-export default function List(props) {
+export default function Note(props) {
     const db = SQLite.openDatabase('ToDo.db');
     const table = props.route.params.table;
     const [items, setItems] = useState([]);

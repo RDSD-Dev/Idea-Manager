@@ -19,12 +19,13 @@ export default function AddItem(props) {
     }
 
     const getItem = () => {
+        console.log("Get");
         db.transaction((tx) => {
             tx.executeSql('SELECT * FROM ' + table + ' WHERE id = ?', [itemId],
             (txObj, resultSet) => {
-                console.log("Got the item ", resultSet);
-                setItemTitle(resultSet.rows._array.name);
-                setItemDes(resultSet.rows._array.description);
+                console.log("Got the item ", resultSet.rows._array[0].name);
+                setItemTitle(resultSet.rows._array[0].name);
+                setItemDes(resultSet.rows._array[0].description);
             },
             (txObj, error) => console.log(error)
             );
@@ -32,11 +33,11 @@ export default function AddItem(props) {
     }
 
     const updateDatabase = () => {
+        console.log("Update");
         db.transaction((tx) => {
-            const today = new Date();
-            tx.executeSql('INSERT INTO ' + table + ' (name, description, makeDate) VALUES (?, ?, ?)', [itemTitle, itemDes, (today.getFullYear() + "-" + today.getMonth() + "-" + today.getDate())],
+            tx.executeSql('UPDATE '+table+' SET name=Succ, description=Succ WHERE id=?', [itemId],
             (txObj, resultSet) => {
-                console.log("Add to database ", resultSet);
+                console.log("Updated to database ", resultSet);
                 navigateList();
             },
             (txObj, error) => console.log(error)
@@ -52,7 +53,7 @@ export default function AddItem(props) {
             <TextInput value={itemTitle} onChangeText={setItemTitle} />
             <Text>Description: </Text>
             <TextInput value={itemDes} onChangeText={setItemDes} />
-            <Button title='Add' onPress={updateDatabase}/>
+            <Button title='Add' onPress={() => updateDatabase()}/>
         </ScrollView>
     );
 }

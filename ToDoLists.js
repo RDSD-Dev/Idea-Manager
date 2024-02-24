@@ -1,8 +1,9 @@
-import { StyleSheet, Text, View, TextInput, Button, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Button, ScrollView, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {createStackNavigator} from '@react-navigation/stack';
 import { useNavigation } from '@react-navigation/native';
+import * as SQLite from 'expo-sqlite';
 
 const Stack = createStackNavigator();
 
@@ -11,7 +12,6 @@ export default function ToDoLists(props) {
     const [listArr, setListArr] = useState([]);
 
     const loadData = navigation.addListener('focus', () => {
-        console.log("Focus");
         const value = AsyncStorage.getItem('Lists').then((value) => {
             if(!value){
               console.log('Making New Lists Key');
@@ -23,15 +23,19 @@ export default function ToDoLists(props) {
                 setListArr(JSON.parse(value));
               }
             }
-            
           });
-        //ToDoLists(props);
     });
 
     const navigateAddList = () => {
         //navigation.header = "";
         console.log("Navigate: Add List");
         navigation.navigate("Add List");
+    }
+
+    const navigateUpdateList = (title) => {
+        //navigation.header = "";
+        console.log("Navigate: Update List");
+        navigation.navigate("Update List", {list: title});
     }
 
     const navigateList = (name) => {
@@ -55,6 +59,7 @@ export default function ToDoLists(props) {
             }
         }
         setListArr(tempArr);
+        AsyncStorage.setItem('Lists', JSON.stringify(listArr));
     }
 
     const moveListDown = (name) => {
@@ -72,10 +77,39 @@ export default function ToDoLists(props) {
             }
         }
         setListArr(tempArr);
+        AsyncStorage.setItem('Lists', JSON.stringify(listArr));
     }
 
-    const destroyList = (name) => {
-        
+    const destroyList = (title) => {
+        console.log("Delete: ", title);
+        const db = SQLite.openDatabase('ToDo.db');
+        db.transaction(tx => {
+            // Dates are Y-M-D
+            tx.executeSql('DROP TABLE IF EXISTS '+title, []);
+        });
+
+        const index = listArr.indexOf(title);
+        if(index > -1){
+            setListArr(listArr.splice(index, 1));
+            AsyncStorage.setItem('Lists', JSON.stringify(listArr));
+            navigation.setOptions({title: "To Do Lists"});
+            const value = AsyncStorage.getItem('Lists').then((value) => {
+              if(value != undefined){
+                setListArr(JSON.parse(value));
+              }
+            });
+        }
+    }
+
+    const DeleteConfirmation = (title) => {
+        Alert.alert("Delete Confirmation", "Are you sure you'd like to delete this?", [
+            {
+                text: 'Delete', onPress: () => destroyList(title),
+            },
+            {
+                text: 'Cancel', onPress: () => {console.log("Cancel Delete")},
+            }
+        ]);
     }
 
     const displayLists = () => {
@@ -87,21 +121,21 @@ export default function ToDoLists(props) {
                     <Button title='Go' onPress={() => navigateList(name)} />
                     <Button title='Up' onPress={() => moveListUp(name)}/>
                     <Button title='Down' onPress={() => moveListDown(name)}/>
+                    <Button title='Update' onPress={() => navigateUpdateList(name)}/>
+                    <Button title='Delete' onPress={() => DeleteConfirmation(name)}/>
                 </View>
             );
     })}
 
     if(listArr.length <= 0){
-        console.log("Start");
         const value = AsyncStorage.getItem('Lists').then((value) => {
              if(!value){
                  console.log('Making New Lists Key');
-                 const listArr = ['rootList1'];
+                 const listArr = [];
                 AsyncStorage.setItem('Lists', JSON.stringify(listArr));
             }
             else{
                 if(value != undefined){
-                console.log("GetLists: "+value);
                 setListArr(JSON.parse(value));
                 }
              }
