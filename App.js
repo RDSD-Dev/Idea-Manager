@@ -59,9 +59,10 @@ else{
 }
 
 function NotesNav(){
+  console.log
   const [NoteArr, setNoteArr] = useState([]);
 
-  if(NoteArr.length <= 0){
+  if(NoteArr.length < 0){
     const value = AsyncStorage.getItem('Notes').then((value) => {
       if(!value){
         console.log('Making New Notes Key');
@@ -70,7 +71,6 @@ function NotesNav(){
       }
       else{
         if(value != undefined){
-
           setNoteArr(JSON.parse(value));
         }
         else{
@@ -80,7 +80,6 @@ function NotesNav(){
     });
 }
 else{
-  console.log("Notes: ", NoteArr);
   return (
     <Stack.Navigator >
       <Stack.Screen name="Notes" component={Notes} />

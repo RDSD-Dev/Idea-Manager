@@ -25,9 +25,17 @@ export default function Notes(props) {
     //ToDoLists(props);
 });
 
+const navigateNote = (title) => {
+
+}
+
 const navigateAddNote = () => {
   console.log("Navigate: Add List");
   navigation.navigate("Add Note");
+}
+
+const navigateUpdateNote = (title) => {
+
 }
 
 const deleteNote = (title) => {
@@ -62,11 +70,50 @@ const DeleteConfirmation = (title) => {
   ]);
 }
 
+const moveNoteUp = (name) => {
+  console.log("Move Up: ", name)
+  const current = noteArr.indexOf(name);
+  let tempArr = [];
+  for(let i=0; i< noteArr.length; i++){
+      if(i+1 == current){
+          tempArr.push(noteArr[current]);
+          tempArr.push(noteArr[i]);
+          i++;
+      }
+      else{
+          tempArr.push(noteArr[i]);
+      }
+  }
+  setNoteArr(tempArr);
+  AsyncStorage.setItem('Notes', JSON.stringify(tempArr));
+  
+}
+
+const moveNoteDown = (name) => {
+  console.log("Move Down: ", name)
+  const current = noteArr.indexOf(name);
+  let tempArr = [];
+  for(let i=0; i< noteArr.length; i++){
+      if(i == current && i != noteArr.length-1){
+          tempArr.push(noteArr[i+1]);
+          tempArr.push(noteArr[current]);
+          i++;
+      }
+      else{
+          tempArr.push(noteArr[i]);
+      }
+  }
+  setNoteArr(tempArr);
+  AsyncStorage.setItem('Notes', JSON.stringify(tempArr));
+}
+
   const displayNotes = () => {
     return noteArr.map(title => {
       return(
           <View key={title}>
               <Text >{title}</Text>
+              <Button title='Up' onPress={() => moveNoteUp(title)}/>
+              <Button title='Down' onPress={() => moveNoteDown(title)}/>
               <Button title='Delete' onPress={() => DeleteConfirmation(title)}/>
           </View>
       );
@@ -99,12 +146,12 @@ else{
 }
 
     return(
+      <ScrollView>
+        <Button title="+" onPress={() => navigateAddNote()}/>
         <View>
-            <Button title='+'/>
-            <View>
-              {displayNotes()}
-            </View>
+          {displayNotes()}
         </View>
+  </ScrollView>
     );
 }
 

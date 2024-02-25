@@ -10,6 +10,7 @@ export default function AddNote(props) {
     const [noteTitle, setNoteTitle] = useState(undefined);
 
     const navigateNotes = () => {
+        console.log("Navigate: Notes")
         navigation.goBack();
     }
 
@@ -18,9 +19,10 @@ export default function AddNote(props) {
         AsyncStorage.getItem('Notes').then((value) => {
             let notes = JSON.parse(value);
             notes.push(noteTitle);
-            AsyncStorage.setItem('Notes', JSON.stringify(notes));
+            AsyncStorage.setItem('Notes', JSON.stringify(notes)).then((value) => {
+                navigateNotes();
+            });
         });
-        navigateNotes();
     }
 
     return (

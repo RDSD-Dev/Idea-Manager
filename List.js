@@ -13,13 +13,13 @@ export default function List(props) {
 
     const navigateAddItem = () => {
         console.log("Navigate Add Item")
-        props.navigation.navigate('Add Item', {refresh: true, table: table});
+        props.navigation.navigate('Add Item', {table: table, data: db});
         setIsUpdatingData(true);
     }
 
     const navigateUpdateItem = (id) => {
         console.log("Navigate Update Item")
-        props.navigation.navigate('Update Item', {refresh: true, table: table, id: id, data: db});
+        props.navigation.navigate('Update Item', {table: table, id: id, data: db});
         setIsUpdatingData(true);
     }
 

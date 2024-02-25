@@ -15,7 +15,7 @@ export default function ToDoLists(props) {
         const value = AsyncStorage.getItem('Lists').then((value) => {
             if(!value){
               console.log('Making New Lists Key');
-              const listArr = ['rootList1'];
+              const listArr = [];
               AsyncStorage.setItem('Lists', JSON.stringify(listArr));
             }
             else{
