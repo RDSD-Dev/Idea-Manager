@@ -7,3 +7,4 @@ SQL Structure: ToDo.db
     remakeNum: int
 
         SQL Structure: Note.db
+        id INTEGER PRIMARY KEY AUTOINCREMENT, note Text, makeDate Date

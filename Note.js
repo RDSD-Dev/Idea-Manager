@@ -1,119 +1,47 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TextInput, Button, ScrollView } from 'react-native';
-import * as SQLite from 'expo-sqlite';
 import { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Note(props) {
-    const db = SQLite.openDatabase('ToDo.db');
     const table = props.route.params.table;
-    const [items, setItems] = useState([]);
-    const [isUpdatingData, setIsUpdatingData] = useState(false);
+    const [note, setNote] = useState(undefined);
     const navigation = useNavigation();
-
-    useEffect (() => {
-        db.transaction(tx => {
-            // Dates are Y-M-D
-            tx.executeSql('CREATE TABLE IF NOT EXISTS '+table+' (id INTEGER PRIMARY KEY AUTOINCREMENT, name VarChar(32), description Text, makeDate Date, completeDate Date, remakeNum int)', []);
-        });
-
-        db.transaction(tx => {
-            tx.executeSql('SELECT * FROM ' + table,  [],
-                (txObj, resultSet) => setItems(resultSet.rows._array),
-                (txObj, error) => console.log(error)
-            );
-        });
-
-    }, []);
-
-    const loadData = () => {
-        db.transaction(tx => {
-            tx.executeSql('SELECT * FROM ' + table,  [],
-                (txObj, resultSet) => setItems(resultSet.rows._array),
-                (txObj, error) => console.log(error)
-            );
-        });
-        console.log("Load ", items);
-    }
 
     const isFocused = navigation.addListener('focus', () => {
         navigation.setOptions({title: table});
-        if(isUpdatingData){
-            loadData();
-            setIsUpdatingData(false);
-        }
     });
 
-    const navigateAddItem = () => {
-        console.log("Navigate Add Item")
-        props.navigation.navigate('Add Item', {refresh: true, table: table});
-        setIsUpdatingData(true);
-    }
-
-    const navigateUpdateItem = (id) => {
-        console.log("Navigate Update Item")
-        props.navigation.navigate('Update Item', {refresh: true, table: table, id: id});
-        setIsUpdatingData(true);
-    }
-
-    const deleteItem = (id) => {
-        const sql ="DELETE FROM "+table+" WHERE id='" + id + "'";
-        console.log(sql);
-        db.transaction(tx => {tx.executeSql('DELETE FROM '+table+' WHERE id=?', [id],
-        (txObj, resultSet) => {
-            if(resultSet.rowsAffected > 0){
-                let existingNames = [...items].filter(name => name.id !== id);
-                setItems(existingNames);
-                console.log("Deleted: ", id);
+    useEffect (() => {
+        if(note == undefined){
+        const value = AsyncStorage.getItem(table).then((value) => {
+            if(!value){
+                console.log('Making New Note Key');
+                const listArr = [];
+               AsyncStorage.setItem(table, "");
+           }
+           else{
+               if(value != undefined){
+               setNote(JSON.parse(value));
+               }
             }
-        },
-        (txObj, error) => console.log(error)
-        );
         });
     }
+    else{
+        updateNote();
+    }
+    }, [note]);
 
-    const completeItem = (id) => {
-        console.log("Completed: ", id);
-        const today = new Date();
-        const completeDate = '' + today.getFullYear() + '-' + today.getMonth() + '-' + today.getDate();
-        const sql = 'UPDATE '+table+' SET completeDate = '+completeDate+' WHERE id = '+id;
-        console.log("Sql:", sql);
-        db.transaction(tx => {
-            tx.executeSql('UPDATE '+table+' SET completeDate = ? WHERE id = ?', [completeDate, id],
-            (txObj, resultSet) => {
-                if(resultSet.rowsAffected > 0){
-                    console.log("Completed Yay");
-                    let existingNames = [...names];
-                    const indexToUpdate = existingNames.findIndex(name => name.completeDate === completeDate);
-                    existingNames[indexToUpdate].completeDate = completeDate;
-                    setItems(existingNames);
-                }
-            },
-                (txObj, error) => console.log(error)
-            );
-        });
-    };
-
-    const displayItems = () => {
-        console.log("names: ",items);
-        return items.map((name, index, description, completeDate) => {
-            return (
-                <View key={index} >
-                    <Text>{name.name}</Text>
-                    <Text>{name.description}</Text>
-                    <Button title='Complete' onPress={() => completeItem(name.id)} />
-                    <Button title='Delete' onPress={() => deleteItem(name.id)} />
-                    <Button title='Update' onPress={() => navigateUpdateItem(name.id)} />
-                </View>
-            );
-        });
-    };
+    const updateNote = () => {
+        AsyncStorage.setItem(table, JSON.stringify(note));
+    }
 
     return (
       <ScrollView style={{}}>
-        <Button title="Add" onPress={navigateAddItem}/>
+        <Button title="Add" onPress={() => updateNote()}/>
         <View >
-            {displayItems()}
+            <TextInput style={{}} value={note} onChangeText={setNote}/>
         </View>
         <StatusBar />
       </ScrollView>

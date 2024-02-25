@@ -26,7 +26,8 @@ export default function Notes(props) {
 });
 
 const navigateNote = (title) => {
-
+  console.log("Navigate:", title);
+  navigation.navigate("Note", {table: title});
 }
 
 const navigateAddNote = () => {
@@ -35,7 +36,8 @@ const navigateAddNote = () => {
 }
 
 const navigateUpdateNote = (title) => {
-
+  console.log("Navigate: Update List");
+  navigation.navigate("Update Note", {table: title});
 }
 
 const deleteNote = (title) => {
@@ -112,8 +114,10 @@ const moveNoteDown = (name) => {
       return(
           <View key={title}>
               <Text >{title}</Text>
+              <Button title='Go' onPress={() => navigateNote(title)}/>
               <Button title='Up' onPress={() => moveNoteUp(title)}/>
               <Button title='Down' onPress={() => moveNoteDown(title)}/>
+              <Button title='Update' onPress={() => navigateUpdateNote(title)}/>
               <Button title='Delete' onPress={() => DeleteConfirmation(title)}/>
           </View>
       );

@@ -16,6 +16,7 @@ import UpdateList from './UpdateList';
 import Notes from './Notes';
 import Note from './Note';
 import AddNote from './AddNote';
+import UpdateNote from './UpdateNote';
 
 import Settings from './Settings';
 
@@ -85,6 +86,7 @@ else{
       <Stack.Screen name="Notes" component={Notes} />
       <Stack.Screen name="Note" component={Note} />
       <Stack.Screen name="Add Note" component={AddNote} />
+      <Stack.Screen name="Update Note" component={UpdateNote} />
     </Stack.Navigator>
   );
 }
