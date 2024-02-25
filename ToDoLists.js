@@ -59,7 +59,8 @@ export default function ToDoLists(props) {
             }
         }
         setListArr(tempArr);
-        AsyncStorage.setItem('Lists', JSON.stringify(listArr));
+        AsyncStorage.setItem('Lists', JSON.stringify(tempArr));
+        
     }
 
     const moveListDown = (name) => {
@@ -77,7 +78,7 @@ export default function ToDoLists(props) {
             }
         }
         setListArr(tempArr);
-        AsyncStorage.setItem('Lists', JSON.stringify(listArr));
+        AsyncStorage.setItem('Lists', JSON.stringify(tempArr));
     }
 
     const destroyList = (title) => {
@@ -113,7 +114,6 @@ export default function ToDoLists(props) {
     }
 
     const displayLists = () => {
-        navigation.header
         return listArr.map(name => {
             return(
                 <View key={name}>

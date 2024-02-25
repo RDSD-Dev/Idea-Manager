@@ -45,7 +45,6 @@ function ToDoListNav(){
     });
 }
 else{
-  console.log("Lists: ", listArr);
   return (
     <Stack.Navigator >
       <Stack.Screen name="To Do Lists" component={ToDoLists} />
@@ -98,7 +97,7 @@ return(
   <NavigationContainer>
     <Tab.Navigator>
       <Tab.Screen name="To Do" component={ToDoListNav} options={{headerShown: false}}/>
-      <Tab.Screen name="Notes" component={NotesNav} options={{headerShown: false}}/>
+      <Tab.Screen name="Notes Tab" component={NotesNav} options={{headerShown: false, title: 'Notes'}}/>
       <Tab.Screen name="Settings" component={Settings}/>
     </Tab.Navigator>
   </NavigationContainer>

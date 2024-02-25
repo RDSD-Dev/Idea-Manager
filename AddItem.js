@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
 
 export default function AddItem(props) {
-    const db = SQLite.openDatabase('ToDo.db');
     const table = props.route.params.table;
     const navigation = useNavigation();
     const [itemTitle, setItemTitle] = useState(undefined);
@@ -15,6 +14,7 @@ export default function AddItem(props) {
     }
 
     const addToDatabase = () => {
+        const db = SQLite.openDatabase('ToDo.db');
         db.transaction((tx) => {
             const today = new Date();
             tx.executeSql('INSERT INTO ' + table + ' (name, description, makeDate) VALUES (?, ?, ?)', [itemTitle, itemDes, (today.getFullYear() + "-" + today.getMonth() + "-" + today.getDate())],

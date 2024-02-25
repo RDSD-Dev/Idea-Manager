@@ -11,6 +11,18 @@ export default function List(props) {
     const [isUpdatingData, setIsUpdatingData] = useState(false);
     const navigation = useNavigation();
 
+    const navigateAddItem = () => {
+        console.log("Navigate Add Item")
+        props.navigation.navigate('Add Item', {refresh: true, table: table});
+        setIsUpdatingData(true);
+    }
+
+    const navigateUpdateItem = (id) => {
+        console.log("Navigate Update Item")
+        props.navigation.navigate('Update Item', {refresh: true, table: table, id: id, data: db});
+        setIsUpdatingData(true);
+    }
+
     useEffect (() => {
         db.transaction(tx => {
             // Dates are Y-M-D
@@ -36,28 +48,8 @@ export default function List(props) {
         console.log("Load ", items);
     }
 
-    const isFocused = navigation.addListener('focus', () => {
-        navigation.setOptions({title: table});
-        if(isUpdatingData){
-            loadData();
-            setIsUpdatingData(false);
-        }
-    });
-
-    const navigateAddItem = () => {
-        console.log("Navigate Add Item")
-        props.navigation.navigate('Add Item', {refresh: true, table: table});
-        setIsUpdatingData(true);
-    }
-
-    const navigateUpdateItem = (id) => {
-        console.log("Navigate Update Item")
-        props.navigation.navigate('Update Item', {refresh: true, table: table, id: id});
-        setIsUpdatingData(true);
-    }
-
     const deleteItem = (id) => {
-        const sql ="DELETE FROM "+table+" WHERE id='" + id + "'";
+        const sql ="DELETE FROM "+table+" WHERE id=" + id;
         console.log(sql);
         db.transaction(tx => {tx.executeSql('DELETE FROM '+table+' WHERE id=?', [id],
         (txObj, resultSet) => {
@@ -74,29 +66,40 @@ export default function List(props) {
 
     const completeItem = (id) => {
         console.log("Completed: ", id);
+        const index = items.findIndex(name => name.id === id);
+        console.log("Picked:", items[index]);
         const today = new Date();
         const completeDate = '' + today.getFullYear() + '-' + today.getMonth() + '-' + today.getDate();
-        const sql = 'UPDATE '+table+' SET completeDate = '+completeDate+' WHERE id = '+id;
-        console.log("Sql:", sql);
         db.transaction(tx => {
-            tx.executeSql(sql, [],
+            tx.executeSql('UPDATE '+table+' SET completeDate = ? WHERE id = ?', [completeDate, id],
             (txObj, resultSet) => {
-                console.log("Completed did: ", id);
-                const index = items.indexOf(id);
-                items[index].completeDate = completeDate;
-                setItems(items);
+                if(resultSet.rowsAffected > 0){
+                    console.log("Succ");
+                    let existingItems = [...items];
+                    const indexToUpdate = existingItems.findIndex(name => name.id === id);
+                    existingItems[indexToUpdate].completeDate = completeDate;
+                    setItems(existingItems);
+                }
             },
-            (txObj, error) => console.log(error)
+                (txObj, error) => console.log(error)
             );
         });
     }
 
+    const isFocused = navigation.addListener('focus', () => {
+        navigation.setOptions({title: table});
+        if(isUpdatingData){
+            loadData();
+            setIsUpdatingData(false);
+        }
+    });
+
     const displayItems = () => {
-        console.log("names: ",items);
         return items.map((name, index, description, completeDate) => {
             return (
                 <View key={index} >
                     <Text>{name.name}</Text>
+                    <Text>{name.completeDate}</Text>
                     <Text>{name.description}</Text>
                     <Button title='Complete' onPress={() => completeItem(name.id)} />
                     <Button title='Delete' onPress={() => deleteItem(name.id)} />

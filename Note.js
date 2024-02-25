@@ -79,17 +79,20 @@ export default function Note(props) {
         const sql = 'UPDATE '+table+' SET completeDate = '+completeDate+' WHERE id = '+id;
         console.log("Sql:", sql);
         db.transaction(tx => {
-            tx.executeSql(sql, [],
+            tx.executeSql('UPDATE '+table+' SET completeDate = ? WHERE id = ?', [completeDate, id],
             (txObj, resultSet) => {
-                console.log("Completed did: ", id);
-                const index = items.indexOf(id);
-                items[index].completeDate = completeDate;
-                setItems(items);
+                if(resultSet.rowsAffected > 0){
+                    console.log("Completed Yay");
+                    let existingNames = [...names];
+                    const indexToUpdate = existingNames.findIndex(name => name.completeDate === completeDate);
+                    existingNames[indexToUpdate].completeDate = completeDate;
+                    setItems(existingNames);
+                }
             },
-            (txObj, error) => console.log(error)
+                (txObj, error) => console.log(error)
             );
         });
-    }
+    };
 
     const displayItems = () => {
         console.log("names: ",items);

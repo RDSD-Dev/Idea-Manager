@@ -7,7 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 const Stack = createStackNavigator();
 
 export default function AddItem(props) {
-    const db = SQLite.openDatabase('ToDo.db');
+    const db = props.route.params.data;
     const table = props.route.params.table;
     const itemId = props.route.params.id;
     const navigation = useNavigation();
@@ -34,18 +34,23 @@ export default function AddItem(props) {
 
     const updateDatabase = () => {
         console.log("Update");
-        db.transaction((tx) => {
-            tx.executeSql('UPDATE '+table+' SET name=Succ, description=Succ WHERE id=?', [itemId],
+
+        db.transaction(tx => {
+            tx.executeSql('UPDATE '+table+' SET name = ?, description = ? WHERE id = ?', [itemTitle, itemDes, itemId],
             (txObj, resultSet) => {
-                console.log("Updated to database ", resultSet);
-                navigateList();
+                if(resultSet.rowsAffected > 0){
+                    console.log("Updated to database ", resultSet);
+                    navigateList();
+                }
             },
-            (txObj, error) => console.log(error)
+                (txObj, error) => console.log(error)
             );
         });
     }
 
-    getItem();
+    if(itemTitle == undefined){
+        getItem();
+    }
 
     return (
         <ScrollView>
@@ -53,7 +58,7 @@ export default function AddItem(props) {
             <TextInput value={itemTitle} onChangeText={setItemTitle} />
             <Text>Description: </Text>
             <TextInput value={itemDes} onChangeText={setItemDes} />
-            <Button title='Add' onPress={() => updateDatabase()}/>
+            <Button title='Update' onPress={() => updateDatabase()}/>
         </ScrollView>
     );
 }
