@@ -33,13 +33,18 @@ export default function Note(props) {
     }
     }, [note]);
 
+    const navigateEditNotePhotos = () => {
+      console.log("Navigate: Edit Note Photos");
+      navigation.navigate("Edit Note Photos", {table: table});
+    }
+
     const updateNote = () => {
         AsyncStorage.setItem(table, JSON.stringify(note));
     }
 
     return (
       <ScrollView style={{}}>
-        <Button title="Add" onPress={() => updateNote()}/>
+        <Button title="Add" onPress={() => navigateEditNotePhotos()}/>
         <View >
             <TextInput style={{}} value={note} onChangeText={setNote}/>
         </View>
