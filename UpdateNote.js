@@ -27,12 +27,15 @@ export default function UpdateNote(props) {
 
     const updateNoteTitle = () => {
         console.log("Update");
-        const value = AsyncStorage.getItem('Notes').then((value) => {
+        const value = AsyncStorage.getItem('Notes').then((value) => {note
             let tempArr = JSON.parse(value);
             const index = tempArr.indexOf(table);
             tempArr[index] = noteTitle;
             AsyncStorage.setItem('Notes', JSON.stringify(tempArr)).then((value) => {
                 AsyncStorage.setItem(noteTitle, note).then((value) => {
+                  const pics = AsyncStorage.getItem(table + "Pics").then((pics) => {
+                    AsyncStorage.setItem(noteTitle + "Pics", pics);
+                  })
                     AsyncStorage.removeItem(table).then((value) => {
                         navigateNotes();
                     })

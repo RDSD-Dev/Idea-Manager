@@ -42,12 +42,8 @@ const navigateUpdateNote = (title) => {
 
 const deleteNote = (title) => {
   console.log("Delete: ", title);
-  const db = SQLite.openDatabase('Note.db');
-  db.transaction(tx => {
-      // Dates are Y-M-D
-      tx.executeSql('DROP TABLE IF EXISTS '+title, []);
-  });
 
+  // Edit notes array
   const index = noteArr.indexOf(title);
   if(index > -1){
     setNoteArr(noteArr.splice(index, 1));
@@ -59,6 +55,11 @@ const deleteNote = (title) => {
         }
       });
   }
+
+  // Delete async storage
+  AsyncStorage.removeItem(title);
+  AsyncStorage.removeItem(title + "Pics");
+
 }
 
 const DeleteConfirmation = (title) => {
