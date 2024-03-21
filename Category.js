@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function Category(props) {
+export default function Category(props) { // title, color
   const [images, setImages] = useState([]);
     const table = props.route.params.table;
     const [note, setNote] = useState(undefined);
@@ -12,13 +12,10 @@ export default function Category(props) {
 
 
     return (
-      <ScrollView style={{}}>
-        <Button title="Pick an image from camera roll" onPress={pickImage} />
-        {displayPics()}
-        <StatusBar />
-        <TextInput style={[styles.TextInput]} value={note} multiline={true} onChangeText={setNote}/>
+      <View style={{}}>
+        <Text>{props.title} Header</Text>
         
-      </ScrollView>
+      </View>
     );
   }
 
