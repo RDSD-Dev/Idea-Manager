@@ -1,0 +1,28 @@
+SQL:
+    ListItems:
+        key: AUTOINCREMENT
+        title: VarChar(64)
+        makeDate: Date
+        completeDate: Date
+        Type: Int:
+            1: Basic
+            2: Remake from make Date
+            3: Remake from last completeDate
+        remakeNum: Int
+        category: VarChar(32)
+        sortNum: Int
+
+AsyncStorage:
+    appCategories:
+        [[{Category Title}, {Category Color}]]
+    
+    appNotes:
+        [[{Note Title}, {Note Category}, {Note Sort Number}]]
+
+    app{Note Title}:
+        {Note Text}
+
+    app{Note Title}Pictures:
+        [{Picture}]
+
+    

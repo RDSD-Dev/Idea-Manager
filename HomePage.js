@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TextInput, Button, ScrollView, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Button, ScrollView, Alert, FlatList } from 'react-native';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
@@ -9,6 +9,7 @@ import Category from './Category';
 export default function HomePage(props) {
   const navigation = useNavigation();
   const [allCategories, setAllCategories] = useState([]); // Stores HomePageCategories from AsyncStorage
+  
   
   if(allCategories == null || allCategories.length <= 0){
     const value = AsyncStorage.getItem('HomePageCategories').then((value) => {
@@ -39,6 +40,10 @@ export default function HomePage(props) {
     return(
         <ScrollView>
             <Text>Header</Text>
+            <FlatList 
+              data={}
+              renderItem={() => {}}
+            />
             {displayCategories()}
         </ScrollView>
     );
