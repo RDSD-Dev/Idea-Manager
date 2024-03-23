@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Category(props) { // title, color
   const [images, setImages] = useState([]);
-    const table = props.route.params.table;
+    //const table = props.route.params.table;
     const [note, setNote] = useState(undefined);
     const navigation = useNavigation();
 

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TextInput, Button, ScrollView, Alert, FlatList } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Button, ScrollView, Alert, FlatList, TextComponent, Modal } from 'react-native';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
@@ -11,108 +11,103 @@ export default function HomePage(props) {
   const db = SQLite.openDatabase('ideaManager.db');
   const table = "listItems";
   const [allCategories, setAllCategories] = useState([]); // Stores HomePageCategories from AsyncStorage
+  let cats = [];
   const [shouldLoadData, setShouldLoadData] = useState(true);
   let data = [];
+  let cat = "";
 
-  
-  
-  if(allCategories == null || allCategories.length <= 0){
-    const value = AsyncStorage.getItem('HomePageCategories').then((value) => {
-        if(!value){
-            // New key made
-          console.log('Making New Lists Key');
-          const temArr = [];
-          AsyncStorage.setItem('HomePageCategories', JSON.stringify(temArr));
-          setAllCategories(JSON.parse(temArr));
-        }
-        else{
-            // Save Categories
-          if(value != undefined){
-            setAllCategories(JSON.parse(value));
-          }
-        }
-      });
-  }
-
-    if(shouldLoadData){
-      console.log("Data");
-      // Make Table if it doesn't exist
-      db.transaction(tx => {
-        // Dates are Y-M-D
-        tx.executeSql('CREATE TABLE IF NOT EXISTS '+table+' (id INTEGER PRIMARY KEY AUTOINCREMENT, name VarChar(64), makeDate Date, completeDate Date, type Int, remakeNum int, category VarChar(32), sortNum Int, isPinned Boolean)', []);
-      });
-
-      // Store list items as object
-      db.transaction(tx => {
-        tx.executeSql('SELECT * FROM ' + table,  [],
-            (txObj, resultSet) => {
-              const currentItem = resultSet.rows._array;
-              const currentObject = {
-                title: currentItem.title,
-                id: currentItem.id,
-                type: currentItem.type,
-                category: currentItem.category,
-                sortNum: currentItem.sortNum,
-                isPinned: currentItem.isPinned,
-                makeDate: currentItem.makeDate,
-                completeDate: currentItem.completeDate,
-                remakeNum: currentItem.remakeNum
-              }
-              console.log("Sql: " + currentObject);
-              data.push(currentObject);
-            },
-            (txObj, error) => console.log(error)
-        );
-      });
-
-      // Store note titles as object
-      const value = AsyncStorage.getItem('appNotes').then((value) => {
-        if(!value){
-          console.log('Making New Lists Key');
-          const temArr = [];
-          AsyncStorage.setItem('appNotes', JSON.stringify(temArr));
-        }
-        else{
-          if(value != undefined){
-            const notes = JSON.parse(value);
-            notes.forEach((note) => {
-              const currentObject = {
-                title: note[0],
-                type: 0,
-                category: note[1],
-                sortNum: note[2],
-                isPinned: note[3],
-                makeDate: note[4],
-                editDate: note[5]
-              };
-              data.push(currentObject);
-            });
-          }
-        }
-      });
-
-      setShouldLoadData(false);
-    }
-    //console.log(data);
+  useEffect(() => {
+    console.log("Use Effect");
+  }, []);
 
   const displayCategories = () => {
-    return allCategories.map(title => {
-        return(
-            <Category category={title} color={title.color}/>
-        );
-    });
+    return allCategories.forEach((title) => {
+      return(
+        <Text>{title[0]}</Text>
+      );
+    })
   }
 
-    return(
-        <View>
-            <Text>Header</Text>
-            <FlatList 
-              data={data}
-              renderItem={() => {}}
-            />
-            {displayCategories()}
-        </View>
-    );
+  if(shouldLoadData){
+    console.log("Loading Data");
+    // Make Table if it doesn't exist
+    db.transaction(tx => {
+      // Dates are Y-M-D
+      tx.executeSql('CREATE TABLE IF NOT EXISTS '+table+' (id INTEGER PRIMARY KEY AUTOINCREMENT, name VarChar(64), makeDate Date, completeDate Date, type Int, remakeNum int, category VarChar(32), sortNum Int, isPinned Boolean)', []);
+    });
+
+    // Store list items as object
+    db.transaction(tx => {
+      tx.executeSql('SELECT * FROM ' + table,  [],
+          (txObj, resultSet) => {
+            const currentItem = resultSet.rows._array;
+            const currentObject = {
+              title: currentItem.title,
+              id: currentItem.id,
+              type: currentItem.type,
+              category: currentItem.category,
+              sortNum: currentItem.sortNum,
+              isPinned: currentItem.isPinned,
+              makeDate: currentItem.makeDate,
+              completeDate: currentItem.completeDate,
+              remakeNum: currentItem.remakeNum
+            }
+            data.push(currentObject);
+          },
+          (txObj, error) => console.log(error)
+      );
+    });
+
+    //Store Categories
+    let value = AsyncStorage.getItem('appCategories').then((value) => {
+      if(!value){
+        console.log('Making New Lists Key');
+        const temArr = [
+          ["Pinned", "Pinned"],
+          ["List Items", "List Items"],
+          ["Notes", "Notes"]
+        ];
+        console.log(temArr);
+        setAllCategories(temArr);
+        AsyncStorage.setItem('appCategories', JSON.stringify(temArr));
+      }
+      else{
+        console.log("Categories: " + JSON.parse(value));
+        setAllCategories(JSON.parse(value));
+      }
+    });
+
+    // Store note titles as object
+    value = AsyncStorage.getItem('appNotes').then((value) => {
+        if(value != undefined){
+          JSON.parse(value).forEach((note) => {
+            const currentObject = {
+              title: note[0],
+              type: 0,
+              category: note[1],
+              sortNum: note[2],
+              isPinned: note[3],
+              makeDate: note[4],
+              editDate: note[5]
+            };
+            data.push(currentObject);
+          });
+        }
+    });
+
+    console.log("All Data: " + data);
+    if(allCategories.length >= 3){
+      setShouldLoadData(false);
+    }
+  }
+
+  return(
+    <View>
+        <Text>{"\n"}Header{"\n"}</Text>
+        <Text>{allCategories[0][0]}</Text>
+
+    </View>
+);
 }
 
   const styles = StyleSheet.create({
@@ -122,6 +117,5 @@ export default function HomePage(props) {
       alignItems: 'center',
       justifyContent: 'center',
     },
-
   });
   
