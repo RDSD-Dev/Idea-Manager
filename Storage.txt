@@ -18,7 +18,7 @@ AsyncStorage:
         [[{Category Title}, {Category Color}]]
     
     appNotes:
-        [[{Note Title}, {Note Category}, {Note Sort Number}, {isPinned}]]
+        [[{Note Title}, {Note Category}, {Note Sort Number}, {isPinned}, {makeDate}, {editDate}]]
 
     app{Note Title}:
         {Note Text}
