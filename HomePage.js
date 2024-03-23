@@ -11,7 +11,9 @@ export default function HomePage(props) {
   const db = SQLite.openDatabase('ideaManager.db');
   const table = "listItems";
   const [allCategories, setAllCategories] = useState([]); // Stores HomePageCategories from AsyncStorage
+  const [shouldLoadData, setShouldLoadData] = useState(true);
   let data = [];
+
   
   
   if(allCategories == null || allCategories.length <= 0){
@@ -32,7 +34,8 @@ export default function HomePage(props) {
       });
   }
 
-    if(data.length() <= 0){
+    if(shouldLoadData){
+      console.log("Data");
       // Make Table if it doesn't exist
       db.transaction(tx => {
         // Dates are Y-M-D
@@ -55,6 +58,7 @@ export default function HomePage(props) {
                 completeDate: currentItem.completeDate,
                 remakeNum: currentItem.remakeNum
               }
+              console.log("Sql: " + currentObject);
               data.push(currentObject);
             },
             (txObj, error) => console.log(error)
@@ -85,11 +89,11 @@ export default function HomePage(props) {
             });
           }
         }
-        
       });
+
+      setShouldLoadData(false);
     }
-
-
+    //console.log(data);
 
   const displayCategories = () => {
     return allCategories.map(title => {
@@ -100,14 +104,14 @@ export default function HomePage(props) {
   }
 
     return(
-        <ScrollView>
+        <View>
             <Text>Header</Text>
             <FlatList 
               data={data}
               renderItem={() => {}}
             />
             {displayCategories()}
-        </ScrollView>
+        </View>
     );
 }
 
