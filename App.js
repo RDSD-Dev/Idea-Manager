@@ -6,6 +6,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import {createStackNavigator} from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import HomePage from './HomePage';
+
 import ToDoLists from './ToDoLists';
 import AddList from './AddList';
 import List from './List';
@@ -99,6 +101,7 @@ export default function App() {
 return(
   <NavigationContainer>
     <Tab.Navigator>
+    <Tab.Screen name="Home" component={HomePage} options={{headerShown: false}}/>
       <Tab.Screen name="To Do" component={ToDoListNav} options={{headerShown: false}}/>
       <Tab.Screen name="Notes Tab" component={NotesNav} options={{headerShown: false, title: 'Notes'}}/>
       <Tab.Screen name="Settings" component={Settings}/>

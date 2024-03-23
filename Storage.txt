@@ -1,6 +1,6 @@
 SQL:
-    ListItems:
-        key: AUTOINCREMENT
+    listItems:
+        id: AUTOINCREMENT
         title: VarChar(64)
         makeDate: Date
         completeDate: Date
@@ -11,13 +11,14 @@ SQL:
         remakeNum: Int
         category: VarChar(32)
         sortNum: Int
+        isPinned: Boolean
 
 AsyncStorage:
     appCategories:
         [[{Category Title}, {Category Color}]]
     
     appNotes:
-        [[{Note Title}, {Note Category}, {Note Sort Number}]]
+        [[{Note Title}, {Note Category}, {Note Sort Number}, {isPinned}]]
 
     app{Note Title}:
         {Note Text}
@@ -25,4 +26,9 @@ AsyncStorage:
     app{Note Title}Pictures:
         [{Picture}]
 
+Object:
+    List:
+        {title, id, type, category, sortNum, isPinned, makeDate, completeDate, remakeNum}
     
+    Note:
+        {title, type, category, sortNum, isPinned, makeDate, editDate}
