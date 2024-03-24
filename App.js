@@ -1,113 +1,160 @@
 import * as React from 'react';
-import { StyleSheet, Text, View, Button } from 'react-native';
+import { StyleSheet, Text, View, SafeAreaView, SectionList, Pressable, TextInput, Button, Modal } from 'react-native';
 import { useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import {createStackNavigator} from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SQLite from 'expo-sqlite';
 
-import HomePage from './HomePage';
+export default function App() {
+  const [expandedSections, setExpandedSections] = useState(new Set());
+  const [shouldLoadData, setShouldLoadData] = useState(true);
+  const [categories, setCategories] = useState([]);
+  const db = SQLite.openDatabase('ideaManager.db');
+  const table = "listItems";
+  let items = [];
 
-import ToDoLists from './ToDoLists';
-import AddList from './AddList';
-import List from './List';
-import AddItem from './AddItem';
-import UpdateItem from './UpdateItem';
-import UpdateList from './UpdateList';
+  useEffect(() => {
+    console.log("Use Effect");
+  }, []);
 
-import Notes from './Notes';
-import Note from './Note';
-import AddNote from './AddNote';
-import UpdateNote from './UpdateNote';
-import EditNotePhotos from './EditNotePhotos';
+  const sortData = () =>{
+    let sortingArr = categories;
+    // Iterates though each category
+    for(var i = 0; i<categories.length; i++){
+      // Gets all the data that belongs in the current category
+      let tempArr =  [];
+      if(categories[i] == "Pinned"){
+        tempArr = (items.filter((item) => item.isPinned == true));
+      }
+      else if(categories[i] == "List Items"){
+        tempArr = (items.filter((item) => item.type > 0));
+      }
+      else if(categories[i] == "Notes"){
+        tempArr = (items.filter((item) => item.category == 0));
+      }
+      else{
+        tempArr = (items.filter((item) => item.category == categories[i]));
+      }
+      let sortedArr =[];
+      // Iterate though each object for the current category
+      for(var t = 0; t<tempArr.length; t++){
+        sortedArr[t] = tempArr.indexOf(tempArr.filter((item) => item.sortNum == t));
+      }
+      sortingArr[i].items = sortedArr;
+    }
+    setCategories(sortingArr);
+  }
 
-import Settings from './Settings';
+  const addItem = (category, type) => {
+    console.log(category);
+  }
 
-const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator();
-
-// Nested Navigator Stack
-function ToDoListNav(){
-  const [listArr, setListArr] = useState([]);
-
-  if(listArr.length <= 0){
-    const value = AsyncStorage.getItem('Lists').then((value) => {
+  if(shouldLoadData){
+    console.log("Loading Data");
+    //Store Categories
+    let value = AsyncStorage.getItem('appCategories').then((value) => {
       if(!value){
         console.log('Making New Lists Key');
-        const listArr = ['rootList1'];
-        AsyncStorage.setItem('Lists', JSON.stringify(listArr));
+        const temArr = [
+          {
+            title: "Pinned",
+            color: "Pinned",
+            data: [{}],
+          },
+          {
+            title: "List Items",
+            color: "List Items",
+            data: [{}],
+          },
+          {
+            title: "Notes",
+            color: "Notes",
+            data: [{}],
+          },
+        ];
+        console.log("Temp: " + temArr.length);
+        setCategories(temArr);
+        AsyncStorage.setItem('appCategories', JSON.stringify(temArr));
       }
       else{
-        if(value != undefined){
-
-          setListArr(JSON.parse(value));
-        }
-        else{
-          console.log("Fail: ", value);
-        }
+        console.log("Categories: ");
+        setCategories(JSON.parse(value));
       }
     });
-}
-else{
-  return (
-    <Stack.Navigator >
-      <Stack.Screen name="To Do Lists" component={ToDoLists} />
-      <Stack.Screen name="Add List" component={AddList} />
-      <Stack.Screen name="Update List" component={UpdateList} />
-      <Stack.Screen name="To Do List" component={List} />
-      <Stack.Screen name="Add Item" component={AddItem} />
-      <Stack.Screen name="Update Item" component={UpdateItem} />
-    </Stack.Navigator>
-  );
-}
-}
 
-function NotesNav(){
-  console.log
-  const [NoteArr, setNoteArr] = useState([]);
-
-  if(NoteArr.length < 0){
-    const value = AsyncStorage.getItem('Notes').then((value) => {
-      if(!value){
-        console.log('Making New Notes Key');
-        const NoteArr = ['rootNote1'];
-        AsyncStorage.setItem('Notes', JSON.stringify(NoteArr));
-      }
-      else{
-        if(value != undefined){
-          setNoteArr(JSON.parse(value));
-        }
-        else{
-          console.log("Fail: ", value);
-        }
+    // Store note titles as object
+    value = AsyncStorage.getItem('appNotes').then((value) => {
+      if(value != undefined){
+        JSON.parse(value).forEach((note) => {
+          const currentObject = {
+            title: note[0],
+            type: 0,
+            category: note[1],
+            sortNum: note[2],
+            isPinned: note[3],
+            makeDate: note[4],
+            editDate: note[5]
+          };
+          data.push(currentObject);
+        });
       }
     });
-}
-else{
-  return (
-    <Stack.Navigator >
-      <Stack.Screen name="Notes" component={Notes} />
-      <Stack.Screen name="Note" component={Note} />
-      <Stack.Screen name="Add Note" component={AddNote} />
-      <Stack.Screen name="Update Note" component={UpdateNote} />
-      <Stack.Screen name="Edit Note Photos" component={EditNotePhotos} />
-    </Stack.Navigator>
-  );
-}
-}
 
-// Root Navigator Tab 
-export default function App() {
-return(
-  <NavigationContainer>
-    <Tab.Navigator>
-    <Tab.Screen name="Home" component={HomePage} options={{headerShown: false}}/>
-      <Tab.Screen name="To Do" component={ToDoListNav} options={{headerShown: false}}/>
-      <Tab.Screen name="Notes Tab" component={NotesNav} options={{headerShown: false, title: 'Notes'}}/>
-      <Tab.Screen name="Settings" component={Settings}/>
-    </Tab.Navigator>
-  </NavigationContainer>
-);
+    // Make Table if it doesn't exist
+    db.transaction(tx => {
+      // Dates are Y-M-D
+      tx.executeSql('CREATE TABLE IF NOT EXISTS '+table+' (id INTEGER PRIMARY KEY AUTOINCREMENT, name VarChar(64), makeDate Date, completeDate Date, type Int, remakeNum int, category VarChar(32), sortNum Int, isPinned Boolean)', []);
+    });
+
+    // Store list items as object
+    db.transaction(tx => {
+      tx.executeSql('SELECT * FROM ' + table,  [],
+          (txObj, resultSet) => {
+            const currentItem = resultSet.rows._array;
+            const currentObject = {
+              title: currentItem.title,
+              id: currentItem.id,
+              type: currentItem.type,
+              category: currentItem.category,
+              sortNum: currentItem.sortNum,
+              isPinned: currentItem.isPinned,
+              makeDate: currentItem.makeDate,
+              completeDate: currentItem.completeDate,
+              remakeNum: currentItem.remakeNum
+            }
+            items.push(currentObject);
+          },
+          (txObj, error) => console.log(error)
+      );
+    });
+
+    if(categories.length >= 3){
+      console.log("All Data: " + items);
+      setShouldLoadData(false);
+      sortData();
+    }
+  }
+  else{
+    return(
+      <SafeAreaView>
+        <Text>{"\n"}Header{"\n"}</Text>
+        <Button title='+' onPress={() => console.log("Add Category")}/>
+        <SectionList 
+          sections={categories}
+          keyExtractor={(item, index) => item + index}
+          renderItem={({item}) => (
+            <Text>{items[item]}</Text>
+          )}
+          renderSectionHeader={({section: {title}}) => (
+            <View>
+            <Text>{title}</Text>
+            <Button title='+' onPress={() => addItem(title)}/>
+            </View>
+          )}
+        />
+  
+      </SafeAreaView>
+  );
+  }
 }
 
 const styles = StyleSheet.create({

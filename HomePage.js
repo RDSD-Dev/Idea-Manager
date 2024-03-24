@@ -23,7 +23,7 @@ export default function HomePage(props) {
     // Iterates though each category
     for(var i = 0; i<categories.length; i++){
       // Gets all the data that belongs in the current category
-      const tempArr = (items.filter((item) => item.category == categories[i]));
+      let tempArr =  [];
       if(categories[i] == "Pinned"){
         tempArr = (items.filter((item) => item.isPinned == true));
       }
@@ -44,6 +44,10 @@ export default function HomePage(props) {
       sortingArr[i].items = sortedArr;
     }
     setCategories(sortingArr);
+  }
+
+  const addItem = (category, type) => {
+    console.log(category);
   }
 
   if(shouldLoadData){
@@ -135,6 +139,7 @@ export default function HomePage(props) {
     return(
       <SafeAreaView>
         <Text>{"\n"}Header{"\n"}</Text>
+        <Button title='+' onPress={() => console.log("Add Category")}/>
         <SectionList 
           sections={categories}
           keyExtractor={(item, index) => item + index}
@@ -142,7 +147,10 @@ export default function HomePage(props) {
             <Text>{items[item]}</Text>
           )}
           renderSectionHeader={({section: {title}}) => (
+            <View>
             <Text>{title}</Text>
+            <Button title='+' onPress={() => addItem(title)}/>
+            </View>
           )}
         />
   
