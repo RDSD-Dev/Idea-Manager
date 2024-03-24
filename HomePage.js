@@ -1,35 +1,90 @@
-import { StyleSheet, Text, View, TextInput, Button, ScrollView, Alert, FlatList, TextComponent, Modal } from 'react-native';
+import { StyleSheet, Text, View, SafeAreaView, SectionList, Pressable, TextInput, Button, ScrollView, Alert, FlatList, TextComponent, Modal } from 'react-native';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import * as SQLite from 'expo-sqlite';
 
-import Category from './Category';
-
 export default function HomePage(props) {
   const navigation = useNavigation();
   const db = SQLite.openDatabase('ideaManager.db');
   const table = "listItems";
-  const [allCategories, setAllCategories] = useState([]); // Stores HomePageCategories from AsyncStorage
-  let cats = [];
+  const [expandedSections, setExpandedSections] = useState(new Set());
+
+  const [categories, setCategories] = useState([]); // Stores HomePageCategories from AsyncStorage
   const [shouldLoadData, setShouldLoadData] = useState(true);
   let data = [];
-  let cat = "";
 
   useEffect(() => {
     console.log("Use Effect");
   }, []);
 
-  const displayCategories = () => {
-    return allCategories.forEach((title) => {
-      return(
-        <Text>{title[0]}</Text>
-      );
-    })
+  const sortData = () =>{
+    let sortingArr = categories;
+    // Iterates though each category
+    for(var i = 0; i<categories.length; i++){
+      // Gets all the data that belongs in the current category
+      const tempArr = (data.filter((item) => item.category == categories[i]));
+      let sortedArr =[];
+      // Iterate though each object for the current category
+      for(var t = 0; t<tempArr.length; t++){
+        sortedArr[t] = tempArr.filter((item) => item.sortNum == t);
+      }
+      sortingArr[i].indexes = sortedArr;
+    }
+    setCategories(sortingArr);
   }
 
   if(shouldLoadData){
     console.log("Loading Data");
+    //Store Categories
+    let value = AsyncStorage.getItem('appCategories').then((value) => {
+      if(!value){
+        console.log('Making New Lists Key');
+        const temArr = [
+          {
+            title: "Pinned",
+            color: "Pinned",
+            indexes: [{}],
+          },
+          {
+            title: "List Items",
+            color: "List Items",
+            indexes: [{}],
+          },
+          {
+            title: "Notes",
+            color: "Notes",
+            indexes: [{}],
+          },
+        ];
+        console.log("Temp: " + temArr.length);
+        setCategories(temArr);
+        AsyncStorage.setItem('appCategories', JSON.stringify(temArr));
+      }
+      else{
+        console.log("Categories: ");
+        setCategories(JSON.parse(value));
+      }
+    });
+
+    // Store note titles as object
+    value = AsyncStorage.getItem('appNotes').then((value) => {
+      if(value != undefined){
+        JSON.parse(value).forEach((note) => {
+          const currentObject = {
+            title: note[0],
+            type: 0,
+            category: note[1],
+            sortNum: note[2],
+            isPinned: note[3],
+            makeDate: note[4],
+            editDate: note[5]
+          };
+          data.push(currentObject);
+        });
+      }
+    });
+
     // Make Table if it doesn't exist
     db.transaction(tx => {
       // Dates are Y-M-D
@@ -58,56 +113,22 @@ export default function HomePage(props) {
       );
     });
 
-    //Store Categories
-    let value = AsyncStorage.getItem('appCategories').then((value) => {
-      if(!value){
-        console.log('Making New Lists Key');
-        const temArr = [
-          ["Pinned", "Pinned"],
-          ["List Items", "List Items"],
-          ["Notes", "Notes"]
-        ];
-        console.log(temArr);
-        setAllCategories(temArr);
-        AsyncStorage.setItem('appCategories', JSON.stringify(temArr));
-      }
-      else{
-        console.log("Categories: " + JSON.parse(value));
-        setAllCategories(JSON.parse(value));
-      }
-    });
-
-    // Store note titles as object
-    value = AsyncStorage.getItem('appNotes').then((value) => {
-        if(value != undefined){
-          JSON.parse(value).forEach((note) => {
-            const currentObject = {
-              title: note[0],
-              type: 0,
-              category: note[1],
-              sortNum: note[2],
-              isPinned: note[3],
-              makeDate: note[4],
-              editDate: note[5]
-            };
-            data.push(currentObject);
-          });
-        }
-    });
-
-    console.log("All Data: " + data);
-    if(allCategories.length >= 3){
+    if(categories.length >= 3){
+      console.log("All Data: " + data);
       setShouldLoadData(false);
+      sortData();
     }
   }
+  else{
+    console.log("data: " + data);
+    return(
+      <SafeAreaView>
+          <Text>{"\n"}Header{"\n"}{data[0]}</Text>
 
-  return(
-    <View>
-        <Text>{"\n"}Header{"\n"}</Text>
-        <Text>{allCategories[0][0]}</Text>
-
-    </View>
-);
+  
+      </SafeAreaView>
+  );
+  }
 }
 
   const styles = StyleSheet.create({

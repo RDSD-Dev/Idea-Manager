@@ -27,6 +27,8 @@ AsyncStorage:
         [{Picture}]
 
 Object:
+    Categories:
+        {title, color, indexes[]}
     List:
         {title, id, type, category, sortNum, isPinned, makeDate, completeDate, remakeNum}
     
