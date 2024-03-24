@@ -12,7 +12,7 @@ export default function HomePage(props) {
 
   const [categories, setCategories] = useState([]); // Stores HomePageCategories from AsyncStorage
   const [shouldLoadData, setShouldLoadData] = useState(true);
-  let data = [];
+  let items = [];
 
   useEffect(() => {
     console.log("Use Effect");
@@ -23,13 +23,25 @@ export default function HomePage(props) {
     // Iterates though each category
     for(var i = 0; i<categories.length; i++){
       // Gets all the data that belongs in the current category
-      const tempArr = (data.filter((item) => item.category == categories[i]));
+      const tempArr = (items.filter((item) => item.category == categories[i]));
+      if(categories[i] == "Pinned"){
+        tempArr = (items.filter((item) => item.isPinned == true));
+      }
+      else if(categories[i] == "List Items"){
+        tempArr = (items.filter((item) => item.type > 0));
+      }
+      else if(categories[i] == "Notes"){
+        tempArr = (items.filter((item) => item.category == 0));
+      }
+      else{
+        tempArr = (items.filter((item) => item.category == categories[i]));
+      }
       let sortedArr =[];
       // Iterate though each object for the current category
       for(var t = 0; t<tempArr.length; t++){
-        sortedArr[t] = tempArr.filter((item) => item.sortNum == t);
+        sortedArr[t] = tempArr.indexOf(tempArr.filter((item) => item.sortNum == t));
       }
-      sortingArr[i].indexes = sortedArr;
+      sortingArr[i].items = sortedArr;
     }
     setCategories(sortingArr);
   }
@@ -44,17 +56,17 @@ export default function HomePage(props) {
           {
             title: "Pinned",
             color: "Pinned",
-            indexes: [{}],
+            data: [{}],
           },
           {
             title: "List Items",
             color: "List Items",
-            indexes: [{}],
+            data: [{}],
           },
           {
             title: "Notes",
             color: "Notes",
-            indexes: [{}],
+            data: [{}],
           },
         ];
         console.log("Temp: " + temArr.length);
@@ -107,24 +119,32 @@ export default function HomePage(props) {
               completeDate: currentItem.completeDate,
               remakeNum: currentItem.remakeNum
             }
-            data.push(currentObject);
+            items.push(currentObject);
           },
           (txObj, error) => console.log(error)
       );
     });
 
     if(categories.length >= 3){
-      console.log("All Data: " + data);
+      console.log("All Data: " + items);
       setShouldLoadData(false);
       sortData();
     }
   }
   else{
-    console.log("data: " + data);
     return(
       <SafeAreaView>
-          <Text>{"\n"}Header{"\n"}{data[0]}</Text>
-
+        <Text>{"\n"}Header{"\n"}</Text>
+        <SectionList 
+          sections={categories}
+          keyExtractor={(item, index) => item + index}
+          renderItem={({item}) => (
+            <Text>{items[item]}</Text>
+          )}
+          renderSectionHeader={({section: {title}}) => (
+            <Text>{title}</Text>
+          )}
+        />
   
       </SafeAreaView>
   );
