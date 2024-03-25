@@ -8,6 +8,11 @@ export default function App() {
   const [expandedSections, setExpandedSections] = useState(new Set());
   const [shouldLoadData, setShouldLoadData] = useState(true);
   const [categories, setCategories] = useState([]);
+  const [addCategoryVisibility, setAddCategoryVisibility] = useState(false); // addCategory, 
+  const [deleteConfirmationVisibility, setDeleteConfirmationVisibility] = useState(false); // addCategory, 
+  const [errorMessage, setErrorMessage] = useState(undefined);
+  const [addInput, setAddInput] = useState(undefined);
+  const [userText, setUserText] = useState(undefined);
   const db = SQLite.openDatabase('ideaManager.db');
   const table = "listItems";
   let items = [];
@@ -44,13 +49,71 @@ export default function App() {
     setCategories(sortingArr);
   }
 
+  const addCategory = () => {
+    let isValid = true;
+    // Check if Title is valid
+    const result = categories.filter((item) => item.title == addInput);
+    if(addInput.length <= 0){
+      console.log("Category names cannot be empty.");
+      setErrorMessage("Category names cannot be empty.");
+      isValid = false;
+    }
+    else if(result.length > 0){
+      console.log("That category title is taken.");
+      setErrorMessage("That category title is taken.");
+      isValid = false;
+    }
+    else{
+      console.log("Made category: " + addInput);
+    }
+
+    if(isValid){
+      const newCategory = {
+        title: addInput,
+        color: userText,
+        data: [{}]
+      }
+      let editCatagories = categories;
+      const noteCategory = editCatagories[editCatagories.length-1];
+      editCatagories.pop();
+      const ListCategory = editCatagories[editCatagories.length-1];
+      editCatagories.pop();
+      editCatagories.push(newCategory);
+      editCatagories.push(noteCategory);
+      editCatagories.push(ListCategory);
+
+      setCategories(editCatagories);
+      AsyncStorage.setItem('appCategories',JSON.stringify(editCatagories));
+      setAddCategoryVisibility(!addCategoryVisibility)
+    }
+  }
+
+  const deleteCategory = (category) => {
+    changeUserInput();
+    console.log("Delete Category: " + category);
+    let editCatagories = categories;
+    const obj = editCatagories.filter((item) => item.title == category);
+    const index = categories.indexOf(obj[0]);
+    editCatagories.splice(index, 1);
+
+    AsyncStorage.setItem('appCategories', JSON.stringify(editCatagories));
+    setDeleteConfirmationVisibility(false);
+  }
+  
+
   const addItem = (category, type) => {
     console.log(category);
   }
 
+  const changeUserInput = (textArr = ["", ""]) => {
+    setErrorMessage("");
+    setAddInput(textArr[0]);
+    setUserText(textArr[1]);
+  }
+
   if(shouldLoadData){
     console.log("Loading Data");
-    //Store Categories
+    //Store Categories Pinned should always be first List Items and Notes should always be last
     let value = AsyncStorage.getItem('appCategories').then((value) => {
       if(!value){
         console.log('Making New Lists Key');
@@ -79,7 +142,7 @@ export default function App() {
         console.log("Categories: ");
         setCategories(JSON.parse(value));
       }
-    });
+    }); 
 
     // Store note titles as object
     value = AsyncStorage.getItem('appNotes').then((value) => {
@@ -136,20 +199,99 @@ export default function App() {
   else{
     return(
       <SafeAreaView>
+        {/* Add Category*/}
+      <Modal 
+        animationType='slide'
+        transparent={true}
+        visible={addCategoryVisibility}
+        onRequestClose={() => {
+          Alert.alert('Modal has been closed.');
+          setAddCategoryVisibility(!addCategoryVisibility);
+        }}
+        >
+
+          <View style={styles.centeredView}>
+            <View style={styles.modalView}>
+              <Text style={styles.modalText}>Add Category</Text>
+              <Text>{errorMessage}</Text>
+              <Text>Title: </Text>
+              <TextInput value={addInput} onChangeText={setAddInput}/>
+              <Text>Color: </Text>
+              <TextInput value={userText} onChangeText={setUserText}/>
+
+              <Pressable
+                  style={[styles.button, styles.buttonClose]}
+                  onPress={() => addCategory()}>
+                  <Text style={styles.textStyle}>Add Category</Text>
+                </Pressable>
+
+                <Pressable
+                  style={[styles.button, styles.buttonClose]}
+                  onPress={() => setAddCategoryVisibility(!addCategoryVisibility)}>
+                  <Text style={styles.textStyle}>Cancel</Text>
+                </Pressable>
+            </View>
+          </View>
+      </Modal>
+        {/* Delete Confirmation*/}
+      <Modal 
+        animationType='slide'
+        transparent={true}
+        visible={deleteConfirmationVisibility}
+        onRequestClose={() => {
+          Alert.alert('Modal has been closed.');
+          setDeleteConfirmationVisibility(!deleteConfirmationVisibility);
+        }}
+        >
+
+          <View style={styles.centeredView}>
+            <View style={styles.modalView}>
+              <Text style={styles.modalText}>Delete {addInput}: {userText}?</Text>
+              <Text>{errorMessage}</Text>
+
+
+              <Pressable
+                  style={[styles.button, styles.buttonClose]}
+                  onPress={() => deleteCategory(userText)}>
+                  <Text style={styles.textStyle}>Delete</Text>
+                </Pressable>
+
+                <Pressable
+                  style={[styles.button, styles.buttonClose]}
+                  onPress={() => setDeleteConfirmationVisibility(!deleteConfirmationVisibility)}>
+                  <Text style={styles.textStyle}>Cancel</Text>
+                </Pressable>
+            </View>
+          </View>
+      </Modal>
+
         <Text>{"\n"}Header{"\n"}</Text>
-        <Button title='+' onPress={() => console.log("Add Category")}/>
+        <Button title='+' onPress={() => {changeUserInput();  setAddCategoryVisibility(true)}}/>
+
         <SectionList 
           sections={categories}
           keyExtractor={(item, index) => item + index}
           renderItem={({item}) => (
             <Text>{items[item]}</Text>
           )}
-          renderSectionHeader={({section: {title}}) => (
-            <View>
-            <Text>{title}</Text>
-            <Button title='+' onPress={() => addItem(title)}/>
-            </View>
-          )}
+          renderSectionHeader={({section: {title}}) => {
+            if(title == "Pinned" || title == "List Items" || title == "Notes"){
+              return(
+                <View>
+                <Text>{title}</Text>
+                <Button title='+' onPress={() => addItem(title)}/>
+                </View>
+                );
+            }
+            return(
+              <View>
+              <Text>{title}</Text>
+              <Button title='+' onPress={() => addItem(title)}/>
+              <Button title='Delete' onPress={() =>{ changeUserInput(["Category", title]); setDeleteConfirmationVisibility(true)}}/>
+              </View>
+              );
+
+          }}
         />
   
       </SafeAreaView>
@@ -164,4 +306,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+
+  button: {
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+  },
+  buttonOpen: {
+    backgroundColor: '#F194FF',
+  },
+  buttonClose: {
+    backgroundColor: '#2196F3',
+  },
+
 });
