@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { StyleSheet, Text, View, SafeAreaView, SectionList, Pressable, TextInput, Button, Modal } from 'react-native';
 import { useState, useEffect } from 'react';
+import { RadioButton, Checkbox } from 'react-native-paper';
+import DropDownPicker from 'react-native-dropdown-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SQLite from 'expo-sqlite';
 
@@ -9,12 +11,18 @@ export default function App() {
   const [shouldLoadData, setShouldLoadData] = useState(true);
   const [categories, setCategories] = useState([]);
   const [addCategoryVisibility, setAddCategoryVisibility] = useState(false); // addCategory, 
+  const [addItemVisibility, setAddItemVisibility] = useState(false); // addItem, 
   const [deleteConfirmationVisibility, setDeleteConfirmationVisibility] = useState(false); // addCategory, 
   const [errorMessage, setErrorMessage] = useState(undefined);
   const [addInput, setAddInput] = useState(undefined);
   const [userText, setUserText] = useState(undefined);
+  const [userBoolean, setUserBoolean] = useState(false);
+  const [checked, setChecked] = React.useState('first');
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [categoryValue, setCategoryValue] = useState(null);
+  const [categoryItems, setCategoryItems] = useState([]);
   const db = SQLite.openDatabase('ideaManager.db');
-  const table = "listItems";
+  const table = "ListItems";
   let items = [];
 
   useEffect(() => {
@@ -27,17 +35,17 @@ export default function App() {
     for(var i = 0; i<categories.length; i++){
       // Gets all the data that belongs in the current category
       let tempArr =  [];
-      if(categories[i] == "Pinned"){
+      if(categories[i].title == "Pinned"){
         tempArr = (items.filter((item) => item.isPinned == true));
       }
-      else if(categories[i] == "List Items"){
+      else if(categories[i].title == "List Items"){
         tempArr = (items.filter((item) => item.type > 0));
       }
-      else if(categories[i] == "Notes"){
-        tempArr = (items.filter((item) => item.category == 0));
+      else if(categories[i].title == "Notes"){
+        tempArr = (items.filter((item) => item.type == 0));
       }
       else{
-        tempArr = (items.filter((item) => item.category == categories[i]));
+        tempArr = (items.filter((item) => item.category == categories[i].title));
       }
       let sortedArr =[];
       // Iterate though each object for the current category
@@ -88,6 +96,10 @@ export default function App() {
     }
   }
 
+  const updateCategory = () => {
+
+  }
+
   const deleteCategory = (category) => {
     changeUserInput();
     console.log("Delete Category: " + category);
@@ -101,14 +113,176 @@ export default function App() {
   }
   
 
-  const addItem = (category, type) => {
+  const addListItem = () => { // Title: addInput, Category: categoryValue, isPinned: userBoolean
+    let isValid = true;
+    const addTitle = addInput;
+    const addCategory = categoryValue;
+    const addIsPinned = userBoolean;
+    const addType = 1;
+    const addRemakeNum = 0;
+    const today = new Date();
+    const addToday = (today.getFullYear() + "-" + today.getMonth() + "-" + today.getDate());
+    let addSortingNum = 0;
+    if(addCategory != "" || addCategory != null){
+      for(var i = 1; i<categories.length -2; i++){
+        if(categories[i].title == addCategory){
+          const tempArr = (items.filter((item) => item.category == categories[i].title));
+          addSortingNum = tempArr.length;
+        }
+      }
+    }
+
+    if(addTitle == ""){
+      setErrorMessage("Item title cannot be empty.");
+      isValid = false;
+    }
+
+    if(isValid){
+      db.transaction(tx => {
+        console.log("Add Item: " + addTitle + " Category: " + addCategory + " isPinned: " + addIsPinned);
+        tx.executeSql('INSERT INTO ' + table + ' (title, category, sortNum, isPinned, makeDate, type, remakeNum) VALUES (?, ?, ?, ?, ?, ?, ?)',  
+        [addTitle, addCategory, addSortingNum, addIsPinned, addToday, addType, addRemakeNum],
+            (txObj, resultSet) => {
+              console.log("Added to database");
+              changeUserInput();
+              setAddCategoryVisibility(!addItemVisibility);
+            },
+            (txObj, error) => {console.log("Error: ",error)}
+            
+        );
+        console.log("End");
+      });
+    }
+  }
+
+  const addNote= () => {
     console.log(category);
   }
 
-  const changeUserInput = (textArr = ["", ""]) => {
+  const changeUserInput = (textArr = ["", "", 'first', false]) => {
     setErrorMessage("");
     setAddInput(textArr[0]);
     setUserText(textArr[1]);
+    setChecked(textArr[2]);
+    setUserBoolean(textArr[3]);
+    setCategoryOpen(false);
+    setCategoryValue(null);
+
+    let categoryItemSetting = [];
+    categories.forEach(function (element, index ){
+      console.log(element.title + ":");
+      if(index == 0 || index == categories.length-2 || index == categories.length-1){
+        // Doesn't need to be seen
+      }
+      else{
+        console.log(element.title);
+        categoryItemSetting.push({label: element.title, value: element.title});
+      }
+      });
+      setCategoryItems(categoryItemSetting);
+    
+  }
+
+  const addItemModal = () => {
+    if(checked == 'first'){
+      return(
+        <View style={styles.modalView}>
+          <Text style={styles.modalText}>Add Item</Text>
+          <Text>{errorMessage}</Text>
+          <Text>List Item</Text>
+          <RadioButton 
+            value='first'
+            status={checked === 'first' ? 'checked' : 'unchecked'}
+            onPress={() => setChecked('first')}
+          />
+          <Text>Note Item</Text>
+          <RadioButton 
+            value='second'
+            status={checked === 'second' ? 'checked' : 'unchecked'}
+            onPress={() => setChecked('second')}
+          />
+
+          <Text>Title: </Text>
+          <TextInput value={addInput} onChangeText={setAddInput}/>
+          <Text>Pinned?: </Text>
+          <Checkbox 
+            status={userBoolean ? 'checked' : 'unchecked'}
+            onPress={() => {setUserBoolean(!userBoolean); console.log(userBoolean)}}
+          />
+          <Text>category: </Text>
+          <DropDownPicker
+            open={categoryOpen}
+            value={categoryValue}
+            items={categoryItems}
+            setOpen={setCategoryOpen}
+            setValue={setCategoryValue}
+            setItems={setCategoryItems}
+          />
+
+          <Pressable
+              style={[styles.button, styles.buttonClose]}
+              onPress={() => addListItem()}>
+              <Text style={styles.textStyle}>Add Item</Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.button, styles.buttonClose]}
+              onPress={() => setAddItemVisibility(!addItemVisibility)}>
+              <Text style={styles.textStyle}>Cancel</Text>
+            </Pressable>
+          </View>
+      );
+    }
+    else{
+      return(
+        <View style={styles.modalView}>
+          <Text style={styles.modalText}>Add Note</Text>
+          <Text>{errorMessage}</Text>
+          <Text>List Item</Text>
+          <RadioButton 
+            value='first'
+            status={checked === 'first' ? 'checked' : 'unchecked'}
+            onPress={() => setChecked('first')}
+          />
+          <Text>Note Item</Text>
+          <RadioButton 
+            value='second'
+            status={checked === 'second' ? 'checked' : 'unchecked'}
+            onPress={() => setChecked('second')}
+          />
+
+          <Text>Title: </Text>
+          <TextInput value={addInput} onChangeText={setAddInput}/>
+          <Text>Pinned?: </Text>
+          <Checkbox 
+            status={userBoolean ? 'checked' : 'unchecked'}
+            onPress={() => {setUserBoolean(!userBoolean); console.log(userBoolean)}}
+          />
+          <Text>category: </Text>
+          <DropDownPicker
+            open={categoryOpen}
+            value={categoryValue}
+            items={categoryItems}
+            setOpen={setCategoryOpen}
+            setValue={setCategoryValue}
+            setItems={setCategoryItems}
+          />
+
+
+          <Pressable
+              style={[styles.button, styles.buttonClose]}
+              onPress={() => addNote()}>
+              <Text style={styles.textStyle}>Add Note</Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.button, styles.buttonClose]}
+              onPress={() => setAddItemVisibility(!addItemVisibility)}>
+              <Text style={styles.textStyle}>Cancel</Text>
+            </Pressable>
+          </View>
+      );
+    }
   }
 
   if(shouldLoadData){
@@ -162,16 +336,23 @@ export default function App() {
       }
     });
 
+
     // Make Table if it doesn't exist
     db.transaction(tx => {
       // Dates are Y-M-D
-      tx.executeSql('CREATE TABLE IF NOT EXISTS '+table+' (id INTEGER PRIMARY KEY AUTOINCREMENT, name VarChar(64), makeDate Date, completeDate Date, type Int, remakeNum int, category VarChar(32), sortNum Int, isPinned Boolean)', []);
+      tx.executeSql('CREATE TABLE IF NOT EXISTS '+table+' (id INTEGER PRIMARY KEY AUTOINCREMENT, title VarChar(64), makeDate Date, completeDate Date, type Int, remakeNum int, category VarChar(32), sortNum Int, isPinned Boolean)', [],
+      (txObj, resultSet) => {
+        console.log("Create " + resultSet)
+      });
     });
+
+
 
     // Store list items as object
     db.transaction(tx => {
       tx.executeSql('SELECT * FROM ' + table,  [],
           (txObj, resultSet) => {
+            console.log("Get: ", resultSet);
             const currentItem = resultSet.rows._array;
             const currentObject = {
               title: currentItem.title,
@@ -184,6 +365,7 @@ export default function App() {
               completeDate: currentItem.completeDate,
               remakeNum: currentItem.remakeNum
             }
+            console.log("Data: " + currentObject);
             items.push(currentObject);
           },
           (txObj, error) => console.log(error)
@@ -200,16 +382,15 @@ export default function App() {
     return(
       <SafeAreaView>
         {/* Add Category*/}
-      <Modal 
-        animationType='slide'
-        transparent={true}
-        visible={addCategoryVisibility}
-        onRequestClose={() => {
-          Alert.alert('Modal has been closed.');
-          setAddCategoryVisibility(!addCategoryVisibility);
-        }}
+        <Modal 
+          animationType='slide'
+          transparent={true}
+          visible={addCategoryVisibility}
+          onRequestClose={() => {
+            Alert.alert('Modal has been closed.');
+            setAddCategoryVisibility(!addCategoryVisibility);
+          }}
         >
-
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
               <Text style={styles.modalText}>Add Category</Text>
@@ -230,25 +411,41 @@ export default function App() {
                   onPress={() => setAddCategoryVisibility(!addCategoryVisibility)}>
                   <Text style={styles.textStyle}>Cancel</Text>
                 </Pressable>
+              </View>
             </View>
-          </View>
-      </Modal>
-        {/* Delete Confirmation*/}
-      <Modal 
-        animationType='slide'
-        transparent={true}
-        visible={deleteConfirmationVisibility}
-        onRequestClose={() => {
-          Alert.alert('Modal has been closed.');
-          setDeleteConfirmationVisibility(!deleteConfirmationVisibility);
-        }}
-        >
+        </Modal>
 
+        {/* Add Item*/}
+        <Modal 
+          animationType='slide'
+          transparent={true}
+          visible={addItemVisibility}
+          onRequestClose={() => {
+            Alert.alert('Modal has been closed.');
+            setAddCategoryVisibility(!addItemVisibility);
+          }}
+        >
+          <View style={styles.centeredView}>
+
+              {addItemModal()}
+
+            </View>
+        </Modal>
+
+        {/* Delete Confirmation*/}
+        <Modal 
+          animationType='slide'
+          transparent={true}
+          visible={deleteConfirmationVisibility}
+          onRequestClose={() => {
+            Alert.alert('Modal has been closed.');
+            setDeleteConfirmationVisibility(!deleteConfirmationVisibility);
+          }}
+        >
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
               <Text style={styles.modalText}>Delete {addInput}: {userText}?</Text>
               <Text>{errorMessage}</Text>
-
 
               <Pressable
                   style={[styles.button, styles.buttonClose]}
@@ -261,9 +458,9 @@ export default function App() {
                   onPress={() => setDeleteConfirmationVisibility(!deleteConfirmationVisibility)}>
                   <Text style={styles.textStyle}>Cancel</Text>
                 </Pressable>
+              </View>
             </View>
-          </View>
-      </Modal>
+        </Modal>
 
         <Text>{"\n"}Header{"\n"}</Text>
         <Button title='+' onPress={() => {changeUserInput();  setAddCategoryVisibility(true)}}/>
@@ -279,21 +476,20 @@ export default function App() {
               return(
                 <View>
                 <Text>{title}</Text>
-                <Button title='+' onPress={() => addItem(title)}/>
+                <Button title='+' onPress={() => {changeUserInput(); setAddItemVisibility(true)}}/>
                 </View>
                 );
             }
             return(
               <View>
               <Text>{title}</Text>
-              <Button title='+' onPress={() => addItem(title)}/>
+              <Button title='+' onPress={() => {changeUserInput(); setCategoryValue(title); setAddItemVisibility(true)}}/>
               <Button title='Delete' onPress={() =>{ changeUserInput(["Category", title]); setDeleteConfirmationVisibility(true)}}/>
               </View>
               );
 
           }}
         />
-  
       </SafeAreaView>
   );
   }
