@@ -5,6 +5,7 @@ import { RadioButton, Checkbox } from 'react-native-paper';
 import DropDownPicker from 'react-native-dropdown-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SQLite from 'expo-sqlite';
+const db = SQLite.openDatabase('IdeaManager.db');
 
 export default function App() {
   const [expandedSections, setExpandedSections] = useState(new Set());
@@ -21,15 +22,17 @@ export default function App() {
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [categoryValue, setCategoryValue] = useState(null);
   const [categoryItems, setCategoryItems] = useState([]);
-  const db = SQLite.openDatabase('ideaManager.db');
-  const table = "ListItems";
+  const table = "listItems";
   let items = [];
 
   useEffect(() => {
     console.log("Use Effect");
+
+
   }, []);
 
   const sortData = () =>{
+    console.log("Raw Data: ", items);
     let sortingArr = categories;
     // Iterates though each category
     for(var i = 0; i<categories.length; i++){
@@ -53,6 +56,8 @@ export default function App() {
         sortedArr[t] = tempArr.indexOf(tempArr.filter((item) => item.sortNum == t));
       }
       sortingArr[i].items = sortedArr;
+      console.log("Processed: ",categories[i].data);
+
     }
     setCategories(sortingArr);
   }
@@ -138,19 +143,31 @@ export default function App() {
     }
 
     if(isValid){
+      console.log("ADD");
+      // 'INSERT INTO ' + table + ' (title, category, sortNum, isPinned, makeDate, type, remakeNum) values (?, ?, ?, ?, ?, ?, ?)'
       db.transaction(tx => {
-        console.log("Add Item: " + addTitle + " Category: " + addCategory + " isPinned: " + addIsPinned);
-        tx.executeSql('INSERT INTO ' + table + ' (title, category, sortNum, isPinned, makeDate, type, remakeNum) VALUES (?, ?, ?, ?, ?, ?, ?)',  
+        tx.executeSql('INSERT INTO ' + table + ' (title, category, sortNum, isPinned, makeDate, type, remakeNum) values (?, ?, ?, ?, ?, ?, ?) ',  
         [addTitle, addCategory, addSortingNum, addIsPinned, addToday, addType, addRemakeNum],
-            (txObj, resultSet) => {
-              console.log("Added to database");
-              changeUserInput();
-              setAddCategoryVisibility(!addItemVisibility);
-            },
-            (txObj, error) => {console.log("Error: ",error)}
-            
-        );
-        console.log("End");
+        (txObj, resultSet) => {
+          console.log("Added: ", resultSet.insertId);
+          const currentObject = {
+            title: addTitle,
+            id: resultSet.insertId,
+            type: addType,
+            category: addCategory,
+            sortNum: addSortingNum,
+            isPinned: addIsPinned,
+            makeDate: addToday,
+            completeDate: null,
+            remakeNum: addRemakeNum
+          }
+          items.push(currentObject);
+          sortData();
+          changeUserInput();
+          setAddItemVisibility(false);
+        },
+        (txObj, error) => console.log(error)
+    );
       });
     }
   }
@@ -313,7 +330,6 @@ export default function App() {
         AsyncStorage.setItem('appCategories', JSON.stringify(temArr));
       }
       else{
-        console.log("Categories: ");
         setCategories(JSON.parse(value));
       }
     }); 
@@ -336,46 +352,42 @@ export default function App() {
       }
     });
 
+    // Make Table if it doesn't exist IF NOT EXISTS
 
-    // Make Table if it doesn't exist
+
     db.transaction(tx => {
-      // Dates are Y-M-D
-      tx.executeSql('CREATE TABLE IF NOT EXISTS '+table+' (id INTEGER PRIMARY KEY AUTOINCREMENT, title VarChar(64), makeDate Date, completeDate Date, type Int, remakeNum int, category VarChar(32), sortNum Int, isPinned Boolean)', [],
+      tx.executeSql('CREATE TABLE IF NOT EXISTS '+table+' (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, makeDate DATE, dueDate DATETIME, completeDate DATE, type INTEGER, remakeNum INTEGER, category TEXT, sortNum INTEGER, isPinned BOOLEAN)', [],
       (txObj, resultSet) => {
-        console.log("Create " + resultSet)
+        console.log("Make: ", resultSet);r
       });
     });
 
-
-
-    // Store list items as object
     db.transaction(tx => {
       tx.executeSql('SELECT * FROM ' + table,  [],
-          (txObj, resultSet) => {
-            console.log("Get: ", resultSet);
-            const currentItem = resultSet.rows._array;
-            const currentObject = {
-              title: currentItem.title,
-              id: currentItem.id,
-              type: currentItem.type,
-              category: currentItem.category,
-              sortNum: currentItem.sortNum,
-              isPinned: currentItem.isPinned,
-              makeDate: currentItem.makeDate,
-              completeDate: currentItem.completeDate,
-              remakeNum: currentItem.remakeNum
-            }
-            console.log("Data: " + currentObject);
-            items.push(currentObject);
-          },
-          (txObj, error) => console.log(error)
-      );
-    });
-
+      (txObj, resultSet) => {
+        console.log("Get: ", resultSet.rows._array[0].title);
+        const currentItem = resultSet.rows._array[0];
+        const currentObject = {
+          title: currentItem.title,
+          id: currentItem.id,
+          type: currentItem.type,
+          category: currentItem.category,
+          sortNum: currentItem.sortNum,
+          isPinned: currentItem.isPinned,
+          makeDate: currentItem.makeDate,
+          completeDate: currentItem.completeDate,
+          remakeNum: currentItem.remakeNum
+        }
+        console.log("Data: Gotten" );
+        items.push(currentObject);
+        sortData();
+      },
+      (txObj, error) => console.log(error)
+  );
+    })
+    
     if(categories.length >= 3){
-      console.log("All Data: " + items);
       setShouldLoadData(false);
-      sortData();
     }
   }
   else{

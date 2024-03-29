@@ -3,6 +3,7 @@ SQL:
         id: AUTOINCREMENT
         title: VarChar(64)
         makeDate: Date
+        dueDate: Datetime
         completeDate: Date
         Type: Int:
             1: Basic
