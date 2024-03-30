@@ -17,9 +17,9 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState(undefined);
   const [userTitle, setUserTitle] = useState(undefined);
   const [userText, setUserText] = useState(undefined);
-  const [userInt, setUserInt] = useState(undefined);
+  const [userInt, setUserInt] = useState(1);
   const [userBoolean, setUserBoolean] = useState(false);
-  const [checked, setChecked] = React.useState('first');
+  const [checked, setChecked] = useState('first');
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [categoryValue, setCategoryValue] = useState(null);
   const [categoryItems, setCategoryItems] = useState([]);
@@ -92,15 +92,29 @@ export default function App() {
   
   const addItem = () => { // Title: userTitle, Category: categoryValue, isPinned: userBoolean
     let isValid = true;
-    let addItem = {
-      title: userTitle,
-      category: categoryValue,
-      sortingNum: 0,
-      isPinned: userBoolean,
-      type: userInt,
-      remakeNum: 0,
-      makeDate: null
-    };
+    let addItem
+    if(userInt == 0){ // Note
+      addItem = {
+        title: userTitle,
+        category: categoryValue,
+        sortingNum: 0,
+        isPinned: userBoolean,
+        type: userInt,
+        makeDate: null
+      };
+    }
+    else{ // List Item
+      addItem = {
+        title: userTitle,
+        category: categoryValue,
+        sortingNum: 0,
+        isPinned: userBoolean,
+        type: userInt,
+        remakeNum: 0,
+        makeDate: null
+      };
+    }
+
 
     const today = new Date();
     addItem.makeDate = (today.getFullYear() + "-" + today.getMonth() + "-" + today.getDate());
@@ -117,7 +131,7 @@ export default function App() {
       setErrorMessage("Item title cannot be empty.");
       isValid = false;
     }
-    else if(categoryData.filter(e => e.title === addItem.title) .length > 0){
+    else if(categoryData.filter(e => e.title === addItem.title).length > 0){
       setErrorMessage("Item title has been taken.");
       isValid = false;
     }
@@ -145,16 +159,21 @@ export default function App() {
         tempCategories[0].data.push(addItem);
       }
       if(addItem.type == 0){ // Note
-
+        tempCategories[tempCategories.length-1].data.push(addItem);
       }
       else{ // List Item
         tempCategories[tempCategories.length-2].data.push(addItem);
       }
-      
-      AsyncStorage.setItem('appCategoriesData', JSON.stringify(tempData));
+      console.log("Adding: ", tempCategories[1].data);
+      setCategories(tempCategories);
+      AsyncStorage.setItem('appCategoryData', JSON.stringify(tempData));
       setAddItemVisibility(false);
       eraseUserInputs();
     }
+  }
+
+  const deleteItem = () => {
+
   }
 
   const eraseUserInputs = () => {
@@ -163,6 +182,7 @@ export default function App() {
     setUserTitle(null);
     setUserText(null);
     setChecked('first');
+    setUserInt(1);
     setUserBoolean(false);
     setCategoryOpen(false);
     setCategoryValue(null);    
@@ -178,13 +198,13 @@ export default function App() {
           <RadioButton 
             value='first'
             status={checked === 'first' ? 'checked' : 'unchecked'}
-            onPress={() => setChecked('first')}
+            onPress={() => {setUserInt(1); setChecked('first')}}
           />
           <Text>Note Item</Text>
           <RadioButton 
             value='second'
             status={checked === 'second' ? 'checked' : 'unchecked'}
-            onPress={() => setChecked('second')}
+            onPress={() => {setUserInt(0); setChecked('second')}}
           />
 
           <Text>Title: </Text>
@@ -206,7 +226,7 @@ export default function App() {
 
           <Pressable
               style={[styles.button, styles.buttonClose]}
-              onPress={() => addItem()}>
+              onPress={() => {addItem()}}>
               <Text style={styles.textStyle}>Add Item</Text>
             </Pressable>
 
@@ -269,8 +289,11 @@ export default function App() {
     }
   }
 
+  const deleteModal = () => {
+    
+  }
+
   const sortData = (dataArr) => {
-    console.log("Sorting");
     let categoryNames = [];
     let categoryDropDown = categoryItems;
     for(let i=0; i<categories.length; i++){
@@ -295,7 +318,6 @@ export default function App() {
       }
       // Insert data object into temp categories under its category
       const index = categoryNames.indexOf(dataArr[i].category);
-      console.log("Index: ", index);
       if(index > 0){
         tempCategories[index].data.push(dataArr[i]);
       }
@@ -304,7 +326,6 @@ export default function App() {
   }
 
   if(shouldLoadData){
-    console.log("Loading Data");
     //Store Categories Pinned should always be first List Items and Notes should always be last
     let value = AsyncStorage.getItem('appCategories').then((value) => {
       if(!value){
@@ -473,11 +494,19 @@ export default function App() {
                 </View>
               );
             }
-            if(title == "List Items" || title == "Notes"){
+            if(title == "List Items"){
               return(
                 <View>
                   <Text>{title} : {color}</Text>
                   <Button title='+' onPress={() => {setAddItemVisibility(true)}}/>
+                </View>
+                );
+            }
+            else if(title == "Notes"){
+              return(
+                <View>
+                  <Text>{title} : {color}</Text>
+                  <Button title='+' onPress={() => {setChecked('second'); setUserInt(0); setAddItemVisibility(true)}}/>
                 </View>
                 );
             }
