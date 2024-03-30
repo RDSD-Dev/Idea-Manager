@@ -17,6 +17,7 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState(undefined);
   const [userTitle, setUserTitle] = useState(undefined);
   const [userText, setUserText] = useState(undefined);
+  const [userInt, setUserInt] = useState(undefined);
   const [userBoolean, setUserBoolean] = useState(false);
   const [checked, setChecked] = React.useState('first');
   const [categoryOpen, setCategoryOpen] = useState(false);
@@ -24,9 +25,7 @@ export default function App() {
   const [categoryItems, setCategoryItems] = useState([]);
 
   useEffect(() => {
-    console.log("Use Effect");
-
-
+    //console.log("Use Effect");
   }, []);
 
   const addCategory = () => {
@@ -68,7 +67,7 @@ export default function App() {
   }
 
   const deleteCategory = (category) => {
-    changeUserInput();
+    eraseUserInputs();
     console.log("Delete Category: " + category);
     let editCatagories = categories;
     const obj = editCatagories.filter((item) => item.title == category);
@@ -88,17 +87,17 @@ export default function App() {
 
     AsyncStorage.setItem('appCategories', JSON.stringify(editCatagories));
     setDeleteConfirmationVisibility(false);
-    changeUserInput();
+    eraseUserInputs();
   }
   
-  const addListItem = () => { // Title: userTitle, Category: categoryValue, isPinned: userBoolean
+  const addItem = () => { // Title: userTitle, Category: categoryValue, isPinned: userBoolean
     let isValid = true;
     let addItem = {
       title: userTitle,
       category: categoryValue,
       sortingNum: 0,
       isPinned: userBoolean,
-      type: 1,
+      type: userInt,
       remakeNum: 0,
       makeDate: null
     };
@@ -154,21 +153,17 @@ export default function App() {
       
       AsyncStorage.setItem('appCategoriesData', JSON.stringify(tempData));
       setAddItemVisibility(false);
-      changeUserInput();
+      eraseUserInputs();
     }
   }
 
-  const addNote= () => {
-    console.log(category);
-  }
-
-  const changeUserInput = (textArr = ["", "", 'first', false]) => {
+  const eraseUserInputs = () => {
     console.log("Clear");
-    setErrorMessage("");
-    setUserTitle(textArr[0]);
-    setUserText(textArr[1]);
-    setChecked(textArr[2]);
-    setUserBoolean(textArr[3]);
+    setErrorMessage(null);
+    setUserTitle(null);
+    setUserText(null);
+    setChecked('first');
+    setUserBoolean(false);
     setCategoryOpen(false);
     setCategoryValue(null);    
   }
@@ -177,7 +172,7 @@ export default function App() {
     if(checked == 'first'){
       return(
         <View style={styles.modalView}>
-          <Text style={styles.modalText}>Add Item</Text>
+          <Text style={styles.modalText}>Add List Item</Text>
           <Text>{errorMessage}</Text>
           <Text>List Item</Text>
           <RadioButton 
@@ -211,13 +206,13 @@ export default function App() {
 
           <Pressable
               style={[styles.button, styles.buttonClose]}
-              onPress={() => addListItem()}>
+              onPress={() => addItem()}>
               <Text style={styles.textStyle}>Add Item</Text>
             </Pressable>
 
             <Pressable
               style={[styles.button, styles.buttonClose]}
-              onPress={() => {setAddItemVisibility(!addItemVisibility); changeUserInput();}}>
+              onPress={() => {setAddItemVisibility(!addItemVisibility); eraseUserInputs();}}>
               <Text style={styles.textStyle}>Cancel</Text>
             </Pressable>
           </View>
@@ -258,16 +253,15 @@ export default function App() {
             setItems={setCategoryItems}
           />
 
-
           <Pressable
               style={[styles.button, styles.buttonClose]}
-              onPress={() => addNote()}>
-              <Text style={styles.textStyle}>Add Note</Text>
+              onPress={() => {setUserInt(0) ;addItem()}}>
+              <Text style={styles.textStyle}>Add Item</Text>
             </Pressable>
 
             <Pressable
               style={[styles.button, styles.buttonClose]}
-              onPress={() => setAddItemVisibility(!addItemVisibility)}>
+              onPress={() => {setAddItemVisibility(!addItemVisibility); eraseUserInputs();}}>
               <Text style={styles.textStyle}>Cancel</Text>
             </Pressable>
           </View>
@@ -367,7 +361,7 @@ export default function App() {
           visible={addCategoryVisibility}
           onRequestClose={() => {
             Alert.alert('Modal has been closed.');
-            changeUserInput();
+            eraseUserInputs();
             setAddCategoryVisibility(!addCategoryVisibility);
           }}
         >
@@ -388,7 +382,7 @@ export default function App() {
 
                 <Pressable
                   style={[styles.button, styles.buttonClose]}
-                  onPress={() => {setAddCategoryVisibility(!addCategoryVisibility); changeUserInput();}}>
+                  onPress={() => {setAddCategoryVisibility(!addCategoryVisibility); eraseUserInputs();}}>
                   <Text style={styles.textStyle}>Cancel</Text>
                 </Pressable>
               </View>
@@ -402,7 +396,7 @@ export default function App() {
           visible={addItemVisibility}
           onRequestClose={() => {
             Alert.alert('Modal has been closed.');
-            changeUserInput();
+            eraseUserInputs();
             setAddCategoryVisibility(!addItemVisibility);
           }}
         >
@@ -443,7 +437,7 @@ export default function App() {
             </View>
         </Modal>
 
-        <Text>{"\n"}Header{"\n"}</Text>
+        <Text>{"\n"}Idea Manager{"\n"}</Text>
         <Button title='+' onPress={() => {setAddCategoryVisibility(true)}}/>
 
         <SectionList 
