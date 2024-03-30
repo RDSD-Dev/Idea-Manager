@@ -72,11 +72,23 @@ export default function App() {
     console.log("Delete Category: " + category);
     let editCatagories = categories;
     const obj = editCatagories.filter((item) => item.title == category);
-    const index = categories.indexOf(obj[0]);
+    let index = categories.indexOf(obj[0]);
     editCatagories.splice(index, 1);
+
+    let tempData = categoryData;
+    const editItems = tempData.filter(e => e.category === category);
+    if(editItems.length > 0){
+      for(let i=0; i< editItems.length; i++){
+        index = tempData.indexOf(editItems[i]);
+        tempData[index].category = null;
+      }
+      setCategoryData(tempData);
+      AsyncStorage.setItem('appCategoryData', tempData);
+    }
 
     AsyncStorage.setItem('appCategories', JSON.stringify(editCatagories));
     setDeleteConfirmationVisibility(false);
+    changeUserInput();
   }
   
   const addListItem = () => { // Title: userTitle, Category: categoryValue, isPinned: userBoolean
@@ -106,6 +118,10 @@ export default function App() {
       setErrorMessage("Item title cannot be empty.");
       isValid = false;
     }
+    else if(categoryData.filter(e => e.title === addItem.title) .length > 0){
+      setErrorMessage("Item title has been taken.");
+      isValid = false;
+    }
 
     if(isValid){
       console.log("Add Item");
@@ -115,6 +131,7 @@ export default function App() {
       for(let i=0; i<categories.length; i++){
         categoryNames.push(categories[i].title);
       }
+
       let index = categoryNames.indexOf(addItem.category);
       if(index > 0){
         const previousItem = tempCategories[index].data[tempCategories[index].data.length-1];
@@ -124,15 +141,20 @@ export default function App() {
       }
       else{
         tempData.push(addItem);
-        if(addItem.type == 0){ // Note
-
-        }
-        else{ // List Item
-          tempCategories[tempCategories.length-2].data.push(addItem);
-        }
       }
+      if(addItem.isPinned){
+        tempCategories[0].data.push(addItem);
+      }
+      if(addItem.type == 0){ // Note
+
+      }
+      else{ // List Item
+        tempCategories[tempCategories.length-2].data.push(addItem);
+      }
+      
       AsyncStorage.setItem('appCategoriesData', JSON.stringify(tempData));
       setAddItemVisibility(false);
+      changeUserInput();
     }
   }
 
@@ -141,27 +163,14 @@ export default function App() {
   }
 
   const changeUserInput = (textArr = ["", "", 'first', false]) => {
+    console.log("Clear");
     setErrorMessage("");
     setUserTitle(textArr[0]);
     setUserText(textArr[1]);
     setChecked(textArr[2]);
     setUserBoolean(textArr[3]);
     setCategoryOpen(false);
-    setCategoryValue(null);
-
-    let categoryItemSetting = [];
-    categories.forEach(function (element, index ){
-      console.log(element.title + ":");
-      if(index == 0 || index == categories.length-2 || index == categories.length-1){
-        // Doesn't need to be seen
-      }
-      else{
-        console.log(element.title);
-        categoryItemSetting.push({label: element.title, value: element.title});
-      }
-      });
-      setCategoryItems(categoryItemSetting);
-    
+    setCategoryValue(null);    
   }
 
   const addItemModal = () => {
@@ -208,7 +217,7 @@ export default function App() {
 
             <Pressable
               style={[styles.button, styles.buttonClose]}
-              onPress={() => setAddItemVisibility(!addItemVisibility)}>
+              onPress={() => {setAddItemVisibility(!addItemVisibility); changeUserInput();}}>
               <Text style={styles.textStyle}>Cancel</Text>
             </Pressable>
           </View>
@@ -269,9 +278,15 @@ export default function App() {
   const sortData = (dataArr) => {
     console.log("Sorting");
     let categoryNames = [];
+    let categoryDropDown = categoryItems;
     for(let i=0; i<categories.length; i++){
-      categoryNames.push(categories[i].title);
+      const title = categories[i].title;
+      categoryNames.push(title);
+      if(title !== "Pinned" && title !== "List Items" && title !== "Notes" ){
+        categoryDropDown.push({label: title, value: title});
+      }
     }
+    setCategoryItems(categoryDropDown);
 
     let tempCategories = categories;
     for(let i=0; i<dataArr.length; i++){ 
@@ -327,10 +342,10 @@ export default function App() {
       setShouldLoadData(false);
     }); 
 
-    value = AsyncStorage.getItem('appCategoriesData').then((value) => {
+    value = AsyncStorage.getItem('appCategoryData').then((value) => {
       if(!value){
         console.log('Making New Data Key');
-        AsyncStorage.setItem('appCategoriesData', JSON.stringify([]));
+        AsyncStorage.setItem('appCategoryData', JSON.stringify([]));
       }
       else{
         setCategoryData(JSON.parse(value));
@@ -352,6 +367,7 @@ export default function App() {
           visible={addCategoryVisibility}
           onRequestClose={() => {
             Alert.alert('Modal has been closed.');
+            changeUserInput();
             setAddCategoryVisibility(!addCategoryVisibility);
           }}
         >
@@ -372,7 +388,7 @@ export default function App() {
 
                 <Pressable
                   style={[styles.button, styles.buttonClose]}
-                  onPress={() => setAddCategoryVisibility(!addCategoryVisibility)}>
+                  onPress={() => {setAddCategoryVisibility(!addCategoryVisibility); changeUserInput();}}>
                   <Text style={styles.textStyle}>Cancel</Text>
                 </Pressable>
               </View>
@@ -386,6 +402,7 @@ export default function App() {
           visible={addItemVisibility}
           onRequestClose={() => {
             Alert.alert('Modal has been closed.');
+            changeUserInput();
             setAddCategoryVisibility(!addItemVisibility);
           }}
         >
@@ -427,31 +444,54 @@ export default function App() {
         </Modal>
 
         <Text>{"\n"}Header{"\n"}</Text>
-        <Button title='+' onPress={() => {changeUserInput();  setAddCategoryVisibility(true)}}/>
+        <Button title='+' onPress={() => {setAddCategoryVisibility(true)}}/>
 
         <SectionList 
           sections={categories}
           keyExtractor={(item, index) => item + index}
-          renderItem={({item}) => (
-            <View>
-              <Text>{item.title}</Text>
-              <Text>{item.type}</Text>
-            </View>
-          )}
-          renderSectionHeader={({section: {title}}) => {
-            if(title == "Pinned" || title == "List Items" || title == "Notes"){
+          renderItem={({item}) => {
+            if(item.type == 0){ // Note
+              return (
+                <View>
+                  <Text>Note</Text>
+                  <Text>{item.title}</Text>
+                  <Button title="Delete"/>
+              </View>
+              );
+            }
+            else if(item.type !== undefined){
+              return (
+                <View>
+                  <Text>List Item</Text>
+                  <Text>{item.title}</Text>
+                  <Button title="Delete"/>
+              </View>
+              );
+            }
+
+          }}
+          renderSectionHeader={({section: {title, color}}) => {
+            if(title == "Pinned"){
               return(
                 <View>
-                <Text>{title}</Text>
-                <Button title='+' onPress={() => {changeUserInput(); setAddItemVisibility(true)}}/>
+                  <Text>{title} : {color}</Text>
+                  <Button title='+' onPress={() => {setUserBoolean(true); setAddItemVisibility(true)}}/>
+                </View>
+              );
+            }
+            if(title == "List Items" || title == "Notes"){
+              return(
+                <View>
+                  <Text>{title} : {color}</Text>
+                  <Button title='+' onPress={() => {setAddItemVisibility(true)}}/>
                 </View>
                 );
             }
             return(
               <View>
-                <Text>{title}</Text>
-                <Button title='+' onPress={() => {changeUserInput(); setCategoryValue(title); setAddItemVisibility(true)}}/>
-                <Button title='Delete' onPress={() =>{ changeUserInput(["Category", title]); setDeleteConfirmationVisibility(true)}}/>
+                <Text>{title} : {color}</Text>
+                <Button title='+' onPress={() => {setCategoryValue(title); setAddItemVisibility(true)}}/>
+                <Button title='Delete' onPress={() =>{setUserTitle(title); setDeleteConfirmationVisibility(true)}}/>
               </View>
               );
 
