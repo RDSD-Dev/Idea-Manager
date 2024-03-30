@@ -4,26 +4,24 @@ import { useState, useEffect } from 'react';
 import { RadioButton, Checkbox } from 'react-native-paper';
 import DropDownPicker from 'react-native-dropdown-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SQLite from 'expo-sqlite';
-const db = SQLite.openDatabase('IdeaManager.db');
 
 export default function App() {
   const [expandedSections, setExpandedSections] = useState(new Set());
   const [shouldLoadData, setShouldLoadData] = useState(true);
   const [categories, setCategories] = useState([]);
+  const [categoryData, setCategoryData] = useState([]);
+
   const [addCategoryVisibility, setAddCategoryVisibility] = useState(false); // addCategory, 
   const [addItemVisibility, setAddItemVisibility] = useState(false); // addItem, 
   const [deleteConfirmationVisibility, setDeleteConfirmationVisibility] = useState(false); // addCategory, 
   const [errorMessage, setErrorMessage] = useState(undefined);
-  const [addInput, setAddInput] = useState(undefined);
+  const [userTitle, setUserTitle] = useState(undefined);
   const [userText, setUserText] = useState(undefined);
   const [userBoolean, setUserBoolean] = useState(false);
   const [checked, setChecked] = React.useState('first');
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [categoryValue, setCategoryValue] = useState(null);
   const [categoryItems, setCategoryItems] = useState([]);
-  const table = "listItems";
-  let items = [];
 
   useEffect(() => {
     console.log("Use Effect");
@@ -31,42 +29,12 @@ export default function App() {
 
   }, []);
 
-  const sortData = () =>{
-    console.log("Raw Data: ", items);
-    let sortingArr = categories;
-    // Iterates though each category
-    for(var i = 0; i<categories.length; i++){
-      // Gets all the data that belongs in the current category
-      let tempArr =  [];
-      if(categories[i].title == "Pinned"){
-        tempArr = (items.filter((item) => item.isPinned == true));
-      }
-      else if(categories[i].title == "List Items"){
-        tempArr = (items.filter((item) => item.type > 0));
-      }
-      else if(categories[i].title == "Notes"){
-        tempArr = (items.filter((item) => item.type == 0));
-      }
-      else{
-        tempArr = (items.filter((item) => item.category == categories[i].title));
-      }
-      let sortedArr =[];
-      // Iterate though each object for the current category
-      for(var t = 0; t<tempArr.length; t++){
-        sortedArr[t] = tempArr.indexOf(tempArr.filter((item) => item.sortNum == t));
-      }
-      sortingArr[i].items = sortedArr;
-      console.log("Processed: ",categories[i].data);
-
-    }
-    setCategories(sortingArr);
-  }
-
   const addCategory = () => {
     let isValid = true;
+    const addCategoryTitle = userTitle;
     // Check if Title is valid
-    const result = categories.filter((item) => item.title == addInput);
-    if(addInput.length <= 0){
+    const result = categories.filter((item) => item.title == addCategoryTitle);
+    if(addCategoryTitle.length <= 0){
       console.log("Category names cannot be empty.");
       setErrorMessage("Category names cannot be empty.");
       isValid = false;
@@ -77,23 +45,17 @@ export default function App() {
       isValid = false;
     }
     else{
-      console.log("Made category: " + addInput);
+      console.log("Made category: " + addCategoryTitle);
     }
 
     if(isValid){
       const newCategory = {
-        title: addInput,
+        title: addCategoryTitle,
         color: userText,
         data: [{}]
       }
       let editCatagories = categories;
-      const noteCategory = editCatagories[editCatagories.length-1];
-      editCatagories.pop();
-      const ListCategory = editCatagories[editCatagories.length-1];
-      editCatagories.pop();
-      editCatagories.push(newCategory);
-      editCatagories.push(noteCategory);
-      editCatagories.push(ListCategory);
+      editCatagories.splice(editCatagories.length-2, 0, newCategory);
 
       setCategories(editCatagories);
       AsyncStorage.setItem('appCategories',JSON.stringify(editCatagories));
@@ -117,58 +79,60 @@ export default function App() {
     setDeleteConfirmationVisibility(false);
   }
   
-
-  const addListItem = () => { // Title: addInput, Category: categoryValue, isPinned: userBoolean
+  const addListItem = () => { // Title: userTitle, Category: categoryValue, isPinned: userBoolean
     let isValid = true;
-    const addTitle = addInput;
-    const addCategory = categoryValue;
-    const addIsPinned = userBoolean;
-    const addType = 1;
-    const addRemakeNum = 0;
+    let addItem = {
+      title: userTitle,
+      category: categoryValue,
+      sortingNum: 0,
+      isPinned: userBoolean,
+      type: 1,
+      remakeNum: 0,
+      makeDate: null
+    };
+
     const today = new Date();
-    const addToday = (today.getFullYear() + "-" + today.getMonth() + "-" + today.getDate());
-    let addSortingNum = 0;
+    addItem.makeDate = (today.getFullYear() + "-" + today.getMonth() + "-" + today.getDate());
     if(addCategory != "" || addCategory != null){
       for(var i = 1; i<categories.length -2; i++){
         if(categories[i].title == addCategory){
           const tempArr = (items.filter((item) => item.category == categories[i].title));
-          addSortingNum = tempArr.length;
+          addItem.sortingNum = tempArr.length;
         }
       }
     }
 
-    if(addTitle == ""){
+    if(addItem.title == ""){
       setErrorMessage("Item title cannot be empty.");
       isValid = false;
     }
 
     if(isValid){
-      console.log("ADD");
-      // 'INSERT INTO ' + table + ' (title, category, sortNum, isPinned, makeDate, type, remakeNum) values (?, ?, ?, ?, ?, ?, ?)'
-      db.transaction(tx => {
-        tx.executeSql('INSERT INTO ' + table + ' (title, category, sortNum, isPinned, makeDate, type, remakeNum) values (?, ?, ?, ?, ?, ?, ?) ',  
-        [addTitle, addCategory, addSortingNum, addIsPinned, addToday, addType, addRemakeNum],
-        (txObj, resultSet) => {
-          console.log("Added: ", resultSet.insertId);
-          const currentObject = {
-            title: addTitle,
-            id: resultSet.insertId,
-            type: addType,
-            category: addCategory,
-            sortNum: addSortingNum,
-            isPinned: addIsPinned,
-            makeDate: addToday,
-            completeDate: null,
-            remakeNum: addRemakeNum
-          }
-          items.push(currentObject);
-          sortData();
-          changeUserInput();
-          setAddItemVisibility(false);
-        },
-        (txObj, error) => console.log(error)
-    );
-      });
+      console.log("Add Item");
+      let tempCategories = categories;
+      let tempData = categoryData;
+      let categoryNames = [];
+      for(let i=0; i<categories.length; i++){
+        categoryNames.push(categories[i].title);
+      }
+      let index = categoryNames.indexOf(addItem.category);
+      if(index > 0){
+        const previousItem = tempCategories[index].data[tempCategories[index].data.length-1];
+        tempCategories[index].data.push(addItem);
+        index = tempData.indexOf(previousItem) + 1;
+        tempData.splice(index, 0, addItem);
+      }
+      else{
+        tempData.push(addItem);
+        if(addItem.type == 0){ // Note
+
+        }
+        else{ // List Item
+          tempCategories[tempCategories.length-2].data.push(addItem);
+        }
+      }
+      AsyncStorage.setItem('appCategoriesData', JSON.stringify(tempData));
+      setAddItemVisibility(false);
     }
   }
 
@@ -178,7 +142,7 @@ export default function App() {
 
   const changeUserInput = (textArr = ["", "", 'first', false]) => {
     setErrorMessage("");
-    setAddInput(textArr[0]);
+    setUserTitle(textArr[0]);
     setUserText(textArr[1]);
     setChecked(textArr[2]);
     setUserBoolean(textArr[3]);
@@ -220,7 +184,7 @@ export default function App() {
           />
 
           <Text>Title: </Text>
-          <TextInput value={addInput} onChangeText={setAddInput}/>
+          <TextInput value={userTitle} onChangeText={setUserTitle}/>
           <Text>Pinned?: </Text>
           <Checkbox 
             status={userBoolean ? 'checked' : 'unchecked'}
@@ -269,7 +233,7 @@ export default function App() {
           />
 
           <Text>Title: </Text>
-          <TextInput value={addInput} onChangeText={setAddInput}/>
+          <TextInput value={userTitle} onChangeText={setUserTitle}/>
           <Text>Pinned?: </Text>
           <Checkbox 
             status={userBoolean ? 'checked' : 'unchecked'}
@@ -302,6 +266,34 @@ export default function App() {
     }
   }
 
+  const sortData = (dataArr) => {
+    console.log("Sorting");
+    let categoryNames = [];
+    for(let i=0; i<categories.length; i++){
+      categoryNames.push(categories[i].title);
+    }
+
+    let tempCategories = categories;
+    for(let i=0; i<dataArr.length; i++){ 
+      if(dataArr[i].isPinned){// Pinned
+        tempCategories[0].data.push(dataArr[i]);
+      }
+      if(dataArr[i].type == 0){ // Note
+        tempCategories[tempCategories.length-1].data.push(dataArr[i]);
+      }
+      else{ // List Item
+        tempCategories[tempCategories.length-2].data.push(dataArr[i]);
+      }
+      // Insert data object into temp categories under its category
+      const index = categoryNames.indexOf(dataArr[i].category);
+      console.log("Index: ", index);
+      if(index > 0){
+        tempCategories[index].data.push(dataArr[i]);
+      }
+    }
+    setCategories(tempCategories);
+  }
+
   if(shouldLoadData){
     console.log("Loading Data");
     //Store Categories Pinned should always be first List Items and Notes should always be last
@@ -312,17 +304,17 @@ export default function App() {
           {
             title: "Pinned",
             color: "Pinned",
-            data: [{}],
+            data: [],
           },
           {
             title: "List Items",
             color: "List Items",
-            data: [{}],
+            data: [],
           },
           {
             title: "Notes",
             color: "Notes",
-            data: [{}],
+            data: [],
           },
         ];
         console.log("Temp: " + temArr.length);
@@ -332,60 +324,20 @@ export default function App() {
       else{
         setCategories(JSON.parse(value));
       }
+      setShouldLoadData(false);
     }); 
 
-    // Store note titles as object
-    value = AsyncStorage.getItem('appNotes').then((value) => {
-      if(value != undefined){
-        JSON.parse(value).forEach((note) => {
-          const currentObject = {
-            title: note[0],
-            type: 0,
-            category: note[1],
-            sortNum: note[2],
-            isPinned: note[3],
-            makeDate: note[4],
-            editDate: note[5]
-          };
-          data.push(currentObject);
-        });
+    value = AsyncStorage.getItem('appCategoriesData').then((value) => {
+      if(!value){
+        console.log('Making New Data Key');
+        AsyncStorage.setItem('appCategoriesData', JSON.stringify([]));
       }
-    });
+      else{
+        setCategoryData(JSON.parse(value));
+        sortData(JSON.parse(value));
+      }
+    }); 
 
-    // Make Table if it doesn't exist IF NOT EXISTS
-
-
-    db.transaction(tx => {
-      tx.executeSql('CREATE TABLE IF NOT EXISTS '+table+' (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, makeDate DATE, dueDate DATETIME, completeDate DATE, type INTEGER, remakeNum INTEGER, category TEXT, sortNum INTEGER, isPinned BOOLEAN)', [],
-      (txObj, resultSet) => {
-        console.log("Make: ", resultSet);r
-      });
-    });
-
-    db.transaction(tx => {
-      tx.executeSql('SELECT * FROM ' + table,  [],
-      (txObj, resultSet) => {
-        console.log("Get: ", resultSet.rows._array[0].title);
-        const currentItem = resultSet.rows._array[0];
-        const currentObject = {
-          title: currentItem.title,
-          id: currentItem.id,
-          type: currentItem.type,
-          category: currentItem.category,
-          sortNum: currentItem.sortNum,
-          isPinned: currentItem.isPinned,
-          makeDate: currentItem.makeDate,
-          completeDate: currentItem.completeDate,
-          remakeNum: currentItem.remakeNum
-        }
-        console.log("Data: Gotten" );
-        items.push(currentObject);
-        sortData();
-      },
-      (txObj, error) => console.log(error)
-  );
-    })
-    
     if(categories.length >= 3){
       setShouldLoadData(false);
     }
@@ -408,7 +360,7 @@ export default function App() {
               <Text style={styles.modalText}>Add Category</Text>
               <Text>{errorMessage}</Text>
               <Text>Title: </Text>
-              <TextInput value={addInput} onChangeText={setAddInput}/>
+              <TextInput value={userTitle} onChangeText={setUserTitle}/>
               <Text>Color: </Text>
               <TextInput value={userText} onChangeText={setUserText}/>
 
@@ -456,7 +408,7 @@ export default function App() {
         >
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
-              <Text style={styles.modalText}>Delete {addInput}: {userText}?</Text>
+              <Text style={styles.modalText}>Delete {userTitle}: {userText}?</Text>
               <Text>{errorMessage}</Text>
 
               <Pressable
@@ -481,7 +433,10 @@ export default function App() {
           sections={categories}
           keyExtractor={(item, index) => item + index}
           renderItem={({item}) => (
-            <Text>{items[item]}</Text>
+            <View>
+              <Text>{item.title}</Text>
+              <Text>{item.type}</Text>
+            </View>
           )}
           renderSectionHeader={({section: {title}}) => {
             if(title == "Pinned" || title == "List Items" || title == "Notes"){
@@ -494,9 +449,9 @@ export default function App() {
             }
             return(
               <View>
-              <Text>{title}</Text>
-              <Button title='+' onPress={() => {changeUserInput(); setCategoryValue(title); setAddItemVisibility(true)}}/>
-              <Button title='Delete' onPress={() =>{ changeUserInput(["Category", title]); setDeleteConfirmationVisibility(true)}}/>
+                <Text>{title}</Text>
+                <Button title='+' onPress={() => {changeUserInput(); setCategoryValue(title); setAddItemVisibility(true)}}/>
+                <Button title='Delete' onPress={() =>{ changeUserInput(["Category", title]); setDeleteConfirmationVisibility(true)}}/>
               </View>
               );
 
