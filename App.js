@@ -51,8 +51,13 @@ export default function App() {
       const newCategory = {
         title: addCategoryTitle,
         color: userText,
-        data: [{}]
+        data: []
       }
+
+      let editCategoryItems = categoryItems;
+      editCategoryItems.push(newCategory);
+      setCategoryItems(editCatagories);
+
       let editCatagories = categories;
       editCatagories.splice(editCatagories.length-2, 0, newCategory);
 
@@ -66,8 +71,8 @@ export default function App() {
 
   }
 
-  const deleteCategory = (category) => {
-    eraseUserInputs();
+  const deleteCategory = () => {
+    const category = userTitle;
     console.log("Delete Category: " + category);
     let editCatagories = categories;
     const obj = editCatagories.filter((item) => item.title == category);
@@ -83,6 +88,13 @@ export default function App() {
       }
       setCategoryData(tempData);
       AsyncStorage.setItem('appCategoryData', tempData);
+    }
+
+    let editCategoryItems = categoryItems;
+    index = editCategoryItems.indexOf(category);
+    if(index >= 0){
+      editCategoryItems.splice(index, 1);
+      setCategoryItems(editCategoryItems);
     }
 
     AsyncStorage.setItem('appCategories', JSON.stringify(editCatagories));
@@ -115,7 +127,6 @@ export default function App() {
       };
     }
 
-
     const today = new Date();
     addItem.makeDate = (today.getFullYear() + "-" + today.getMonth() + "-" + today.getDate());
     if(addCategory != "" || addCategory != null){
@@ -137,7 +148,7 @@ export default function App() {
     }
 
     if(isValid){
-      console.log("Add Item");
+      console.log("Add Item: ", addItem.title);
       let tempCategories = categories;
       let tempData = categoryData;
       let categoryNames = [];
@@ -164,7 +175,6 @@ export default function App() {
       else{ // List Item
         tempCategories[tempCategories.length-2].data.push(addItem);
       }
-      console.log("Adding: ", tempCategories[1].data);
       setCategories(tempCategories);
       AsyncStorage.setItem('appCategoryData', JSON.stringify(tempData));
       setAddItemVisibility(false);
@@ -173,7 +183,46 @@ export default function App() {
   }
 
   const deleteItem = () => {
+    const title = userTitle;
+    const item = categoryData.filter((e) => e.title == title)[0];
+    console.log("Deleting Item: ", title);
 
+    let editCategories = categories;
+    let editCategoryData = categoryData;
+
+    let index = editCategoryData.indexOf(categoryData.filter((e) => e.title == title)[0]);
+    editCategoryData.splice(index, 1);
+
+
+    if(item.isPinned){
+      index = editCategories[0].data.indexOf(editCategories[0].data.filter((e) => e.title == title)[0]);
+      editCategories[0].data.splice(item, 1);
+    }
+    
+    const category = editCategories.filter((e) => e.title == item.category);
+    if(category.length > 0){
+      for(let i=0;i<category.length; i++){
+        index = editCategories.indexOf(category[i]);
+        editCategories[index].data.splice(editCategories[index].data.indexOf(editCategories[index].data.filter((e) => e.title == title)[0]), 1);
+      }
+    }
+
+    if(item.type == 0){ // Note
+      const num = editCategories.length - 1;
+      index = editCategories[num].data.indexOf(editCategories[num].data.filter((e) => e.title == title)[0]);
+      editCategories[num].data.splice(item, 1);
+    }
+    else{ // List Item
+      const num = editCategories.length - 2;
+      index = editCategories[num].data.indexOf(editCategories[num].data.filter((e) => e.title == title)[0]);
+      editCategories[num].data.splice(item, 1);
+    }
+
+    setCategoryData(editCategoryData);
+    AsyncStorage.setItem('appCategoryData', JSON.stringify(editCategoryData));
+    setCategories(editCategories);
+    setDeleteConfirmationVisibility(false);
+    eraseUserInputs();
   }
 
   const eraseUserInputs = () => {
@@ -289,8 +338,54 @@ export default function App() {
     }
   }
 
-  const deleteModal = () => {
+  const deleteModal = () => { // userBoolean : true: category false: item
+    if(userBoolean){
+      return (
+        <View style={styles.modalView}>
+          <Text style={styles.modalText}>Delete Category: {userTitle}: {userText}?</Text>
+          <Text>{errorMessage}</Text>
     
+          <Pressable
+              style={[styles.button, styles.buttonClose]}
+              onPress={() => deleteCategory()}>
+              <Text style={styles.textStyle}>Delete</Text>
+            </Pressable>
+      
+            <Pressable
+              style={[styles.button, styles.buttonClose]}
+              onPress={() => {eraseUserInputs(); setDeleteConfirmationVisibility(!deleteConfirmationVisibility)}}>
+              <Text style={styles.textStyle}>Cancel</Text>
+            </Pressable>
+        </View>
+      );
+    }
+    else{
+      let type = "";
+      if(userInt == 0){
+        type = "Note";
+      }
+      else{
+        type = "List Item";
+      }
+      return(
+        <View style={styles.modalView}>
+         <Text style={styles.modalText}>Delete {type}: {userTitle}?</Text>
+          <Text>{errorMessage}</Text>
+  
+          <Pressable
+            style={[styles.button, styles.buttonClose]}
+            onPress={() => deleteItem()}>
+            <Text style={styles.textStyle}>Delete</Text>
+          </Pressable>
+    
+          <Pressable
+            style={[styles.button, styles.buttonClose]}
+            onPress={() => {eraseUserInputs(); setDeleteConfirmationVisibility(!deleteConfirmationVisibility)}}>
+            <Text style={styles.textStyle}>Cancel</Text>
+          </Pressable>
+        </View>
+      );
+    }
   }
 
   const sortData = (dataArr) => {
@@ -439,23 +534,8 @@ export default function App() {
           }}
         >
           <View style={styles.centeredView}>
-            <View style={styles.modalView}>
-              <Text style={styles.modalText}>Delete {userTitle}: {userText}?</Text>
-              <Text>{errorMessage}</Text>
-
-              <Pressable
-                  style={[styles.button, styles.buttonClose]}
-                  onPress={() => deleteCategory(userText)}>
-                  <Text style={styles.textStyle}>Delete</Text>
-                </Pressable>
-
-                <Pressable
-                  style={[styles.button, styles.buttonClose]}
-                  onPress={() => setDeleteConfirmationVisibility(!deleteConfirmationVisibility)}>
-                  <Text style={styles.textStyle}>Cancel</Text>
-                </Pressable>
-              </View>
-            </View>
+            {deleteModal()}
+          </View>
         </Modal>
 
         <Text>{"\n"}Idea Manager{"\n"}</Text>
@@ -470,7 +550,7 @@ export default function App() {
                 <View>
                   <Text>Note</Text>
                   <Text>{item.title}</Text>
-                  <Button title="Delete"/>
+                  <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
               </View>
               );
             }
@@ -479,7 +559,7 @@ export default function App() {
                 <View>
                   <Text>List Item</Text>
                   <Text>{item.title}</Text>
-                  <Button title="Delete"/>
+                  <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
               </View>
               );
             }
@@ -514,7 +594,7 @@ export default function App() {
               <View>
                 <Text>{title} : {color}</Text>
                 <Button title='+' onPress={() => {setCategoryValue(title); setAddItemVisibility(true)}}/>
-                <Button title='Delete' onPress={() =>{setUserTitle(title); setDeleteConfirmationVisibility(true)}}/>
+                <Button title='Delete' onPress={() =>{setUserBoolean(true); setUserTitle(title); setUserText(color); setDeleteConfirmationVisibility(true)}}/>
               </View>
               );
 
