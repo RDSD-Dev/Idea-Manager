@@ -6,23 +6,26 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function App() {
-  const [expandedSections, setExpandedSections] = useState(new Set());
-  const [shouldLoadData, setShouldLoadData] = useState(true);
   const [categories, setCategories] = useState([]);
   const [categoryData, setCategoryData] = useState([]);
+  const [categoryItems, setCategoryItems] = useState([]);
+  const [shouldLoadData, setShouldLoadData] = useState(true);
 
+  const [expandedSections, setExpandedSections] = useState(new Set());
   const [addCategoryVisibility, setAddCategoryVisibility] = useState(false); // addCategory, 
   const [addItemVisibility, setAddItemVisibility] = useState(false); // addItem, 
+  const [updateModalVisibility, setUpdateModalVisibility] = useState(false); // addItem, 
   const [deleteConfirmationVisibility, setDeleteConfirmationVisibility] = useState(false); // addCategory, 
+  const [categoryValue, setCategoryValue] = useState(null);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [checked, setChecked] = useState('first');
+
   const [errorMessage, setErrorMessage] = useState(undefined);
   const [userTitle, setUserTitle] = useState(undefined);
   const [userText, setUserText] = useState(undefined);
+  const [userArr, setUserArr] = useState([]);
   const [userInt, setUserInt] = useState(1);
   const [userBoolean, setUserBoolean] = useState(false);
-  const [checked, setChecked] = useState('first');
-  const [categoryOpen, setCategoryOpen] = useState(false);
-  const [categoryValue, setCategoryValue] = useState(null);
-  const [categoryItems, setCategoryItems] = useState([]);
 
   useEffect(() => {
     //console.log("Use Effect");
@@ -67,8 +70,64 @@ export default function App() {
     }
   }
 
-  const updateCategory = () => {
+  const updateCategory = (updateTitle) => {
+    let isValid = true;
+    const addCategoryTitle = userTitle;
+    // Check if Title is valid
+    const result = categories.filter((item) => item.title == addCategoryTitle);
+    if(addCategoryTitle.length <= 0){
+      console.log("Category names cannot be empty.");
+      setErrorMessage("Category names cannot be empty.");
+      isValid = false;
+    }
+    else if(result.length > 0 && addCategoryTitle !== updateTitle){
+      console.log("That category title is taken.");
+      setErrorMessage("That category title is taken.");
+      isValid = false;
+    }
 
+    if(isValid){
+      console.log("Update category: " + updateTitle);
+
+      let editCategoryItems = categoryItems;
+      let index = -1;
+      for(let i=0; i < editCategoryItems.length; i++){
+        if(editCategoryItems[i].title == updateTitle){
+          console.log(editCategoryItems[i]);
+          editCategoryItems[i].title = addCategoryTitle;
+          editCategoryItems[i].color = userText;
+          break;
+        }
+      }
+      setCategoryItems(editCategoryItems);
+
+      let editCatagories = categories;
+      for(let i=1; i < editCatagories.length-2; i++){
+        if(editCatagories[i].title == updateTitle){
+          index = i;
+          editCatagories[i].title = addCategoryTitle;
+          editCatagories[i].color = userText;
+          break;
+        }
+      }
+
+      for(let i=0; i < editCatagories[index].data.length; i++){
+        editCatagories[index].data[i].category = addCategoryTitle;
+      }
+
+      let editCategoryData = categoryData;
+      const editableData = editCategoryData.filter((e) => e.category == updateTitle);
+      for(let i=0; i < editableData.length; i++){
+        editableData[i].category = addCategoryTitle;
+      }
+
+      setCategoryData(editCategoryData);
+      AsyncStorage.setItem('appCategoryData', JSON.stringify(editCategoryData));
+      setCategories(editCatagories);
+      AsyncStorage.setItem('appCategories',JSON.stringify(editCatagories));
+      setUpdateModalVisibility(!updateModalVisibility);
+      eraseUserInputs();
+    }
   }
 
   const deleteCategory = () => {
@@ -182,6 +241,10 @@ export default function App() {
     }
   }
 
+  const updateItem= () => {
+
+  }
+
   const deleteItem = () => {
     const title = userTitle;
     const item = categoryData.filter((e) => e.title == title)[0];
@@ -235,6 +298,7 @@ export default function App() {
     setUserBoolean(false);
     setCategoryOpen(false);
     setCategoryValue(null);    
+    setUserArr([]);
   }
 
   const addItemModal = () => {
@@ -288,6 +352,87 @@ export default function App() {
       );
     }
     else{
+      return(
+        <View style={styles.modalView}>
+          <Text style={styles.modalText}>Add Note</Text>
+          <Text>{errorMessage}</Text>
+          <Text>List Item</Text>
+          <RadioButton 
+            value='first'
+            status={checked === 'first' ? 'checked' : 'unchecked'}
+            onPress={() => setChecked('first')}
+          />
+          <Text>Note Item</Text>
+          <RadioButton 
+            value='second'
+            status={checked === 'second' ? 'checked' : 'unchecked'}
+            onPress={() => setChecked('second')}
+          />
+
+          <Text>Title: </Text>
+          <TextInput value={userTitle} onChangeText={setUserTitle}/>
+          <Text>Pinned?: </Text>
+          <Checkbox 
+            status={userBoolean ? 'checked' : 'unchecked'}
+            onPress={() => {setUserBoolean(!userBoolean); console.log(userBoolean)}}
+          />
+          <Text>category: </Text>
+          <DropDownPicker
+            open={categoryOpen}
+            value={categoryValue}
+            items={categoryItems}
+            setOpen={setCategoryOpen}
+            setValue={setCategoryValue}
+            setItems={setCategoryItems}
+          />
+
+          <Pressable
+              style={[styles.button, styles.buttonClose]}
+              onPress={() => {setUserInt(0) ;addItem()}}>
+              <Text style={styles.textStyle}>Add Item</Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.button, styles.buttonClose]}
+              onPress={() => {setAddItemVisibility(!addItemVisibility); eraseUserInputs();}}>
+              <Text style={styles.textStyle}>Cancel</Text>
+            </Pressable>
+          </View>
+      );
+    }
+  }
+
+  const updateModal = () => { // UserBoolean true: category false: item
+    if(userBoolean){ // Category
+      return(
+        <View style={styles.modalView}>
+          <Text style={styles.modalText}>Update Category: {userArr[0]}</Text>
+          <Text>{errorMessage}</Text>
+          <Text>List Item</Text>
+
+          <Text>Title: </Text>
+          <TextInput value={userTitle} placeholder={userArr[0]} onChangeText={setUserTitle}/>
+
+          <Text>Color: </Text>
+          <TextInput value={userText} placeholder={userArr[1]} onChangeText={setUserText}/>
+
+
+
+          <Pressable
+              style={[styles.button, styles.buttonClose]}
+              onPress={() => {updateCategory(userArr[0])}}>
+              <Text style={styles.textStyle}>Add Item</Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.button, styles.buttonClose]}
+              onPress={() => {setUpdateModalVisibility(!updateModalVisibility); eraseUserInputs();}}>
+              <Text style={styles.textStyle}>Cancel</Text>
+            </Pressable>
+          </View>
+      );
+    }
+    else{ // Item
       return(
         <View style={styles.modalView}>
           <Text style={styles.modalText}>Add Note</Text>
@@ -523,6 +668,21 @@ export default function App() {
             </View>
         </Modal>
 
+        {/* Update Modal*/}
+        <Modal 
+          animationType='slide'
+          transparent={true}
+          visible={updateModalVisibility}
+          onRequestClose={() => {
+            Alert.alert('Modal has been closed.');
+            setUpdateModalVisibility(!updateModalVisibility);
+          }}
+        >
+          <View style={styles.centeredView}>
+            {updateModal()}
+          </View>
+        </Modal>
+
         {/* Delete Confirmation*/}
         <Modal 
           animationType='slide'
@@ -549,7 +709,9 @@ export default function App() {
               return (
                 <View>
                   <Text>Note</Text>
-                  <Text>{item.title}</Text>
+                  <Pressable onPress={() => {setUserTitle(title); setUpdateModalVisibility(true)}}>
+                    <Text>{item.title}</Text>
+                  </Pressable>
                   <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
               </View>
               );
@@ -558,7 +720,9 @@ export default function App() {
               return (
                 <View>
                   <Text>List Item</Text>
-                  <Text>{item.title}</Text>
+                  <Pressable onPress={() => {setUserTitle(title); setUpdateModalVisibility(true)}}>
+                    <Text>{item.title}</Text>
+                  </Pressable>
                   <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
               </View>
               );
@@ -569,15 +733,19 @@ export default function App() {
             if(title == "Pinned"){
               return(
                 <View>
-                  <Text>{title} : {color}</Text>
-                  <Button title='+' onPress={() => {setUserBoolean(true); setAddItemVisibility(true)}}/>
+                  <Pressable onPress={() => {}}>
+                    <Text>{title} : {color}</Text>
+                  </Pressable>
+                  <Button title='+' onPress={() => {setUserTitle(title); setUserBoolean(true); setAddItemVisibility(true)}}/>
                 </View>
               );
             }
             if(title == "List Items"){
               return(
                 <View>
-                  <Text>{title} : {color}</Text>
+                  <Pressable onPress={() => {}}>
+                    <Text>{title} : {color}</Text>
+                  </Pressable>                  
                   <Button title='+' onPress={() => {setAddItemVisibility(true)}}/>
                 </View>
                 );
@@ -585,14 +753,18 @@ export default function App() {
             else if(title == "Notes"){
               return(
                 <View>
-                  <Text>{title} : {color}</Text>
+                  <Pressable onPress={() => {}}>
+                    <Text>{title} : {color}</Text>
+                  </Pressable>                  
                   <Button title='+' onPress={() => {setChecked('second'); setUserInt(0); setAddItemVisibility(true)}}/>
                 </View>
                 );
             }
             return(
               <View>
-                <Text>{title} : {color}</Text>
+                  <Pressable onPress={() => {setUserTitle(title); setUserText(color); setUserArr([title, color]); setUserBoolean(true);  setUpdateModalVisibility(true)}}>
+                    <Text>{title} : {color}</Text>
+                  </Pressable>
                 <Button title='+' onPress={() => {setCategoryValue(title); setAddItemVisibility(true)}}/>
                 <Button title='Delete' onPress={() =>{setUserBoolean(true); setUserTitle(title); setUserText(color); setDeleteConfirmationVisibility(true)}}/>
               </View>
