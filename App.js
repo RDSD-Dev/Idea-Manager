@@ -59,7 +59,7 @@ export default function App() {
 
       let editCategoryItems = categoryItems;
       editCategoryItems.push(newCategory);
-      setCategoryItems(editCatagories);
+      setCategoryItems(editCategoryItems);
 
       let editCatagories = categories;
       editCatagories.splice(editCatagories.length-2, 0, newCategory);
@@ -241,8 +241,46 @@ export default function App() {
     }
   }
 
-  const updateItem= () => {
+  const updateItem= (updateTitle) => {
+    const newTitle = userTitle;
+    const newIsPinned = userBoolean;
+    const newCategory = categoryValue;
+    let editCategoryData = categoryData;
+    const oldItem = editCategoryData.filter((e) => e.title == updateTitle)[0];
+    console.log("Updating: ", updateTitle);
+    let index = editCategoryData.indexOf(oldItem);
+    editCategoryData[index].title = newTitle;
+    editCategoryData[index].category = newCategory;
+    editCategoryData[index].isPinned = newIsPinned;
+    setCategoryData(editCategoryData);
+    AsyncStorage.setItem('appCategoryData', JSON.stringify(editCategoryData));
 
+    console.log("Is Old Pinned? ", oldItem.isPinned);
+    if(!oldItem.isPinned || newIsPinned){
+      console.log("Sort pinned");
+      sortCategory("Pinned");
+    }
+    if(oldItem.category != null && oldItem.category != ""){ // Was in a category
+      sortCategory(oldItem.category);
+      if(oldItem.category != newCategory && newCategory != null && newCategory != ""){ // Updated to new category
+        sortCategory(newCategory);
+      }
+    }
+    else{
+      if(newCategory != null && newCategory != ""){
+        sortCategory(newCategory);
+      }
+    }
+
+    if(oldItem.type == 0){ // Note
+      sortCategory("Notes");
+    }
+    else{
+     sortCategory("List Items");
+    }
+
+    setUpdateModalVisibility(false);
+    eraseUserInputs();
   }
 
   const deleteItem = () => {
@@ -403,7 +441,7 @@ export default function App() {
   }
 
   const updateModal = () => { // UserBoolean true: category false: item
-    if(userBoolean){ // Category
+    if(checked != 'first'){ // Category
       return(
         <View style={styles.modalView}>
           <Text style={styles.modalText}>Update Category: {userArr[0]}</Text>
@@ -435,27 +473,17 @@ export default function App() {
     else{ // Item
       return(
         <View style={styles.modalView}>
-          <Text style={styles.modalText}>Add Note</Text>
+          <Text style={styles.modalText}>Update Item: {userArr[0]}</Text>
           <Text>{errorMessage}</Text>
           <Text>List Item</Text>
-          <RadioButton 
-            value='first'
-            status={checked === 'first' ? 'checked' : 'unchecked'}
-            onPress={() => setChecked('first')}
-          />
-          <Text>Note Item</Text>
-          <RadioButton 
-            value='second'
-            status={checked === 'second' ? 'checked' : 'unchecked'}
-            onPress={() => setChecked('second')}
-          />
 
           <Text>Title: </Text>
-          <TextInput value={userTitle} onChangeText={setUserTitle}/>
+          <TextInput value={userTitle} placeholder={userArr[0]} onChangeText={setUserTitle}/>
+
           <Text>Pinned?: </Text>
           <Checkbox 
             status={userBoolean ? 'checked' : 'unchecked'}
-            onPress={() => {setUserBoolean(!userBoolean); console.log(userBoolean)}}
+            onPress={() => {setUserBoolean(!userBoolean);}}
           />
           <Text>category: </Text>
           <DropDownPicker
@@ -469,13 +497,13 @@ export default function App() {
 
           <Pressable
               style={[styles.button, styles.buttonClose]}
-              onPress={() => {setUserInt(0) ;addItem()}}>
-              <Text style={styles.textStyle}>Add Item</Text>
+              onPress={() => {console.log(userBoolean); updateItem(userArr[0])}}>
+              <Text style={styles.textStyle}>Update Item</Text>
             </Pressable>
 
             <Pressable
               style={[styles.button, styles.buttonClose]}
-              onPress={() => {setAddItemVisibility(!addItemVisibility); eraseUserInputs();}}>
+              onPress={() => {setUpdateModalVisibility(!updateModalVisibility); eraseUserInputs();}}>
               <Text style={styles.textStyle}>Cancel</Text>
             </Pressable>
           </View>
@@ -533,6 +561,37 @@ export default function App() {
     }
   }
 
+  const sortCategory = (editCategory) => {
+    let data = [];
+    if(editCategory == "Pinned"){
+      data = categoryData.filter((e) => e.isPinned == true);
+    }
+    else if(editCategory == "List Items"){
+      data = categoryData.filter((e) => e.type > 0);
+    }
+    else if(editCategory == "Notes"){
+      data = categoryData.filter((e) => e.type == 0);
+    }
+    else{
+      data = categoryData.filter((e) => e.category == editCategory);
+    }
+
+    let sortedData = [];
+    for(let i=0; i<data.length; i++){
+      sortedData.push({title: "Empty"});
+    }
+    for(let i=0; i<data.length; i++){
+      //const index = data[i].sortNum;
+      sortedData[i] = data[i];
+  }
+  let fixCategories = categories;
+  index = categories.indexOf(categories.filter((e) => e.title == editCategory)[0]);
+  fixCategories[index].data = sortedData;
+  console.log("Category: ", editCategory, " : ", sortedData);
+  setCategories(fixCategories);
+
+  }
+
   const sortData = (dataArr) => {
     let categoryNames = [];
     let categoryDropDown = categoryItems;
@@ -543,6 +602,7 @@ export default function App() {
         categoryDropDown.push({label: title, value: title});
       }
     }
+    categoryDropDown.push({label: null, value: null});
     setCategoryItems(categoryDropDown);
 
     let tempCategories = categories;
@@ -709,7 +769,7 @@ export default function App() {
               return (
                 <View>
                   <Text>Note</Text>
-                  <Pressable onPress={() => {setUserTitle(title); setUpdateModalVisibility(true)}}>
+                  <Pressable onPress={() => {setUserArr([item.title]); setUserTitle(item.title); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
                     <Text>{item.title}</Text>
                   </Pressable>
                   <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
@@ -720,7 +780,7 @@ export default function App() {
               return (
                 <View>
                   <Text>List Item</Text>
-                  <Pressable onPress={() => {setUserTitle(title); setUpdateModalVisibility(true)}}>
+                  <Pressable onPress={() => {setUserArr([item.title]); setUserTitle(item.title); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
                     <Text>{item.title}</Text>
                   </Pressable>
                   <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
@@ -762,11 +822,11 @@ export default function App() {
             }
             return(
               <View>
-                  <Pressable onPress={() => {setUserTitle(title); setUserText(color); setUserArr([title, color]); setUserBoolean(true);  setUpdateModalVisibility(true)}}>
+                  <Pressable onPress={() => {setUserTitle(title); setUserText(color); setUserArr([title, color]); setChecked('second');  setUpdateModalVisibility(true)}}>
                     <Text>{title} : {color}</Text>
                   </Pressable>
                 <Button title='+' onPress={() => {setCategoryValue(title); setAddItemVisibility(true)}}/>
-                <Button title='Delete' onPress={() =>{setUserBoolean(true); setUserTitle(title); setUserText(color); setDeleteConfirmationVisibility(true)}}/>
+                <Button title='Delete' onPress={() =>{setChecked('second'); setUserTitle(title); setUserText(color); setDeleteConfirmationVisibility(true)}}/>
               </View>
               );
 
