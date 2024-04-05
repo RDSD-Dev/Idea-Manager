@@ -16,6 +16,8 @@ export default function App() {
   const [addItemVisibility, setAddItemVisibility] = useState(false); // addItem, 
   const [updateModalVisibility, setUpdateModalVisibility] = useState(false); // addItem, 
   const [deleteConfirmationVisibility, setDeleteConfirmationVisibility] = useState(false); // addCategory, 
+  const [noteVisibility, setNoteVisibility] = useState(false); // addCategory, 
+
   const [categoryValue, setCategoryValue] = useState(null);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [checked, setChecked] = useState('first');
@@ -561,6 +563,10 @@ export default function App() {
     }
   }
 
+  const noteModal = () => {
+    
+  }
+
   const sortCategory = (editCategory) => {
     console.log("Sorting: ", editCategory);
     let data = [];
@@ -756,6 +762,22 @@ export default function App() {
         >
           <View style={styles.centeredView}>
             {deleteModal()}
+          </View>
+        </Modal>
+
+        {/* Display Note*/}
+        <Modal 
+          animationType='slide'
+          transparent={true}
+          visible={noteVisibility}
+          onRequestClose={() => {
+            Alert.alert('Modal has been closed.');
+            eraseUserInputs();
+            setNoteVisibility(!noteVisibility);
+          }}
+        >
+          <View style={styles.centeredView}>
+
           </View>
         </Modal>
 
