@@ -58,7 +58,7 @@ export default function App() {
       }
 
       let editCategoryItems = categoryItems;
-      editCategoryItems.push(newCategory);
+      editCategoryItems.push(newCategory.title);
       setCategoryItems(editCategoryItems);
 
       let editCatagories = categories;
@@ -246,16 +246,16 @@ export default function App() {
     const newIsPinned = userBoolean;
     const newCategory = categoryValue;
     let editCategoryData = categoryData;
-    const oldItem = editCategoryData.filter((e) => e.title == updateTitle)[0];
-    console.log("Updating: ", updateTitle);
-    let index = editCategoryData.indexOf(oldItem);
+    const oldItem = {title: userArr[0], category: userArr[1], isPinned: userArr[2]};
+    console.log("Updating Item: ", updateTitle);
+    let index = editCategoryData.indexOf(editCategoryData.filter((e) => e.title == updateTitle)[0]);
     editCategoryData[index].title = newTitle;
     editCategoryData[index].category = newCategory;
     editCategoryData[index].isPinned = newIsPinned;
     setCategoryData(editCategoryData);
     AsyncStorage.setItem('appCategoryData', JSON.stringify(editCategoryData));
 
-    console.log("Is Old Pinned? ", oldItem.isPinned);
+    console.log("Old Item:  ", oldItem);
     if(!oldItem.isPinned || newIsPinned){
       console.log("Sort pinned");
       sortCategory("Pinned");
@@ -562,6 +562,7 @@ export default function App() {
   }
 
   const sortCategory = (editCategory) => {
+    console.log("Sorting: ", editCategory);
     let data = [];
     if(editCategory == "Pinned"){
       data = categoryData.filter((e) => e.isPinned == true);
@@ -780,7 +781,7 @@ export default function App() {
               return (
                 <View>
                   <Text>List Item</Text>
-                  <Pressable onPress={() => {setUserArr([item.title]); setUserTitle(item.title); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
+                  <Pressable onPress={() => {setUserArr([item.title, item.category, item.isPinned]); setUserTitle(item.title); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
                     <Text>{item.title}</Text>
                   </Pressable>
                   <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
