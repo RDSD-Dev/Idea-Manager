@@ -1,9 +1,10 @@
 import * as React from 'react';
-import { StyleSheet, Text, View, SafeAreaView, SectionList, Pressable, TextInput, Button, Modal } from 'react-native';
+import { StyleSheet, Text, View, SafeAreaView, SectionList, Pressable, TextInput, Button, Modal, ScrollView } from 'react-native';
 import { useState, useEffect } from 'react';
 import { RadioButton, Checkbox } from 'react-native-paper';
 import DropDownPicker from 'react-native-dropdown-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function App() {
   const [categories, setCategories] = useState([]);
@@ -328,6 +329,23 @@ export default function App() {
     eraseUserInputs();
   }
 
+  const displayNote = () =>{
+    const value = AsyncStorage.getItem("ideaManager" + userTitle).then((value) => {
+      if(!value){
+          console.log('Making New Note Key');
+          const listArr = [];
+         AsyncStorage.setItem("ideaManager" + userTitle, "");
+     }
+     else{
+         if(value != undefined){
+         setUserText(JSON.parse(value));
+         }
+      }
+    });
+  
+    setNoteVisibility(true);
+  }
+
   const eraseUserInputs = () => {
     console.log("Clear");
     setErrorMessage(null);
@@ -564,7 +582,15 @@ export default function App() {
   }
 
   const noteModal = () => {
-    
+    return(
+      <View style={styles.modalView}>
+          <Text>{userTitle}</Text>
+          <ScrollView>
+            <TextInput multiline={true} value={userText} onChangeText={setUserText}/>
+        </ScrollView>
+        <Button title='Exit' onPress={() => {eraseUserInputs(); setNoteVisibility(false)}}/>
+      </View>
+    );
   }
 
   const sortCategory = (editCategory) => {
@@ -777,7 +803,7 @@ export default function App() {
           }}
         >
           <View style={styles.centeredView}>
-
+            {noteModal()}
           </View>
         </Modal>
 
@@ -791,15 +817,17 @@ export default function App() {
             if(item.type == 0){ // Note
               return (
                 <View>
+                  <Pressable  onPress={() => {setUserArr([item.title]); setUserTitle(item.title); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
                   <Text>Note</Text>
-                  <Pressable onPress={() => {setUserArr([item.title]); setUserTitle(item.title); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
+                  </Pressable>
+                  <Pressable onPress={() => {setUserTitle(item.title); displayNote()}}>
                     <Text>{item.title}</Text>
                   </Pressable>
                   <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
               </View>
               );
             }
-            else if(item.type !== undefined){
+            else if(item.type !== undefined){ // List Item
               return (
                 <View>
                   <Text>List Item</Text>
