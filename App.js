@@ -31,8 +31,12 @@ export default function App() {
   const [userBoolean, setUserBoolean] = useState(false);
 
   useEffect(() => {
-    //console.log("Use Effect");
-  }, []);
+    console.log("Use Effect");
+    if(noteVisibility){
+      console.log("Effect ", userText)
+      AsyncStorage.setItem("ideaManager" + userTitle, userText);
+    }
+  }, [userText]);
 
   const addCategory = () => {
     let isValid = true;
@@ -330,20 +334,29 @@ export default function App() {
   }
 
   const displayNote = () =>{
-    const value = AsyncStorage.getItem("ideaManager" + userTitle).then((value) => {
+    const noteTitle = JSON.stringify('ideaManager' + userTitle);
+    if(!noteVisibility){
+    const value = AsyncStorage.getItem(noteTitle).then((value) => {
+      console.log(value);
       if(!value){
           console.log('Making New Note Key');
           const listArr = [];
-         AsyncStorage.setItem("ideaManager" + userTitle, "");
+         AsyncStorage.setItem(noteTitle, "");
      }
      else{
          if(value != undefined){
-         setUserText(JSON.parse(value));
+         setUserText(value);
          }
       }
     });
-  
     setNoteVisibility(true);
+  }
+  else{
+    console.log(userText, " : ", userTitle);
+    AsyncStorage.setItem(noteTitle, JSON.stringify(userText)).then(() =>eraseUserInputs() )
+    setNoteVisibility(false)
+  }
+  
   }
 
   const eraseUserInputs = () => {
@@ -583,12 +596,13 @@ export default function App() {
 
   const noteModal = () => {
     return(
-      <View style={styles.modalView}>
-          <Text>{userTitle}</Text>
-          <ScrollView>
-            <TextInput multiline={true} value={userText} onChangeText={setUserText}/>
-        </ScrollView>
-        <Button title='Exit' onPress={() => {eraseUserInputs(); setNoteVisibility(false)}}/>
+      <View style={styles.noteView}>
+          <Text >{userTitle}</Text>
+          <Button title='Exit' onPress={() => {displayNote()}}/>
+          <Text>{userText}</Text>
+          <View style={styles.textContainer}>
+            <TextInput style={styles.textBox} multiline={true} value={userText} onChangeText={setUserText}/>
+        </View>
       </View>
     );
   }
@@ -910,6 +924,35 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+  },
+
+  noteView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    height: '92%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+
+  textContainer: {
+    alignItems: 'left'
+  },
+
+  textBox: {
+    width: '100%',
+    borderStyle: 'solid',
+    borderColor: 'black',
+    borderWidth: 2,
+    borderRadius: 2
   },
 
   button: {
