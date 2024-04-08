@@ -178,6 +178,11 @@ export default function App() {
         type: 0,
         makeDate: null
       };
+
+      if(addItem.title == "appCategories" || addItem.title == "appCategoryData"){ // Note Name check
+        setErrorMessage("Note title cannot be ", addItem.title, ".");
+        isValid = false;
+      }
     }
     else{ // List Item
       addItem = {
@@ -336,7 +341,6 @@ export default function App() {
     noteTitle = JSON.stringify(noteTitle);
     if(!noteVisibility){
     const value = AsyncStorage.getItem(noteTitle).then((value) => {
-      console.log(value);
       if(!value){
           console.log('Making New Note Key');
           const listArr = [];
@@ -351,7 +355,6 @@ export default function App() {
     setNoteVisibility(true);
   }
   else{
-    console.log(userText, " : ", userTitle);
     AsyncStorage.setItem(noteTitle, userText).then(() =>eraseUserInputs() );
     setNoteVisibility(false);
   }
@@ -596,18 +599,16 @@ export default function App() {
       <View style={styles.noteView}>
           <Text >{userTitle}</Text>
           <Button title='Exit' onPress={() => {displayNote(userTitle)}}/>
-          <Text>{userText}</Text>
-          <View style={styles.textContainer}>
-            <TextInput style={styles.textBox} multiline={true} value={userText} onChangeText={setUserText}/>
-        </View>
+          <TextInput style={styles.textBox} multiline={true} value={userText} onChangeText={setUserText}/>
+
       </View>
     );
   }
 
-  const sortCategory = (editCategory) => {
+  const sortCategory = (editCategory, items=[]) => {
     console.log("Sorting: ", editCategory);
     let filterData = items;
-    if(items.length > 0){
+    if(items.length <= 0){
       filterData = categoryData;
     }
     let data = [];
@@ -636,39 +637,6 @@ export default function App() {
     index = categories.indexOf(categories.filter((e) => e.title == editCategory)[0]);
     fixCategories[index].data = sortedData;
     setCategories(fixCategories);
-  }
-
-  const sortData = (dataArr) => {
-    let categoryNames = [];
-    let categoryDropDown = categoryItems;
-    for(let i=0; i<categories.length; i++){
-      const title = categories[i].title;
-      categoryNames.push(title);
-      if(title !== "Pinned" && title !== "List Items" && title !== "Notes" ){
-        categoryDropDown.push({label: title, value: title});
-      }
-    }
-    categoryDropDown.push({label: null, value: null});
-    setCategoryItems(categoryDropDown);
-
-    let tempCategories = categories;
-    for(let i=0; i<dataArr.length; i++){ 
-      if(dataArr[i].isPinned){// Pinned
-        tempCategories[0].data.push(dataArr[i]);
-      }
-      if(dataArr[i].type == 0){ // Note
-        tempCategories[tempCategories.length-1].data.push(dataArr[i]);
-      }
-      else{ // List Item
-        tempCategories[tempCategories.length-2].data.push(dataArr[i]);
-      }
-      // Insert data object into temp categories under its category
-      const index = categoryNames.indexOf(dataArr[i].category);
-      if(index > 0){
-        tempCategories[index].data.push(dataArr[i]);
-      }
-    }
-    setCategories(tempCategories);
   }
 
   if(shouldLoadData){
@@ -715,10 +683,10 @@ export default function App() {
           if(categories[i].title !== "Pinned" && categories[i].title !== "List Items" && categories[i].title !== "Notes"){
             tempCategoryItems.push({label: categories[i].title, value: categories[i].title});
           }
+          sortCategory(categories[i].title, JSON.parse(value));
         }
         setCategoryItems(tempCategoryItems);
       }
-      sortData(JSON.parse(value));
     }); 
 
     if(categories.length >= 3){
@@ -915,7 +883,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   modalView: {
     margin: 20,
     backgroundColor: 'white',
@@ -931,14 +898,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-
   noteView: {
     margin: 20,
     backgroundColor: 'white',
     borderRadius: 20,
     padding: 35,
     height: '92%',
-    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -948,11 +913,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-
   textContainer: {
     alignItems: 'left'
   },
-
   textBox: {
     width: '100%',
     borderStyle: 'solid',
@@ -960,7 +923,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: 2
   },
-
   button: {
     borderRadius: 20,
     padding: 10,
