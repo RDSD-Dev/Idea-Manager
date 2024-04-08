@@ -31,7 +31,6 @@ export default function App() {
   const [userBoolean, setUserBoolean] = useState(false);
 
   useEffect(() => {
-    console.log("Use Effect");
     if(noteVisibility){
       AsyncStorage.setItem(JSON.stringify(userTitle), userText);
     }
@@ -176,7 +175,7 @@ export default function App() {
         category: categoryValue,
         sortingNum: 0,
         isPinned: userBoolean,
-        type: userInt,
+        type: 0,
         makeDate: null
       };
     }
@@ -231,6 +230,9 @@ export default function App() {
       else{
         tempData.push(addItem);
       }
+      AsyncStorage.setItem('appCategoryData', JSON.stringify(tempData));
+      setCategoryData(tempData);
+
       if(addItem.isPinned){
         tempCategories[0].data.push(addItem);
       }
@@ -241,19 +243,19 @@ export default function App() {
         tempCategories[tempCategories.length-2].data.push(addItem);
       }
       setCategories(tempCategories);
-      AsyncStorage.setItem('appCategoryData', JSON.stringify(tempData));
+      
       setAddItemVisibility(false);
       eraseUserInputs();
     }
   }
 
   const updateItem= (updateTitle) => {
+    console.log("Updating Item: ", updateTitle);
     const newTitle = userTitle;
     const newIsPinned = userBoolean;
     const newCategory = categoryValue;
     let editCategoryData = categoryData;
-    const oldItem = {title: userArr[0], category: userArr[1], isPinned: userArr[2]};
-    console.log("Updating Item: ", updateTitle);
+    const oldItem = categoryData.filter((e) => e.title == updateTitle)[0];
     let index = editCategoryData.indexOf(editCategoryData.filter((e) => e.title == updateTitle)[0]);
     editCategoryData[index].title = newTitle;
     editCategoryData[index].category = newCategory;
@@ -261,11 +263,20 @@ export default function App() {
     setCategoryData(editCategoryData);
     AsyncStorage.setItem('appCategoryData', JSON.stringify(editCategoryData));
 
-    console.log("Old Item:  ", oldItem);
-    if(!oldItem.isPinned || newIsPinned){
-      console.log("Sort pinned");
-      sortCategory("Pinned");
+
+    sortCategory("Pinned");
+
+    if(oldItem.type == 0){ // Note
+      AsyncStorage.getItem(JSON.stringify(updateTitle)).then((value) => {
+        AsyncStorage.setItem(JSON.stringify(newTitle), value);
+      });
+      AsyncStorage.removeItem(JSON.stringify(updateTitle));
+      sortCategory("Notes");
     }
+    else{ // List Items
+     sortCategory("List Items");
+    }
+
     if(oldItem.category != null && oldItem.category != ""){ // Was in a category
       sortCategory(oldItem.category);
       if(oldItem.category != newCategory && newCategory != null && newCategory != ""){ // Updated to new category
@@ -276,13 +287,6 @@ export default function App() {
       if(newCategory != null && newCategory != ""){
         sortCategory(newCategory);
       }
-    }
-
-    if(oldItem.type == 0){ // Note
-      sortCategory("Notes");
-    }
-    else{
-     sortCategory("List Items");
     }
 
     setUpdateModalVisibility(false);
@@ -300,33 +304,29 @@ export default function App() {
     let index = editCategoryData.indexOf(categoryData.filter((e) => e.title == title)[0]);
     editCategoryData.splice(index, 1);
 
+    setCategoryData(editCategoryData);
+    AsyncStorage.setItem('appCategoryData', JSON.stringify(editCategoryData));
 
     if(item.isPinned){
-      index = editCategories[0].data.indexOf(editCategories[0].data.filter((e) => e.title == title)[0]);
-      editCategories[0].data.splice(item, 1);
+      sortCategory("Pinned");
     }
     
     const category = editCategories.filter((e) => e.title == item.category);
     if(category.length > 0){
       for(let i=0;i<category.length; i++){
-        index = editCategories.indexOf(category[i]);
-        editCategories[index].data.splice(editCategories[index].data.indexOf(editCategories[index].data.filter((e) => e.title == title)[0]), 1);
+        sortCategory(category[i].title);
       }
     }
 
     if(item.type == 0){ // Note
       const num = editCategories.length - 1;
-      index = editCategories[num].data.indexOf(editCategories[num].data.filter((e) => e.title == title)[0]);
-      editCategories[num].data.splice(item, 1);
+      sortCategory("Notes");
+      AsyncStorage.removeItem(JSON.stringify(title));
     }
     else{ // List Item
-      const num = editCategories.length - 2;
-      index = editCategories[num].data.indexOf(editCategories[num].data.filter((e) => e.title == title)[0]);
-      editCategories[num].data.splice(item, 1);
+      sortCategory("List Items");
     }
 
-    setCategoryData(editCategoryData);
-    AsyncStorage.setItem('appCategoryData', JSON.stringify(editCategoryData));
     setCategories(editCategories);
     setDeleteConfirmationVisibility(false);
     eraseUserInputs();
@@ -506,7 +506,6 @@ export default function App() {
         <View style={styles.modalView}>
           <Text style={styles.modalText}>Update Item: {userArr[0]}</Text>
           <Text>{errorMessage}</Text>
-          <Text>List Item</Text>
 
           <Text>Title: </Text>
           <TextInput value={userTitle} placeholder={userArr[0]} onChangeText={setUserTitle}/>
@@ -605,20 +604,24 @@ export default function App() {
     );
   }
 
-  const sortCategory = (editCategory) => {
+  const sortCategory = (editCategory, items=[]) => {
     console.log("Sorting: ", editCategory);
+    let filterData = items;
+    if(categoryData.length > 0){
+      filterData = categoryData;
+    }
     let data = [];
     if(editCategory == "Pinned"){
-      data = categoryData.filter((e) => e.isPinned == true);
+      data = filterData.filter((e) => e.isPinned == true);
     }
     else if(editCategory == "List Items"){
-      data = categoryData.filter((e) => e.type > 0);
+      data = filterData.filter((e) => e.type > 0);
     }
     else if(editCategory == "Notes"){
-      data = categoryData.filter((e) => e.type == 0);
+      data = filterData.filter((e) => e.type == 0);
     }
     else{
-      data = categoryData.filter((e) => e.category == editCategory);
+      data = filterData.filter((e) => e.category == editCategory);
     }
 
     let sortedData = [];
@@ -628,13 +631,11 @@ export default function App() {
     for(let i=0; i<data.length; i++){
       //const index = data[i].sortNum;
       sortedData[i] = data[i];
-  }
-  let fixCategories = categories;
-  index = categories.indexOf(categories.filter((e) => e.title == editCategory)[0]);
-  fixCategories[index].data = sortedData;
-  console.log("Category: ", editCategory, " : ", sortedData);
-  setCategories(fixCategories);
-
+    }
+    let fixCategories = categories;
+    index = categories.indexOf(categories.filter((e) => e.title == editCategory)[0]);
+    fixCategories[index].data = sortedData;
+    setCategories(fixCategories);
   }
 
   const sortData = (dataArr) => {
@@ -709,7 +710,14 @@ export default function App() {
       }
       else{
         setCategoryData(JSON.parse(value));
-        sortData(JSON.parse(value));
+        let tempCategoryItems = [{label: "", value: ""}];
+        for(let i=0; i<categories.length; i++){
+          if(categories[i].title !== "Pinned" && categories[i].title !== "List Items" && categories[i].title !== "Notes"){
+            tempCategoryItems.push({label: categories[i].title, value: categories[i].title});
+          }
+          sortCategory(categories[i].title, JSON.parse(value));
+        }
+        setCategoryItems(tempCategoryItems);
       }
     }); 
 
