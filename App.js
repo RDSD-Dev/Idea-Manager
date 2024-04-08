@@ -604,10 +604,10 @@ export default function App() {
     );
   }
 
-  const sortCategory = (editCategory, items=[]) => {
+  const sortCategory = (editCategory) => {
     console.log("Sorting: ", editCategory);
     let filterData = items;
-    if(categoryData.length > 0){
+    if(items.length > 0){
       filterData = categoryData;
     }
     let data = [];
@@ -715,10 +715,10 @@ export default function App() {
           if(categories[i].title !== "Pinned" && categories[i].title !== "List Items" && categories[i].title !== "Notes"){
             tempCategoryItems.push({label: categories[i].title, value: categories[i].title});
           }
-          sortCategory(categories[i].title, JSON.parse(value));
         }
         setCategoryItems(tempCategoryItems);
       }
+      sortData(JSON.parse(value));
     }); 
 
     if(categories.length >= 3){
