@@ -33,8 +33,7 @@ export default function App() {
   useEffect(() => {
     console.log("Use Effect");
     if(noteVisibility){
-      console.log("Effect ", userText)
-      AsyncStorage.setItem("ideaManager" + userTitle, userText);
+      AsyncStorage.setItem(JSON.stringify(userTitle), userText);
     }
   }, [userText]);
 
@@ -333,8 +332,8 @@ export default function App() {
     eraseUserInputs();
   }
 
-  const displayNote = () =>{
-    const noteTitle = JSON.stringify('ideaManager' + userTitle);
+  const displayNote = (noteTitle) =>{
+    noteTitle = JSON.stringify(noteTitle);
     if(!noteVisibility){
     const value = AsyncStorage.getItem(noteTitle).then((value) => {
       console.log(value);
@@ -353,10 +352,9 @@ export default function App() {
   }
   else{
     console.log(userText, " : ", userTitle);
-    AsyncStorage.setItem(noteTitle, JSON.stringify(userText)).then(() =>eraseUserInputs() )
-    setNoteVisibility(false)
+    AsyncStorage.setItem(noteTitle, userText).then(() =>eraseUserInputs() );
+    setNoteVisibility(false);
   }
-  
   }
 
   const eraseUserInputs = () => {
@@ -598,7 +596,7 @@ export default function App() {
     return(
       <View style={styles.noteView}>
           <Text >{userTitle}</Text>
-          <Button title='Exit' onPress={() => {displayNote()}}/>
+          <Button title='Exit' onPress={() => {displayNote(userTitle)}}/>
           <Text>{userText}</Text>
           <View style={styles.textContainer}>
             <TextInput style={styles.textBox} multiline={true} value={userText} onChangeText={setUserText}/>
@@ -834,7 +832,7 @@ export default function App() {
                   <Pressable  onPress={() => {setUserArr([item.title]); setUserTitle(item.title); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
                   <Text>Note</Text>
                   </Pressable>
-                  <Pressable onPress={() => {setUserTitle(item.title); displayNote()}}>
+                  <Pressable onPress={() => {setUserTitle(item.title); displayNote(item.title)}}>
                     <Text>{item.title}</Text>
                   </Pressable>
                   <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
