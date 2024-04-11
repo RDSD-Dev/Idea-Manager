@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { StyleSheet, Text, View, SafeAreaView, SectionList, Pressable, TextInput, Button, Modal, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, SafeAreaView, SectionList, Pressable, TextInput, Button, Modal, Image, ScrollView } from 'react-native';
 import { useState, useEffect } from 'react';
 import { RadioButton, Checkbox } from 'react-native-paper';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -23,6 +23,7 @@ export default function App() {
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [checked, setChecked] = useState('first');
 
+  const [images, setImages] = useState([]);
   const [errorMessage, setErrorMessage] = useState(undefined);
   const [userTitle, setUserTitle] = useState(undefined);
   const [userText, setUserText] = useState(undefined);
@@ -33,8 +34,9 @@ export default function App() {
   useEffect(() => {
     if(noteVisibility){
       AsyncStorage.setItem(JSON.stringify(userTitle), userText);
+      AsyncStorage.setItem(JSON.stringify(userTitle + "Pics"), JSON.stringify(images));
     }
-  }, [userText]);
+  }, [userText, images]);
 
   const addCategory = () => {
     let isValid = true;
@@ -173,7 +175,7 @@ export default function App() {
       addItem = {
         title: userTitle,
         category: categoryValue,
-        sorting: [],
+        sortingNum: 0,
         isPinned: userBoolean,
         type: 0,
         makeDate: null
@@ -188,7 +190,7 @@ export default function App() {
       addItem = {
         title: userTitle,
         category: categoryValue,
-        sorting: [],
+        sortingNum: 0,
         isPinned: userBoolean,
         type: userInt,
         remakeNum: 0,
@@ -220,37 +222,28 @@ export default function App() {
       console.log("Add Item: ", addItem.title);
       let tempData = categoryData;
       let sortArr = [];
-      let sortNum = 0;
 
       if(addItem.isPinned){
         sortArr.push("Pinned");
-        sortNum = categoryData.filter((e) => e.isPinned).length ;
-        addItem.sorting.push({title: "Pinned", num: sortNum})
       }
       if(addItem.category != null && addItem.category != ""){
-        sortNum = categoryData.filter((e) => e.category == addItem.category).length;
-        addItem.sorting.push({title: addItem.category, num: sortNum})
+        addItem.sortingNum = categoryData.filter((e) => e.category == addItem.category).length;
         sortArr.push(addItem.category);
       }
       if(addItem.type == 0){ // Note
-        sortNum = categoryData.filter((e) => e.type == 0).length;
-        addItem.sorting.push({title: "Notes", num: sortNum})
         sortArr.push("Notes");
       }
       else{ // List Item
-        sortNum = categoryData.filter((e) => e.type !== 0).length;
-        addItem.sorting.push({title: "List Items", num: sortNum})
         sortArr.push("List Items");
       }
 
-      console.log(addItem);
+      //console.log(addItem);
       tempData.push(addItem);
       AsyncStorage.setItem('appCategoryData', JSON.stringify(tempData));
       setCategoryData(tempData);
-      sortArr.forEach(function (value, index) {
+      sortArr.forEach(function (value) {
         sortCategory(value);
       });
-
       
       setAddItemVisibility(false);
       eraseUserInputs();
@@ -267,25 +260,6 @@ export default function App() {
     const oldItem = categoryData.filter((e) => e.title == updateTitle)[0];
     let index = editCategoryData.indexOf(editCategoryData.filter((e) => e.title == updateTitle)[0]);
     editCategoryData[index].title = newTitle;
-
-    /*
-    userArr.forEach(function(cat, c){
-      const catData = categoryData.filter((e) => e.category == cat.title);
-      for(let i=cat.num; i<catData.length; i++){
-        let sortingTitleIndex = 0;
-        const tempIndex = editCategoryData.findIndex((item) => {
-          sortingTitleIndex = item.sorting.findIndex((title) => {return title.title == cat.title});
-          return item.category == cat.title && item.sorting[sortingTitleIndex].num == i;
-        });
-      editCategoryData[tempIndex].sorting[sortingTitleIndex].num = i +1;
-      }
-      const tempIndex = editCategoryData[index].sorting.findIndex((item) => {
-        return item.title = cat.title;
-      });
-      editCategoryData[index].sorting[tempIndex] = cat;
-    })
-    */
-
     editCategoryData[index].category = newCategory;
     editCategoryData[index].isPinned = newIsPinned;
 
@@ -362,11 +336,9 @@ export default function App() {
 
   const displayNote = (noteTitle) =>{
     noteTitle = JSON.stringify(noteTitle);
-    if(!noteVisibility){
-    const value = AsyncStorage.getItem(noteTitle).then((value) => {
+    let value = AsyncStorage.getItem(noteTitle).then((value) => {
       if(!value){
           console.log('Making New Note Key');
-          const listArr = [];
          AsyncStorage.setItem(noteTitle, "");
      }
      else{
@@ -375,12 +347,17 @@ export default function App() {
          }
       }
     });
+    value = AsyncStorage.getItem(userTitle + "Pics").then((value) => {
+      console.log(value);
+      if(!value){
+        console.log('Making New Note Key');
+        AsyncStorage.setItem(JSON.stringify(userTitle + "Pics"), JSON.stringify([]));
+      }
+      else{
+        setImages(JSON.parse(value));
+      }
+    });
     setNoteVisibility(true);
-  }
-  else{
-    AsyncStorage.setItem(noteTitle, userText).then(() =>eraseUserInputs() );
-    setNoteVisibility(false);
-  }
   }
 
   const eraseUserInputs = () => {
@@ -394,6 +371,50 @@ export default function App() {
     setCategoryOpen(false);
     setCategoryValue(null);    
     setUserArr([]);
+    setImages([]);
+  }
+
+  const pickImage = async () => {
+    // No permissions request is necessary for launching the image library
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      console.log("Picture Added");
+      let tempArr = images;
+      tempArr.push(result.assets[0].uri);
+      setImages(tempArr);
+      console.log(images);
+      AsyncStorage.setItem(userTitle + "Pics", JSON.stringify(images));
+
+    }
+  };
+
+  const displayPics = () => {
+    console.log("Displaying Pics");
+    return images.map(name => {
+      return(
+        <View>
+          <Image key={name} source={{ uri: name}} style={{ width: 200, height: 200 }} />
+        </View>
+      );
+    })
+  }
+
+  const noteModal = () => {
+    return(
+      <View style={styles.noteView}>
+          <Text >{userTitle}</Text>
+          <Button title='Exit' onPress={() => {AsyncStorage.setItem(JSON.stringify(userTitle + "Pics"), JSON.stringify(images)); AsyncStorage.setItem(JSON.stringify(userTitle), userText).then(() =>{eraseUserInputs() });setNoteVisibility(false);}}/>
+          <Button title="Pick an image from camera roll" onPress={pickImage} />
+          {displayPics()}
+          <TextInput style={styles.textBox} multiline={true} value={userText} onChangeText={setUserText}/>
+
+      </View>
+    );
   }
 
   const addItemModal = () => {
@@ -528,7 +549,6 @@ export default function App() {
       );
     }
     else{ // Item
-      //userArr[0] = {title: categoryValue, num: userInt};
       return(
         <View style={styles.modalView}>
           <Text style={styles.modalText}>Update Item: {userArr[0]}</Text>
@@ -553,9 +573,6 @@ export default function App() {
             setItems={setCategoryItems}
           />
 
-          <Text>Sorting Index: </Text>
-          <TextInput value={userInt}/>
-
           <Pressable
               style={[styles.button, styles.buttonClose]}
               onPress={() => {console.log(userBoolean); updateItem(userArr[0])}}>
@@ -572,8 +589,8 @@ export default function App() {
     }
   }
 
-  const deleteModal = () => { // userBoolean : true: category false: item
-    if(userBoolean){
+  const deleteModal = () => { // checked : second: category first: item
+    if(checked == 'second'){
       return (
         <View style={styles.modalView}>
           <Text style={styles.modalText}>Delete Category: {userTitle}: {userText}?</Text>
@@ -622,17 +639,6 @@ export default function App() {
     }
   }
 
-  const noteModal = () => {
-    return(
-      <View style={styles.noteView}>
-          <Text >{userTitle}</Text>
-          <Button title='Exit' onPress={() => {displayNote(userTitle)}}/>
-          <TextInput style={styles.textBox} multiline={true} value={userText} onChangeText={setUserText}/>
-
-      </View>
-    );
-  }
-
   const sortCategory = (editCategory, items=[]) => {
     console.log("Sorting: ", editCategory);
     let filterData = items;
@@ -657,10 +663,17 @@ export default function App() {
     for(let i=0; i<data.length; i++){
       sortedData.push({title: "Empty"});
     }
-    for(let i=0; i<data.length; i++){
-      sortedData[i] = data.filter((e) => e.sorting.filter((t) => t.title == editCategory && t.num == i)[0])[0];
-      //sortedData[i] = data[i];
+    if(editCategory!== 'Pinned' && editCategory !== 'List Items' && editCategory !== 'Notes'){
+      for(let i=0; i<data.length; i++){
+        sortedData[i] = data[i];
+      }
     }
+    else{
+      for(let i=0; i<data.length; i++){
+        sortedData[i] = data[i];
+      }
+    }
+
     let fixCategories = categories;
     index = categories.indexOf(categories.filter((e) => e.title == editCategory)[0]);
     fixCategories[index].data = sortedData;
