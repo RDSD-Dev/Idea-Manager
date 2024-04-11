@@ -173,7 +173,7 @@ export default function App() {
       addItem = {
         title: userTitle,
         category: categoryValue,
-        sortingNum: 0,
+        sorting: [],
         isPinned: userBoolean,
         type: 0,
         makeDate: null
@@ -188,7 +188,7 @@ export default function App() {
       addItem = {
         title: userTitle,
         category: categoryValue,
-        sortingNum: 0,
+        sorting: [],
         isPinned: userBoolean,
         type: userInt,
         remakeNum: 0,
@@ -218,56 +218,79 @@ export default function App() {
 
     if(isValid){
       console.log("Add Item: ", addItem.title);
-      let tempCategories = categories;
       let tempData = categoryData;
-      let categoryNames = [];
-      for(let i=0; i<categories.length; i++){
-        categoryNames.push(categories[i].title);
-      }
-
-      let index = categoryNames.indexOf(addItem.category);
-      if(index > 0){
-        const previousItem = tempCategories[index].data[tempCategories[index].data.length-1];
-        tempCategories[index].data.push(addItem);
-        index = tempData.indexOf(previousItem) + 1;
-        tempData.splice(index, 0, addItem);
-      }
-      else{
-        tempData.push(addItem);
-      }
-      AsyncStorage.setItem('appCategoryData', JSON.stringify(tempData));
-      setCategoryData(tempData);
+      let sortArr = [];
+      let sortNum = 0;
 
       if(addItem.isPinned){
-        tempCategories[0].data.push(addItem);
+        sortArr.push("Pinned");
+        sortNum = categoryData.filter((e) => e.isPinned).length ;
+        addItem.sorting.push({title: "Pinned", num: sortNum})
+      }
+      if(addItem.category != null && addItem.category != ""){
+        sortNum = categoryData.filter((e) => e.category == addItem.category).length;
+        addItem.sorting.push({title: addItem.category, num: sortNum})
+        sortArr.push(addItem.category);
       }
       if(addItem.type == 0){ // Note
-        tempCategories[tempCategories.length-1].data.push(addItem);
+        sortNum = categoryData.filter((e) => e.type == 0).length;
+        addItem.sorting.push({title: "Notes", num: sortNum})
+        sortArr.push("Notes");
       }
       else{ // List Item
-        tempCategories[tempCategories.length-2].data.push(addItem);
+        sortNum = categoryData.filter((e) => e.type !== 0).length;
+        addItem.sorting.push({title: "List Items", num: sortNum})
+        sortArr.push("List Items");
       }
-      setCategories(tempCategories);
+
+      console.log(addItem);
+      tempData.push(addItem);
+      AsyncStorage.setItem('appCategoryData', JSON.stringify(tempData));
+      setCategoryData(tempData);
+      sortArr.forEach(function (value, index) {
+        sortCategory(value);
+      });
+
       
       setAddItemVisibility(false);
       eraseUserInputs();
     }
   }
 
-  const updateItem= (updateTitle) => {
+  const updateItem= (updateTitle) => { // userArr == [{title: category title, num: sorting num}]
     console.log("Updating Item: ", updateTitle);
     const newTitle = userTitle;
     const newIsPinned = userBoolean;
     const newCategory = categoryValue;
+
     let editCategoryData = categoryData;
     const oldItem = categoryData.filter((e) => e.title == updateTitle)[0];
     let index = editCategoryData.indexOf(editCategoryData.filter((e) => e.title == updateTitle)[0]);
     editCategoryData[index].title = newTitle;
+
+    /*
+    userArr.forEach(function(cat, c){
+      const catData = categoryData.filter((e) => e.category == cat.title);
+      for(let i=cat.num; i<catData.length; i++){
+        let sortingTitleIndex = 0;
+        const tempIndex = editCategoryData.findIndex((item) => {
+          sortingTitleIndex = item.sorting.findIndex((title) => {return title.title == cat.title});
+          return item.category == cat.title && item.sorting[sortingTitleIndex].num == i;
+        });
+      editCategoryData[tempIndex].sorting[sortingTitleIndex].num = i +1;
+      }
+      const tempIndex = editCategoryData[index].sorting.findIndex((item) => {
+        return item.title = cat.title;
+      });
+      editCategoryData[index].sorting[tempIndex] = cat;
+    })
+    */
+
     editCategoryData[index].category = newCategory;
     editCategoryData[index].isPinned = newIsPinned;
+
     setCategoryData(editCategoryData);
     AsyncStorage.setItem('appCategoryData', JSON.stringify(editCategoryData));
-
 
     sortCategory("Pinned");
 
@@ -399,7 +422,7 @@ export default function App() {
             status={userBoolean ? 'checked' : 'unchecked'}
             onPress={() => {setUserBoolean(!userBoolean); console.log(userBoolean)}}
           />
-          <Text>category: </Text>
+          <Text>Category: </Text>
           <DropDownPicker
             open={categoryOpen}
             value={categoryValue}
@@ -505,6 +528,7 @@ export default function App() {
       );
     }
     else{ // Item
+      //userArr[0] = {title: categoryValue, num: userInt};
       return(
         <View style={styles.modalView}>
           <Text style={styles.modalText}>Update Item: {userArr[0]}</Text>
@@ -518,6 +542,7 @@ export default function App() {
             status={userBoolean ? 'checked' : 'unchecked'}
             onPress={() => {setUserBoolean(!userBoolean);}}
           />
+          
           <Text>category: </Text>
           <DropDownPicker
             open={categoryOpen}
@@ -527,6 +552,9 @@ export default function App() {
             setValue={setCategoryValue}
             setItems={setCategoryItems}
           />
+
+          <Text>Sorting Index: </Text>
+          <TextInput value={userInt}/>
 
           <Pressable
               style={[styles.button, styles.buttonClose]}
@@ -630,8 +658,8 @@ export default function App() {
       sortedData.push({title: "Empty"});
     }
     for(let i=0; i<data.length; i++){
-      //const index = data[i].sortNum;
-      sortedData[i] = data[i];
+      sortedData[i] = data.filter((e) => e.sorting.filter((t) => t.title == editCategory && t.num == i)[0])[0];
+      //sortedData[i] = data[i];
     }
     let fixCategories = categories;
     index = categories.indexOf(categories.filter((e) => e.title == editCategory)[0]);
@@ -805,7 +833,7 @@ export default function App() {
             if(item.type == 0){ // Note
               return (
                 <View>
-                  <Pressable  onPress={() => {setUserArr([item.title]); setUserTitle(item.title); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
+                  <Pressable  onPress={() => {setUserArr([item.title]); setUserTitle(item.title); setUserInt(0); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
                   <Text>Note</Text>
                   </Pressable>
                   <Pressable onPress={() => {setUserTitle(item.title); displayNote(item.title)}}>
