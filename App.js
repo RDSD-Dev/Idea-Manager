@@ -34,7 +34,6 @@ export default function App() {
   useEffect(() => {
     if(noteVisibility){
       AsyncStorage.setItem(JSON.stringify(userTitle), userText);
-      AsyncStorage.setItem(JSON.stringify(userTitle + "Pics"), JSON.stringify(images));
     }
   }, [userText, images]);
 
@@ -335,6 +334,7 @@ export default function App() {
   }
 
   const displayNote = (noteTitle) =>{
+    const str = noteTitle + "Pics";
     noteTitle = JSON.stringify(noteTitle);
     let value = AsyncStorage.getItem(noteTitle).then((value) => {
       if(!value){
@@ -347,11 +347,13 @@ export default function App() {
          }
       }
     });
-    value = AsyncStorage.getItem(userTitle + "Pics").then((value) => {
+    
+    console.log("Get: ", str);
+    value = AsyncStorage.getItem(str).then((value) => {
       console.log(value);
       if(!value){
         console.log('Making New Note Key');
-        AsyncStorage.setItem(JSON.stringify(userTitle + "Pics"), JSON.stringify([]));
+        AsyncStorage.setItem(noteTitle, JSON.stringify([]));
       }
       else{
         setImages(JSON.parse(value));
@@ -383,25 +385,39 @@ export default function App() {
     });
 
     if (!result.canceled) {
+      let title = userTitle;
+      title += "Pics";
       console.log("Picture Added");
-      let tempArr = images;
-      tempArr.push(result.assets[0].uri);
-      setImages(tempArr);
-      console.log(images);
-      AsyncStorage.setItem(userTitle + "Pics", JSON.stringify(images));
-
+      let temp = images;
+      temp.push(result.assets[0].uri);
+      setImages(temp);
+      //setImages([...images, result.assets[0].uri]);
+      AsyncStorage.setItem(title, JSON.stringify(temp));
     }
   };
 
   const displayPics = () => {
-    console.log("Displaying Pics");
-    return images.map(name => {
+    //console.log("Displaying Pics ", images);
+    return images.map((name, index) => {
       return(
-        <View>
-          <Image key={name} source={{ uri: name}} style={{ width: 200, height: 200 }} />
+        <View key={name}>
+          <Pressable onPress={() => {setUserInt(index); setChecked('third'); setDeleteConfirmationVisibility(true)}}>
+            <Image key={name} source={{ uri: name}} style={{ width: 200, height: 200 }} />
+          </Pressable>
         </View>
       );
     })
+  }
+
+  const deletePic = () => {
+    const title = userTitle;
+    const text = userText;
+    let pics = images;
+    pics.splice(userInt, 1);
+    setImages(pics);
+    const str = userTitle + "Pics";
+    AsyncStorage.setItem(str, JSON.stringify(pics));
+    setDeleteConfirmationVisibility(false);
   }
 
   const noteModal = () => {
@@ -589,7 +605,7 @@ export default function App() {
     }
   }
 
-  const deleteModal = () => { // checked : second: category first: item
+  const deleteModal = () => { // checked : second: category first: item third: Picture
     if(checked == 'second'){
       return (
         <View style={styles.modalView}>
@@ -605,6 +621,26 @@ export default function App() {
             <Pressable
               style={[styles.button, styles.buttonClose]}
               onPress={() => {eraseUserInputs(); setDeleteConfirmationVisibility(!deleteConfirmationVisibility)}}>
+              <Text style={styles.textStyle}>Cancel</Text>
+            </Pressable>
+        </View>
+      );
+    }
+    else if(checked == 'third'){
+      return (
+        <View style={styles.modalView}>
+          <Text style={styles.modalText}>Delete Picture?</Text>
+          <Text>{errorMessage}</Text>
+    
+          <Pressable
+              style={[styles.button, styles.buttonClose]}
+              onPress={() => deletePic()}>
+              <Text style={styles.textStyle}>Delete</Text>
+            </Pressable>
+      
+            <Pressable
+              style={[styles.button, styles.buttonClose]}
+              onPress={() => {setDeleteConfirmationVisibility(!deleteConfirmationVisibility)}}>
               <Text style={styles.textStyle}>Cancel</Text>
             </Pressable>
         </View>
