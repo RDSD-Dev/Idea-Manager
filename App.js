@@ -391,20 +391,17 @@ export default function App() {
     noteTitle = JSON.stringify(noteTitle);
     let value = AsyncStorage.getItem(noteTitle).then((value) => {
       if(!value){
-          console.log('Making New Note Key');
-         AsyncStorage.setItem(noteTitle, "");
+        console.log('Making New Note Key');
+        AsyncStorage.setItem(noteTitle, "");
      }
      else{
          if(value != undefined){
-          
          setUserText(value);
          }
       }
     });
     
-    console.log("Get: ", str);
     value = AsyncStorage.getItem(str).then((value) => {
-      console.log(value);
       if(!value){
         console.log('Making New Note Key');
         AsyncStorage.setItem(noteTitle, JSON.stringify([]));
@@ -451,7 +448,6 @@ export default function App() {
   };
 
   const displayPics = () => {
-    //console.log("Displaying Pics ", images);
     return images.map((name, index) => {
       return(
         <View key={name}>
@@ -588,7 +584,7 @@ export default function App() {
             setOpen={setCategoryOpen}
             setValue={setCategoryValue}
             setItems={setCategoryItems}
-            onChangeValue={() => {setUserInt(categoryData.filter((e) => e.category == categoryValue).length)}}
+            onChangeValue={() => {setUserText(""+categoryData.filter((e) => e.category == categoryValue).length)}}
           />
           <Text>Sorting Index: </Text>
           <TextInput value={userText} onChangeText={setUserText}/>
