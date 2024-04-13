@@ -35,7 +35,7 @@ export default function App() {
     if(noteVisibility){
       AsyncStorage.setItem(JSON.stringify(userTitle), userText);
     }
-  }, [userText]);
+  }, [categoryData, userText]);
 
   const addCategory = () => {
     let isValid = true;
@@ -60,7 +60,8 @@ export default function App() {
       const newCategory = {
         title: addCategoryTitle,
         color: userText,
-        data: []
+        data: [],
+        showCompleted: false
       }
 
       let editCategoryItems = categoryItems;
@@ -152,7 +153,7 @@ export default function App() {
         tempData[index].category = null;
       }
       setCategoryData(tempData);
-      AsyncStorage.setItem('appCategoryData', tempData);
+      AsyncStorage.setItem('appCategoryData', JSON.stringify(tempData));
     }
 
     let editCategoryItems = categoryItems;
@@ -347,7 +348,6 @@ export default function App() {
     const item = categoryData.filter((e) => e.title == title)[0];
     console.log("Deleting Item: ", title);
 
-    let editCategories = categories;
     let editCategoryData = categoryData;
 
     let index = editCategoryData.indexOf(categoryData.filter((e) => e.title == title)[0]);
@@ -365,7 +365,7 @@ export default function App() {
       sortCategory("Pinned");
     }
     
-    const category = editCategories.filter((e) => e.title == item.category);
+    const category = categories.filter((e) => e.title == item.category);
     if(category.length > 0){
       for(let i=0;i<category.length; i++){
         sortCategory(category[i].title);
@@ -373,7 +373,7 @@ export default function App() {
     }
 
     if(item.type == 0){ // Note
-      const num = editCategories.length - 1;
+      const num = categories.length - 1;
       sortCategory("Notes");
       AsyncStorage.removeItem(JSON.stringify(title));
     }
@@ -381,8 +381,25 @@ export default function App() {
       sortCategory("List Items");
     }
 
-    setCategories(editCategories);
     setDeleteConfirmationVisibility(false);
+    eraseUserInputs();
+  }
+
+  const completeItem = (title, category, oldSortingNum) => {
+    let data = categoryData;
+    const index = data.findIndex((e) => e.title == title);
+    const today = new Date();
+    data[index].completeDate = (today.getFullYear() + "-" + today.getMonth() + "-" + today.getDate());
+    console.log(oldSortingNum);
+    for(let i=data.filter((e) => e.category == category).length -1; i>oldSortingNum; i--){
+      const tempIndex = data.findIndex((e) => e.category == category && e.sortingNum == i);
+      data[tempIndex].sortingNum = i-1;
+    }
+    data[index].sortingNum = data.filter((e) => e.category == category).length -1;
+
+    AsyncStorage.setItem('appCategoryData', JSON.stringify(data));
+    setCategoryData(data);
+    sortCategory(category, data);
     eraseUserInputs();
   }
 
@@ -495,8 +512,8 @@ export default function App() {
     if(int < 0){
       setUserText('' + 0);
     }
-    else if(int > categoryData.filter((e) => e.category == categoryValue).length){
-      setUserText('' + categoryData.filter((e) => e.category == categoryValue).length);
+    else if(int > categoryData.filter((e) => e.category == categoryValue && !e.completeDate).length){
+      setUserText('' + categoryData.filter((e) => e.category == categoryValue && !e.completeDate).length);
     }
 
     if(checked != 'second'){ // List Item
@@ -646,7 +663,7 @@ export default function App() {
         type = 'List';
       }
       if(updateModalVisibility){
-        const limit = categoryData.filter((e) => e.category == categoryValue).length -1;
+        const limit = categoryData.filter((e) => e.category == categoryValue && !e.completeDate).length -1;
         if(parseInt(userText) < 0){
           setUserText("" + 0);
         }
@@ -805,7 +822,7 @@ export default function App() {
       }
     }
     let fixCategories = categories;
-    index = categories.indexOf(categories.filter((e) => e.title == editCategory)[0]);
+    index = categories.findIndex((e) => e.title == editCategory);
     fixCategories[index].data = sortedData;
     setCategories(fixCategories);
   }
@@ -820,16 +837,19 @@ export default function App() {
             title: "Pinned",
             color: "Pinned",
             data: [],
+            showCompleted: false
           },
           {
             title: "List Items",
             color: "List Items",
             data: [],
+            showCompleted: false
           },
           {
             title: "Notes",
             color: "Notes",
             data: [],
+            showCompleted: false
           },
         ];
         console.log("Temp: " + temArr.length);
@@ -838,6 +858,7 @@ export default function App() {
       }
       else{
         setCategories(JSON.parse(value));
+        console.log(JSON.parse(value));
       }
       setShouldLoadData(false);
     }); 
@@ -862,6 +883,7 @@ export default function App() {
           sortCategory(categories[i].title, JSON.parse(value));
         }
         setCategoryItems(tempCategoryItems);
+        console.log("TempCat: ", categories);
       }
     }); 
 
@@ -978,33 +1000,63 @@ export default function App() {
           sections={categories}
           keyExtractor={(item, index) => item + index}
           renderItem={({item}) => {
-            if(item.type == 0){ // Note
-              return (
-                <View>
-                  <Pressable  onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
-                  <Text>Note : {item.sortingNum}</Text>
-                  </Pressable>
-                  <Pressable onPress={() => {setUserTitle(item.title); displayNote(item.title)}}>
-                    <Text>{item.title}</Text>
-                  </Pressable>
-                  <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
-              </View>
-              );
+            const showCompleted = categories.filter((e) => e.title = item.category)[0].showCompleted;
+            if(showCompleted){
+              if(item.type == 0){ // Note
+                return (
+                  <View>
+                    <Pressable  onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
+                    <Text>Note : {item.sortingNum}</Text>
+                    </Pressable>
+                    <Pressable onPress={() => {setUserTitle(item.title); displayNote(item.title)}}>
+                      <Text>{item.title}</Text>
+                    </Pressable>
+                    <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
+                </View>
+                );
+              }
+              else if(item.type !== undefined){ // List Item
+                return (
+                  <View>
+                    <Text>List Item : {item.sortingNum}</Text>
+                    <Pressable onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
+                      <Text>{item.title}</Text>
+                    </Pressable>
+                    <Button title='Complete' onPress={() => {completeItem(item.title, item.category, item.sortingNum)}}/>
+                    <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
+                </View>
+                );
+              }
             }
-            else if(item.type !== undefined){ // List Item
-              return (
-                <View>
-                  <Text>List Item : {item.sortingNum}</Text>
-                  <Pressable onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
-                    <Text>{item.title}</Text>
-                  </Pressable>
-                  <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
-              </View>
-              );
+            else{
+              if(item.type == 0){ // Note
+                return (
+                  <View>
+                    <Pressable  onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
+                    <Text>Note : {item.sortingNum}</Text>
+                    </Pressable>
+                    <Pressable onPress={() => {setUserTitle(item.title); displayNote(item.title)}}>
+                      <Text>{item.title}</Text>
+                    </Pressable>
+                    <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
+                </View>
+                );
+              }
+              else if(item.type !== undefined && !item.completeDate){ // List Item
+                return (
+                  <View>
+                    <Text>List Item : {item.sortingNum}</Text>
+                    <Pressable onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
+                      <Text>{item.title}</Text>
+                    </Pressable>
+                    <Button title='Complete' onPress={() => {completeItem(item.title, item.category, item.sortingNum)}}/>
+                    <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
+                </View>
+                );
+              }
             }
-
           }}
-          renderSectionHeader={({section: {title, color}}) => {
+          renderSectionHeader={({section: {title, color, showCompleted}}) => {
             if(title == "Pinned"){
               return(
                 <View>
