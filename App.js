@@ -798,9 +798,7 @@ export default function App() {
     }
 
     if(editCategory!== 'Pinned' && editCategory !== 'List Items' && editCategory !== 'Notes'){
-      console.log(sortedData);
       for(let i=0; i<data.length; i++){
-        console.log(data[i]);
         let currentItem = data.filter((e) => e.sortingNum == i)[0];
         sortedData[i] = currentItem;
       }
