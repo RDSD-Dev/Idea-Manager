@@ -28,14 +28,14 @@ export default function App() {
   const [userTitle, setUserTitle] = useState(undefined);
   const [userText, setUserText] = useState(undefined);
   const [userArr, setUserArr] = useState([]);
-  const [userInt, setUserInt] = useState(1);
+  const [userInt, setUserInt] = useState(0);
   const [userBoolean, setUserBoolean] = useState(false);
 
   useEffect(() => {
     if(noteVisibility){
       AsyncStorage.setItem(JSON.stringify(userTitle), userText);
     }
-  }, [userText, images]);
+  }, [userText]);
 
   const addCategory = () => {
     let isValid = true;
@@ -169,12 +169,12 @@ export default function App() {
   
   const addItem = () => { // Title: userTitle, Category: categoryValue, isPinned: userBoolean
     let isValid = true;
-    let addItem
+    let addItem;
     if(checked == 'second'){ // Note
       addItem = {
         title: userTitle,
         category: categoryValue,
-        sortingNum: userInt,
+        sortingNum: parseInt(userText),
         isPinned: userBoolean,
         type: 0,
         makeDate: null
@@ -193,7 +193,7 @@ export default function App() {
       addItem = {
         title: userTitle,
         category: categoryValue,
-        sortingNum: userInt,
+        sortingNum: parseInt(userText),
         isPinned: userBoolean,
         type: 1,
         remakeNum: 0,
@@ -239,7 +239,12 @@ export default function App() {
         sortArr.push("List Items");
       }
 
-      //console.log(addItem);
+      const catData = tempData.filter((e) => e.category == addItem.category);
+      for(let i=catData.length; i > addItem.sortingNum; i--){
+        const index = tempData.findIndex((e) => e.category == addItem.category && e.sortingNum == i-1);
+        tempData[index].sortingNum = i;
+      }
+
       tempData.push(addItem);
       AsyncStorage.setItem('appCategoryData', JSON.stringify(tempData));
       setCategoryData(tempData);
@@ -257,21 +262,53 @@ export default function App() {
     const newTitle = userTitle;
     const newIsPinned = userBoolean;
     const newCategory = categoryValue;
+    const limit = categoryData.filter((e) => e.category == categoryValue).length -1;
+    if(parseInt(userText) < 0){
+      setUserText("" + 0);
+    }
+    else if(parseInt(userText) > limit){
+      setUserText("" + limit);
+    }
+    const newSortingNum = parseInt(userText);
 
     let editCategoryData = categoryData;
     const oldItem = categoryData.filter((e) => e.title == updateTitle)[0];
     let index = editCategoryData.indexOf(editCategoryData.filter((e) => e.title == updateTitle)[0]);
+
     editCategoryData[index].title = newTitle;
     editCategoryData[index].category = newCategory;
     editCategoryData[index].isPinned = newIsPinned;
+    editCategoryData[index].sortingNum = newSortingNum;
 
-    if(oldItem.category != newCategory){ // Is in different category
+    if(oldItem.category !== newCategory){ // Is in different category
       const oldCategoryData = categoryData.filter((e) => e.category == oldItem.category);
-      if(oldItem.sortingNum !== oldCategoryData.length -1){ // Checks if old sorting number is in the middle of the category
-        for(let i=oldItem.sortingNum+1; i<oldCategoryData.length -1; i++){  // needs to iterate through and edit sorting numbers
-          
+      for(let i=oldItem.sortingNum+1; i<oldCategoryData.length -1; i++){  // needs to iterate through and edit sorting numbers
+        const tempIndex = editCategoryData.indexOf(editCategoryData.filter((e) => e.category == oldItem.category && e.sortingNum == i)[0]);
+        editCategoryData[tempIndex].sortingNum = i-1;
+      }
+      const newCategoryData = categoryData.filter((e) => e.category == newCategory);
+      for(let i=newSortingNum; i<newCategoryData; i++){
+        const tempIndex = editCategoryData.indexOf(editCategoryData.filter((e) => e.category == oldItem.category && e.sortingNum == i && e.title !== newTitle)[0]);
+        editCategoryData[tempIndex].sortingNum = i+1;
+      }
+    }
+    else{ // Is in same category
+      console.log("Same");
+      const currentCategoryData = editCategoryData.filter((e) => e.category == newCategory);
+      if(oldItem.sortingNum < newSortingNum){ // Item was moved back in the array
+          for(let i=oldItem.sortingNum; i<newSortingNum; i++){
+            const tempIndex = editCategoryData.indexOf(editCategoryData.filter((e) => e.category == newCategory && e.sortingNum == i+1)[0]);
+            editCategoryData[tempIndex].sortingNum = i-1;
+          }
+      }
+      else{
+      for(let i=newSortingNum; i<currentCategoryData.length; i++){
+        const tempIndex = editCategoryData.indexOf(currentCategoryData.filter((e) => e.category == newCategory && e.sortingNum == i && e.title !== newTitle)[0]);
+        if(tempIndex >= 0){
+          editCategoryData[tempIndex].sortingNum = i-1;
         }
       }
+    }
     }
 
     setCategoryData(editCategoryData);
@@ -283,23 +320,22 @@ export default function App() {
       AsyncStorage.getItem(JSON.stringify(updateTitle)).then((value) => {
         AsyncStorage.setItem(JSON.stringify(newTitle), value);
       });
-      AsyncStorage.removeItem(JSON.stringify(updateTitle));
+      AsyncStorage.getItem(updateTitle + "Pics").then((value) => {
+        AsyncStorage.setItem(newTitle + "Pics", value);
+      });
+      AsyncStorage.removeItem(updateTitle + "Pics");
       sortCategory("Notes");
     }
     else{ // List Items
      sortCategory("List Items");
     }
 
-    if(oldItem.category != null && oldItem.category != ""){ // Was in a category
-      sortCategory(oldItem.category);
-      if(oldItem.category != newCategory && newCategory != null && newCategory != ""){ // Updated to new category
-        sortCategory(newCategory);
-      }
+    if(oldItem.category !== newCategory){
+      sortCategory(oldItem);
+      sortCategory(newCategory);
     }
     else{
-      if(newCategory != null && newCategory != ""){
-        sortCategory(newCategory);
-      }
+      sortCategory(newCategory);
     }
 
     setUpdateModalVisibility(false);
@@ -316,6 +352,11 @@ export default function App() {
 
     let index = editCategoryData.indexOf(categoryData.filter((e) => e.title == title)[0]);
     editCategoryData.splice(index, 1);
+
+    for(let i=editCategoryData.filter((e) => e.category == item.category).length; i > item.sortingNum; i--){
+      index = editCategoryData.findIndex((e) => e.category == item.category && e.sortingNum == i);
+      editCategoryData[index].sortingNum = i-1;
+    }
 
     setCategoryData(editCategoryData);
     AsyncStorage.setItem('appCategoryData', JSON.stringify(editCategoryData));
@@ -355,6 +396,7 @@ export default function App() {
      }
      else{
          if(value != undefined){
+          
          setUserText(value);
          }
       }
@@ -380,7 +422,7 @@ export default function App() {
     setUserTitle(null);
     setUserText(null);
     setChecked('first');
-    setUserInt(1);
+    setUserInt(0);
     setUserBoolean(false);
     setCategoryOpen(false);
     setCategoryValue(null);    
@@ -446,7 +488,22 @@ export default function App() {
   }
 
   const addItemModal = () => {
-    if(checked != 'second'){
+    let int;
+    if(addItemVisibility){
+      int = parseInt(userText);
+    }
+    else{
+      int =0;
+    }
+      
+    if(int < 0){
+      setUserText('' + 0);
+    }
+    else if(int > categoryData.filter((e) => e.category == categoryValue).length){
+      setUserText('' + categoryData.filter((e) => e.category == categoryValue).length);
+    }
+
+    if(checked != 'second'){ // List Item
       return(
         <View style={styles.modalView}>
           <Text style={styles.modalText}>Add List Item</Text>
@@ -455,7 +512,7 @@ export default function App() {
           <RadioButton 
             value='first'
             status={checked === 'first' ? 'checked' : 'unchecked'}
-            onPress={() => {setUserInt(1); setChecked('first')}}
+            onPress={() => {setChecked('first')}}
           />
           <Text>Note Item</Text>
           <RadioButton 
@@ -479,7 +536,10 @@ export default function App() {
             setOpen={setCategoryOpen}
             setValue={setCategoryValue}
             setItems={setCategoryItems}
+            onChangeValue={() => {setUserText(""+categoryData.filter((e) => e.category == categoryValue).length)}}
           />
+          <Text>Sorting Index: </Text>
+          <TextInput value={userText} onChangeText={setUserText}/>
 
           <Pressable
               style={[styles.button, styles.buttonClose]}
@@ -528,7 +588,10 @@ export default function App() {
             setOpen={setCategoryOpen}
             setValue={setCategoryValue}
             setItems={setCategoryItems}
+            onChangeValue={() => {setUserInt(categoryData.filter((e) => e.category == categoryValue).length)}}
           />
+          <Text>Sorting Index: </Text>
+          <TextInput value={userText} onChangeText={setUserText}/>
 
           <Pressable
               style={[styles.button, styles.buttonClose]}
@@ -586,10 +649,14 @@ export default function App() {
       if(userArr.length > 0 && userArr[0].type !== 0){
         type = 'List';
       }
-      if(userText != categoryValue){ // Just changed category
-        setUserText(categoryValue);
-        const int = categoryData.filter((e) => e.category == categoryValue).length;
-        setUserInt(int);
+      if(updateModalVisibility){
+        const limit = categoryData.filter((e) => e.category == categoryValue).length -1;
+        if(parseInt(userText) < 0){
+          setUserText("" + 0);
+        }
+        else if(parseInt(userText) > limit){
+          setUserText("" + limit);
+        }
       }
       return(
         <View style={styles.modalView}>
@@ -613,10 +680,11 @@ export default function App() {
             setOpen={setCategoryOpen}
             setValue={setCategoryValue}
             setItems={setCategoryItems}
+            onChangeValue={() => {setUserInt(categoryData.filter((e) => e.category == categoryValue).length); setUserText("" + categoryData.filter((e) => e.category == categoryValue).length)}}
           />
 
           <Text>Sorting Index: </Text>
-          <TextInput value={JSON.stringify(userInt)} onChangeText={setUserInt}/>
+          <TextInput value={userText} onChangeText={setUserText}/>
 
           <Pressable
               style={[styles.button, styles.buttonClose]}
@@ -728,9 +796,13 @@ export default function App() {
     for(let i=0; i<data.length; i++){
       sortedData.push({title: "Empty"});
     }
+
     if(editCategory!== 'Pinned' && editCategory !== 'List Items' && editCategory !== 'Notes'){
+      console.log(sortedData);
       for(let i=0; i<data.length; i++){
-        sortedData[i] = data[i];
+        console.log(data[i]);
+        let currentItem = data.filter((e) => e.sortingNum == i)[0];
+        sortedData[i] = currentItem;
       }
     }
     else{
@@ -738,7 +810,6 @@ export default function App() {
         sortedData[i] = data[i];
       }
     }
-
     let fixCategories = categories;
     index = categories.indexOf(categories.filter((e) => e.title == editCategory)[0]);
     fixCategories[index].data = sortedData;
@@ -781,10 +852,15 @@ export default function App() {
       if(!value){
         console.log('Making New Data Key');
         AsyncStorage.setItem('appCategoryData', JSON.stringify([]));
+        for(let i=0; i<categories.length; i++){
+          if(categories[i].title !== "Pinned" && categories[i].title !== "List Items" && categories[i].title !== "Notes"){
+            tempCategoryItems.push({label: categories[i].title, value: categories[i].title});
+          }
+        }
       }
       else{
         setCategoryData(JSON.parse(value));
-        let tempCategoryItems = [{label: "", value: ""}];
+        let tempCategoryItems = [];
         for(let i=0; i<categories.length; i++){
           if(categories[i].title !== "Pinned" && categories[i].title !== "List Items" && categories[i].title !== "Notes"){
             tempCategoryItems.push({label: categories[i].title, value: categories[i].title});
@@ -911,7 +987,7 @@ export default function App() {
             if(item.type == 0){ // Note
               return (
                 <View>
-                  <Pressable  onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText(item.category); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
+                  <Pressable  onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
                   <Text>Note : {item.sortingNum}</Text>
                   </Pressable>
                   <Pressable onPress={() => {setUserTitle(item.title); displayNote(item.title)}}>
@@ -925,7 +1001,7 @@ export default function App() {
               return (
                 <View>
                   <Text>List Item : {item.sortingNum}</Text>
-                  <Pressable onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText(item.category); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
+                  <Pressable onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
                     <Text>{item.title}</Text>
                   </Pressable>
                   <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
@@ -970,7 +1046,7 @@ export default function App() {
                   <Pressable onPress={() => {setUserTitle(title); setUserText(color); setUserArr([title, color]); setChecked('second');  setUpdateModalVisibility(true)}}>
                     <Text>{title} : {color}</Text>
                   </Pressable>
-                <Button title='+' onPress={() => {setCategoryValue(title); setAddItemVisibility(true)}}/>
+                <Button title='+' onPress={() => {setCategoryValue(title); setUserText(""+categoryData.filter((e) => e.category == title).length); setAddItemVisibility(true)}}/>
                 <Button title='Delete' onPress={() =>{setChecked('second'); setUserTitle(title); setUserText(color); setDeleteConfirmationVisibility(true)}}/>
               </View>
               );
