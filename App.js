@@ -11,6 +11,7 @@ export default function App() {
   const [categoryData, setCategoryData] = useState([]);
   const [categoryItems, setCategoryItems] = useState([]);
   const [shouldLoadData, setShouldLoadData] = useState(true);
+  const [categoryCheckedVisibility, setCategoryCheckedVisibility] = useState([]);
 
   const [expandedSections, setExpandedSections] = useState(new Set());
   const [addCategoryVisibility, setAddCategoryVisibility] = useState(false); // addCategory, 
@@ -225,20 +226,6 @@ export default function App() {
     if(isValid){
       console.log("Add Item: ", addItem.title);
       let tempData = categoryData;
-      let sortArr = [];
-
-      if(addItem.isPinned){
-        sortArr.push("Pinned");
-      }
-      if(addItem.category != null && addItem.category != ""){
-        sortArr.push(addItem.category);
-      }
-      if(addItem.type == 0){ // Note
-        sortArr.push("Notes");
-      }
-      else{ // List Item
-        sortArr.push("List Items");
-      }
 
       const catData = tempData.filter((e) => e.category == addItem.category);
       for(let i=catData.length; i > addItem.sortingNum; i--){
@@ -249,9 +236,18 @@ export default function App() {
       tempData.push(addItem);
       AsyncStorage.setItem('appCategoryData', JSON.stringify(tempData));
       setCategoryData(tempData);
-      sortArr.forEach(function (value) {
-        sortCategory(value);
-      });
+      if(addItem.isPinned){
+        sortCategory("Pinned");
+      }
+      if(addItem.category != null && addItem.category != ""){
+        sortCategory(addItem.category);
+      }
+      if(addItem.type == 0){ // Note
+        sortCategory("Notes");
+      }
+      else{ // List Item
+        sortCategory("List Items");
+      }
       
       setAddItemVisibility(false);
       eraseUserInputs();
@@ -859,6 +855,13 @@ export default function App() {
       else{
         setCategories(JSON.parse(value));
         console.log(JSON.parse(value));
+        let tempArr = [];
+        JSON.parse(value).forEach(cat => {
+          if(cat.showCompleted){
+            tempArr.push(cat.title);
+          }
+        });
+        setCategoryCheckedVisibility(tempArr);
       }
       setShouldLoadData(false);
     }); 
@@ -1000,7 +1003,7 @@ export default function App() {
           sections={categories}
           keyExtractor={(item, index) => item + index}
           renderItem={({item}) => {
-            const showCompleted = categories.filter((e) => e.title = item.category)[0].showCompleted;
+            const showCompleted = categoryCheckedVisibility.includes(item.category);
             if(showCompleted){
               if(item.type == 0){ // Note
                 return (
@@ -1092,6 +1095,11 @@ export default function App() {
                   <Pressable onPress={() => {setUserTitle(title); setUserText(color); setUserArr([title, color]); setChecked('second');  setUpdateModalVisibility(true)}}>
                     <Text>{title} : {color}</Text>
                   </Pressable>
+                  <Text>Show Completed Items?</Text>
+                  <Checkbox 
+                  status={categoryCheckedVisibility.includes(title) ? 'checked' : 'unchecked'}
+                  onPress={() => {let temp = categoryCheckedVisibility; if(temp.includes(title)){temp.splice(temp.indexOf(title), 1)}else{temp.push(title)} setCategoryCheckedVisibility(temp); eraseUserInputs(); AsyncStorage.setItem('appCategories', JSON.stringify(temp))}}
+                  />
                 <Button title='+' onPress={() => {setCategoryValue(title); setUserText(""+categoryData.filter((e) => e.category == title).length); setAddItemVisibility(true)}}/>
                 <Button title='Delete' onPress={() =>{setChecked('second'); setUserTitle(title); setUserText(color); setDeleteConfirmationVisibility(true)}}/>
               </View>
