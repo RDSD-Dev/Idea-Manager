@@ -11,9 +11,9 @@ export default function App() {
   const [categoryData, setCategoryData] = useState([]);
   const [categoryItems, setCategoryItems] = useState([]);
   const [shouldLoadData, setShouldLoadData] = useState(true);
+  const [categoryVisibility, setCategoryVisibility] = useState([]);
   const [categoryCheckedVisibility, setCategoryCheckedVisibility] = useState([]);
 
-  const [expandedSections, setExpandedSections] = useState(new Set());
   const [addCategoryVisibility, setAddCategoryVisibility] = useState(false); // addCategory, 
   const [addItemVisibility, setAddItemVisibility] = useState(false); // addItem, 
   const [updateModalVisibility, setUpdateModalVisibility] = useState(false); // addItem, 
@@ -38,6 +38,7 @@ export default function App() {
     }
   }, [categoryData, userText]);
 
+  // Category Stuff
   const addCategory = () => {
     let isValid = true;
     const addCategoryTitle = userTitle;
@@ -62,6 +63,7 @@ export default function App() {
         title: addCategoryTitle,
         color: userText,
         data: [],
+        show: true,
         showCompleted: false
       }
 
@@ -69,15 +71,19 @@ export default function App() {
       editCategoryItems.push(newCategory.title);
       setCategoryItems(editCategoryItems);
 
+      let editCatVis = categoryVisibility;
+      editCatVis.push(newCategory.title);
+      setCategoryVisibility(editCatVis);
+
       let editCatagories = categories;
       editCatagories.splice(editCatagories.length-2, 0, newCategory);
 
       setCategories(editCatagories);
       AsyncStorage.setItem('appCategories',JSON.stringify(editCatagories));
-      setAddCategoryVisibility(!addCategoryVisibility)
+      setAddCategoryVisibility(!addCategoryVisibility);
+      eraseUserInputs();
     }
   }
-
   const updateCategory = (updateTitle) => {
     let isValid = true;
     const addCategoryTitle = userTitle;
@@ -137,7 +143,6 @@ export default function App() {
       eraseUserInputs();
     }
   }
-
   const deleteCategory = () => {
     const category = userTitle;
     console.log("Delete Category: " + category);
@@ -169,6 +174,7 @@ export default function App() {
     eraseUserInputs();
   }
   
+  // Item Stuff
   const addItem = () => { // Title: userTitle, Category: categoryValue, isPinned: userBoolean
     let isValid = true;
     let addItem;
@@ -253,7 +259,6 @@ export default function App() {
       eraseUserInputs();
     }
   }
-
   const updateItem= (updateTitle) => { // userArr == [{title: category title, num: sorting num}]
     console.log("Updating Item: ", updateTitle);
     const newTitle = userTitle;
@@ -338,7 +343,6 @@ export default function App() {
     setUpdateModalVisibility(false);
     eraseUserInputs();
   }
-
   const deleteItem = () => {
     const title = userTitle;
     const item = categoryData.filter((e) => e.title == title)[0];
@@ -380,7 +384,6 @@ export default function App() {
     setDeleteConfirmationVisibility(false);
     eraseUserInputs();
   }
-
   const completeItem = (title, category, oldSortingNum) => {
     let data = categoryData;
     const index = data.findIndex((e) => e.title == title);
@@ -399,6 +402,7 @@ export default function App() {
     eraseUserInputs();
   }
 
+  // Note Pictures
   const displayNote = (noteTitle) =>{
     const str = noteTitle + "Pics";
     noteTitle = JSON.stringify(noteTitle);
@@ -425,21 +429,6 @@ export default function App() {
     });
     setNoteVisibility(true);
   }
-
-  const eraseUserInputs = () => {
-    console.log("Clear");
-    setErrorMessage(null);
-    setUserTitle(null);
-    setUserText(null);
-    setChecked('first');
-    setUserInt(0);
-    setUserBoolean(false);
-    setCategoryOpen(false);
-    setCategoryValue(null);    
-    setUserArr([]);
-    setImages([]);
-  }
-
   const pickImage = async () => {
     // No permissions request is necessary for launching the image library
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -454,12 +443,16 @@ export default function App() {
       console.log("Picture Added");
       let temp = images;
       temp.push(result.assets[0].uri);
+      const tempTitle = userTitle;
+      const tempText = userText;
+      eraseUserInputs();
+      setUserTitle(tempTitle);
+      setUserText(tempText);
       setImages(temp);
-      //setImages([...images, result.assets[0].uri]);
       AsyncStorage.setItem(title, JSON.stringify(temp));
+
     }
   };
-
   const displayPics = () => {
     return images.map((name, index) => {
       return(
@@ -471,7 +464,6 @@ export default function App() {
       );
     })
   }
-
   const deletePic = () => {
     const title = userTitle;
     const text = userText;
@@ -483,6 +475,7 @@ export default function App() {
     setDeleteConfirmationVisibility(false);
   }
 
+  // Modals
   const noteModal = () => {
     return(
       <View style={styles.noteView}>
@@ -495,7 +488,6 @@ export default function App() {
       </View>
     );
   }
-
   const addItemModal = () => {
     let int;
     if(addItemVisibility){
@@ -504,14 +496,12 @@ export default function App() {
     else{
       int =0;
     }
-      
     if(int < 0){
       setUserText('' + 0);
     }
     else if(int > categoryData.filter((e) => e.category == categoryValue && !e.completeDate).length){
       setUserText('' + categoryData.filter((e) => e.category == categoryValue && !e.completeDate).length);
     }
-
     if(checked != 'second'){ // List Item
       return(
         <View style={styles.modalView}>
@@ -617,7 +607,6 @@ export default function App() {
       );
     }
   }
-
   const updateModal = () => { // UserBoolean true: category false: item
     if(checked != 'first'){ // Category
       return(
@@ -710,7 +699,6 @@ export default function App() {
       );
     }
   }
-
   const deleteModal = () => { // checked : second: category first: item third: Picture
     if(checked == 'second'){
       return (
@@ -781,6 +769,19 @@ export default function App() {
     }
   }
 
+  const eraseUserInputs = () => {
+    console.log("Clear");
+    setErrorMessage(null);
+    setUserTitle(null);
+    setUserText(null);
+    setChecked('first');
+    setUserInt(0);
+    setUserBoolean(false);
+    setCategoryOpen(false);
+    setCategoryValue(null);    
+    setUserArr([]);
+    setImages([]);
+  }
   const sortCategory = (editCategory, items=[]) => {
     console.log("Sorting: ", editCategory);
     let filterData = items;
@@ -833,34 +834,45 @@ export default function App() {
             title: "Pinned",
             color: "Pinned",
             data: [],
+            show: true,
             showCompleted: false
           },
           {
             title: "List Items",
             color: "List Items",
             data: [],
+            show: true,
             showCompleted: false
           },
           {
             title: "Notes",
             color: "Notes",
             data: [],
+            show: true,
             showCompleted: false
           },
         ];
-        console.log("Temp: " + temArr.length);
         setCategories(temArr);
         AsyncStorage.setItem('appCategories', JSON.stringify(temArr));
+        let tempCatVis = [];
+        tempCatVis.push('Pinned');
+        tempCatVis.push('Notes');
+        tempCatVis.push('List Items');
+        setCategoryVisibility(tempCatVis);
       }
       else{
         setCategories(JSON.parse(value));
-        console.log(JSON.parse(value));
         let tempArr = [];
+        let tempCatVis = [];
         JSON.parse(value).forEach(cat => {
           if(cat.showCompleted){
             tempArr.push(cat.title);
           }
+          if(cat.show){
+            tempCatVis.push(cat.title);
+          }
         });
+        setCategoryVisibility(tempCatVis);
         setCategoryCheckedVisibility(tempArr);
       }
       setShouldLoadData(false);
@@ -886,7 +898,6 @@ export default function App() {
           sortCategory(categories[i].title, JSON.parse(value));
         }
         setCategoryItems(tempCategoryItems);
-        console.log("TempCat: ", categories);
       }
     }); 
 
@@ -895,6 +906,7 @@ export default function App() {
     }
   }
   else{
+    let currentCategory = '';
     return(
       <SafeAreaView>
         {/* Add Category*/}
@@ -1003,69 +1015,78 @@ export default function App() {
           sections={categories}
           keyExtractor={(item, index) => item + index}
           renderItem={({item}) => {
-            const showCompleted = categoryCheckedVisibility.includes(item.category);
-            if(showCompleted){
-              if(item.type == 0){ // Note
-                return (
-                  <View>
-                    <Pressable  onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
-                    <Text>Note : {item.sortingNum}</Text>
-                    </Pressable>
-                    <Pressable onPress={() => {setUserTitle(item.title); displayNote(item.title)}}>
-                      <Text>{item.title}</Text>
-                    </Pressable>
-                    <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
-                </View>
-                );
+            const show = categoryVisibility.includes(currentCategory);
+            if(show){
+              const showCompleted = categoryCheckedVisibility.includes(currentCategory);
+              if(showCompleted){
+                if(item.type == 0){ // Note
+                  return (
+                    <View>
+                      <Pressable  onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
+                      <Text>Note : {item.sortingNum}</Text>
+                      </Pressable>
+                      <Pressable onPress={() => {setUserTitle(item.title); displayNote(item.title)}}>
+                        <Text>{item.title}</Text>
+                      </Pressable>
+                      <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
+                  </View>
+                  );
+                }
+                else if(item.type !== undefined){ // List Item
+                  return (
+                    <View>
+                      <Text>List Item : {item.sortingNum}</Text>
+                      <Pressable onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
+                        <Text>{item.title}</Text>
+                      </Pressable>
+                      <Button title='Complete' onPress={() => {completeItem(item.title, item.category, item.sortingNum)}}/>
+                      <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
+                  </View>
+                  );
+                }
               }
-              else if(item.type !== undefined){ // List Item
-                return (
-                  <View>
-                    <Text>List Item : {item.sortingNum}</Text>
-                    <Pressable onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
-                      <Text>{item.title}</Text>
-                    </Pressable>
-                    <Button title='Complete' onPress={() => {completeItem(item.title, item.category, item.sortingNum)}}/>
-                    <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
-                </View>
-                );
-              }
-            }
-            else{
-              if(item.type == 0){ // Note
-                return (
-                  <View>
-                    <Pressable  onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
-                    <Text>Note : {item.sortingNum}</Text>
-                    </Pressable>
-                    <Pressable onPress={() => {setUserTitle(item.title); displayNote(item.title)}}>
-                      <Text>{item.title}</Text>
-                    </Pressable>
-                    <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
-                </View>
-                );
-              }
-              else if(item.type !== undefined && !item.completeDate){ // List Item
-                return (
-                  <View>
-                    <Text>List Item : {item.sortingNum}</Text>
-                    <Pressable onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
-                      <Text>{item.title}</Text>
-                    </Pressable>
-                    <Button title='Complete' onPress={() => {completeItem(item.title, item.category, item.sortingNum)}}/>
-                    <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
-                </View>
-                );
+              else{
+                if(item.type == 0){ // Note
+                  return (
+                    <View>
+                      <Pressable  onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
+                      <Text>Note : {item.sortingNum}</Text>
+                      </Pressable>
+                      <Pressable onPress={() => {setUserTitle(item.title); displayNote(item.title)}}>
+                        <Text>{item.title}</Text>
+                      </Pressable>
+                      <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
+                  </View>
+                  );
+                }
+                else if(item.type !== undefined && !item.completeDate){ // List Item
+                  return (
+                    <View>
+                      <Text>List Item : {item.sortingNum}</Text>
+                      <Pressable onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
+                        <Text>{item.title}</Text>
+                      </Pressable>
+                      <Button title='Complete' onPress={() => {completeItem(item.title, item.category, item.sortingNum)}}/>
+                      <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
+                  </View>
+                  );
+                }
               }
             }
           }}
           renderSectionHeader={({section: {title, color, showCompleted}}) => {
+            currentCategory = title;
             if(title == "Pinned"){
               return(
                 <View>
                   <Pressable onPress={() => {}}>
                     <Text>{title} : {color}</Text>
                   </Pressable>
+                  <Text>Show Items?</Text>
+                  <Checkbox 
+                  status={categoryVisibility.includes(title) ? 'checked' : 'unchecked'}
+                  onPress={() => {let temp = categoryVisibility; if(temp.includes(title)){temp.splice(temp.indexOf(title), 1)}else{temp.push(title)} setCategoryVisibility(temp); eraseUserInputs(); AsyncStorage.setItem('appCategories', JSON.stringify(temp))}}
+                  />
                   <Button title='+' onPress={() => {setUserTitle(title); setUserBoolean(true); setAddItemVisibility(true)}}/>
                 </View>
               );
@@ -1075,7 +1096,12 @@ export default function App() {
                 <View>
                   <Pressable onPress={() => {}}>
                     <Text>{title} : {color}</Text>
-                  </Pressable>                  
+                  </Pressable>
+                  <Text>Show Items?</Text>
+                  <Checkbox 
+                  status={categoryVisibility.includes(title) ? 'checked' : 'unchecked'}
+                  onPress={() => {let temp = categoryVisibility; if(temp.includes(title)){temp.splice(temp.indexOf(title), 1)}else{temp.push(title)} setCategoryVisibility(temp); eraseUserInputs(); AsyncStorage.setItem('appCategories', JSON.stringify(temp))}}
+                  />
                   <Button title='+' onPress={() => {setAddItemVisibility(true)}}/>
                 </View>
                 );
@@ -1085,7 +1111,12 @@ export default function App() {
                 <View>
                   <Pressable onPress={() => {}}>
                     <Text>{title} : {color}</Text>
-                  </Pressable>                  
+                  </Pressable>
+                  <Text>Show Items?</Text>
+                  <Checkbox 
+                  status={categoryVisibility.includes(title) ? 'checked' : 'unchecked'}
+                  onPress={() => {let temp = categoryVisibility; if(temp.includes(title)){temp.splice(temp.indexOf(title), 1)}else{temp.push(title)} setCategoryVisibility(temp); eraseUserInputs(); AsyncStorage.setItem('appCategories', JSON.stringify(temp))}}
+                  />          
                   <Button title='+' onPress={() => {setChecked('second'); setUserInt(0); setAddItemVisibility(true)}}/>
                 </View>
                 );
@@ -1095,6 +1126,11 @@ export default function App() {
                   <Pressable onPress={() => {setUserTitle(title); setUserText(color); setUserArr([title, color]); setChecked('second');  setUpdateModalVisibility(true)}}>
                     <Text>{title} : {color}</Text>
                   </Pressable>
+                  <Text>Show Items?</Text>
+                  <Checkbox 
+                  status={categoryVisibility.includes(title) ? 'checked' : 'unchecked'}
+                  onPress={() => {let temp = categoryVisibility; if(temp.includes(title)){temp.splice(temp.indexOf(title), 1)}else{temp.push(title)} setCategoryVisibility(temp); eraseUserInputs(); AsyncStorage.setItem('appCategories', JSON.stringify(temp))}}
+                  />
                   <Text>Show Completed Items?</Text>
                   <Checkbox 
                   status={categoryCheckedVisibility.includes(title) ? 'checked' : 'unchecked'}
