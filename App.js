@@ -841,14 +841,14 @@ export default function App() {
             title: "List Items",
             color: "List Items",
             data: [],
-            show: true,
+            show: false,
             showCompleted: false
           },
           {
             title: "Notes",
             color: "Notes",
             data: [],
-            show: true,
+            show: false,
             showCompleted: false
           },
         ];
