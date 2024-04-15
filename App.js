@@ -18,7 +18,9 @@ export default function App() {
   const [addItemVisibility, setAddItemVisibility] = useState(false); // addItem, 
   const [updateModalVisibility, setUpdateModalVisibility] = useState(false); // addItem, 
   const [deleteConfirmationVisibility, setDeleteConfirmationVisibility] = useState(false); // addCategory, 
-  const [noteVisibility, setNoteVisibility] = useState(false); // addCategory, 
+  const [noteVisibility, setNoteVisibility] = useState(false);
+  const [picsVisibility, setPicsVisibility] = useState(false);
+
 
   const [categoryValue, setCategoryValue] = useState(null);
   const [categoryOpen, setCategoryOpen] = useState(false);
@@ -482,9 +484,18 @@ export default function App() {
           <Text >{userTitle}</Text>
           <Button title='Exit' onPress={() => {AsyncStorage.setItem(JSON.stringify(userTitle + "Pics"), JSON.stringify(images)); AsyncStorage.setItem(JSON.stringify(userTitle), userText).then(() =>{eraseUserInputs() });setNoteVisibility(false);}}/>
           <Button title="Pick an image from camera roll" onPress={pickImage} />
-          {displayPics()}
+          {/*displayPics()*/}
           <TextInput style={styles.textBox} multiline={true} value={userText} onChangeText={setUserText}/>
 
+      </View>
+    );
+  }
+  const notePicturesModal = () => {
+    return(
+      <View>
+        <Button title='Back' onPress={() => {setPicsVisibility(false)}}/>
+        <Button title='Exit' onPress={() => {setPicsVisibility(false); setNoteVisibility(false)}}/>
+        {displayPics()}
       </View>
     );
   }
@@ -909,105 +920,6 @@ export default function App() {
     let currentCategory = '';
     return(
       <SafeAreaView>
-        {/* Add Category*/}
-        <Modal 
-          animationType='slide'
-          transparent={true}
-          visible={addCategoryVisibility}
-          onRequestClose={() => {
-            Alert.alert('Modal has been closed.');
-            eraseUserInputs();
-            setAddCategoryVisibility(!addCategoryVisibility);
-          }}
-        >
-          <View style={styles.centeredView}>
-            <View style={styles.modalView}>
-              <Text style={styles.modalText}>Add Category</Text>
-              <Text>{errorMessage}</Text>
-              <Text>Title: </Text>
-              <TextInput value={userTitle} onChangeText={setUserTitle}/>
-              <Text>Color: </Text>
-              <TextInput value={userText} onChangeText={setUserText}/>
-
-              <Pressable
-                  style={[styles.button, styles.buttonClose]}
-                  onPress={() => addCategory()}>
-                  <Text style={styles.textStyle}>Add Category</Text>
-                </Pressable>
-
-                <Pressable
-                  style={[styles.button, styles.buttonClose]}
-                  onPress={() => {setAddCategoryVisibility(!addCategoryVisibility); eraseUserInputs();}}>
-                  <Text style={styles.textStyle}>Cancel</Text>
-                </Pressable>
-              </View>
-            </View>
-        </Modal>
-
-        {/* Add Item*/}
-        <Modal 
-          animationType='slide'
-          transparent={true}
-          visible={addItemVisibility}
-          onRequestClose={() => {
-            Alert.alert('Modal has been closed.');
-            eraseUserInputs();
-            setAddCategoryVisibility(!addItemVisibility);
-          }}
-        >
-          <View style={styles.centeredView}>
-
-              {addItemModal()}
-
-            </View>
-        </Modal>
-
-        {/* Update Modal*/}
-        <Modal 
-          animationType='slide'
-          transparent={true}
-          visible={updateModalVisibility}
-          onRequestClose={() => {
-            Alert.alert('Modal has been closed.');
-            setUpdateModalVisibility(!updateModalVisibility);
-          }}
-        >
-          <View style={styles.centeredView}>
-            {updateModal()}
-          </View>
-        </Modal>
-
-        {/* Delete Confirmation*/}
-        <Modal 
-          animationType='slide'
-          transparent={true}
-          visible={deleteConfirmationVisibility}
-          onRequestClose={() => {
-            Alert.alert('Modal has been closed.');
-            setDeleteConfirmationVisibility(!deleteConfirmationVisibility);
-          }}
-        >
-          <View style={styles.centeredView}>
-            {deleteModal()}
-          </View>
-        </Modal>
-
-        {/* Display Note*/}
-        <Modal 
-          animationType='slide'
-          transparent={true}
-          visible={noteVisibility}
-          onRequestClose={() => {
-            Alert.alert('Modal has been closed.');
-            eraseUserInputs();
-            setNoteVisibility(!noteVisibility);
-          }}
-        >
-          <View style={styles.centeredView}>
-            {noteModal()}
-          </View>
-        </Modal>
-
         <Text>{"\n"}Idea Manager{"\n"}</Text>
         <Button title='+' onPress={() => {setAddCategoryVisibility(true)}}/>
 
@@ -1143,6 +1055,119 @@ export default function App() {
 
           }}
         />
+        {/* Add Category*/}
+        <Modal 
+          animationType='slide'
+          transparent={true}
+          visible={addCategoryVisibility}
+          onRequestClose={() => {
+            Alert.alert('Modal has been closed.');
+            eraseUserInputs();
+            setAddCategoryVisibility(!addCategoryVisibility);
+          }}
+        >
+          <View style={styles.centeredView}>
+            <View style={styles.modalView}>
+              <Text style={styles.modalText}>Add Category</Text>
+              <Text>{errorMessage}</Text>
+              <Text>Title: </Text>
+              <TextInput value={userTitle} onChangeText={setUserTitle}/>
+              <Text>Color: </Text>
+              <TextInput value={userText} onChangeText={setUserText}/>
+
+              <Pressable
+                  style={[styles.button, styles.buttonClose]}
+                  onPress={() => addCategory()}>
+                  <Text style={styles.textStyle}>Add Category</Text>
+                </Pressable>
+
+                <Pressable
+                  style={[styles.button, styles.buttonClose]}
+                  onPress={() => {setAddCategoryVisibility(!addCategoryVisibility); eraseUserInputs();}}>
+                  <Text style={styles.textStyle}>Cancel</Text>
+                </Pressable>
+              </View>
+            </View>
+        </Modal>
+
+        {/* Add Item*/}
+        <Modal 
+          animationType='slide'
+          transparent={true}
+          visible={addItemVisibility}
+          onRequestClose={() => {
+            Alert.alert('Modal has been closed.');
+            eraseUserInputs();
+            setAddCategoryVisibility(!addItemVisibility);
+          }}
+        >
+          <View style={styles.centeredView}>
+              {addItemModal()}
+            </View>
+        </Modal>
+
+        {/* Update Modal*/}
+        <Modal 
+          animationType='slide'
+          transparent={true}
+          visible={updateModalVisibility}
+          onRequestClose={() => {
+            Alert.alert('Modal has been closed.');
+            setUpdateModalVisibility(!updateModalVisibility);
+          }}
+        >
+          <View style={styles.centeredView}>
+            {updateModal()}
+          </View>
+        </Modal>
+
+        {/* Delete Confirmation*/}
+        <Modal 
+          animationType='slide'
+          transparent={true}
+          visible={deleteConfirmationVisibility}
+          onRequestClose={() => {
+            Alert.alert('Modal has been closed.');
+            setDeleteConfirmationVisibility(!deleteConfirmationVisibility);
+          }}
+        >
+          <View style={styles.centeredView}>
+            {deleteModal()}
+          </View>
+        </Modal>
+
+        {/* Display Note*/}
+        <Modal 
+          animationType='slide'
+          transparent={true}
+          visible={noteVisibility}
+          onRequestClose={() => {
+            Alert.alert('Modal has been closed.');
+            eraseUserInputs();
+            setNoteVisibility(!noteVisibility);
+          }}
+        >
+          <View style={styles.centeredView}>
+            {noteModal()}
+          </View>
+        </Modal>
+
+        {/* Display Note Pics*/}
+        <Modal 
+          animationType='slide'
+          transparent={true}
+          visible={picsVisibility}
+          onRequestClose={() => {
+            Alert.alert('Modal has been closed.');
+            eraseUserInputs();
+            setPicsVisibility(!picsVisibility);
+          }}
+        >
+          <View style={styles.centeredView}>
+            {notePicturesModal()}
+          </View>
+        </Modal>
+
       </SafeAreaView>
   );
   }
