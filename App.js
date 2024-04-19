@@ -963,14 +963,21 @@ export default function App() {
         <SectionList
           sections={categories}
           keyExtractor={(item, index) => item + index}
+          ItemSeparatorComponent={() => {
+            return(<View style={styles.separator}></View>);
+          }}
           renderItem={({item}) => {
+            let style = [styles.item];
             const show = categoryVisibility.includes(currentCategory);
             if(show){
               const showCompleted = categoryCheckedVisibility.includes(currentCategory);
               if(showCompleted){
+                if(item.sortingNum == categoryData.filter((e) => e.category == item.category).length -1){
+                  style.push(styles.endBorder);
+                }
                 if(item.type == 0){ // Note
                   return (
-                    <View style={styles.noteItem}>
+                    <View style={style}>
                       <Pressable  onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
                       <Text style={styles.text}>Note</Text>
                       </Pressable>
@@ -983,7 +990,7 @@ export default function App() {
                 }
                 else if(item.type !== undefined){ // List Item
                   return (
-                    <View style={styles.listItem}>
+                    <View style={style}>
                       <Text style={styles.text}>List Item</Text>
                       <Pressable onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
                         <Text style={styles.text}>{item.title}</Text>
@@ -995,9 +1002,12 @@ export default function App() {
                 }
               }
               else{
+                if(item.sortingNum == categoryData.filter((e) => e.category == item.category).length -1 - categoryData.filter((e) => e.category == item.category && item.completeDate !== undefined).length){
+                  style.push(styles.endBorder);
+                }
                 if(item.type == 0){ // Note
                   return (
-                    <View style={styles.noteItem}>
+                    <View style={style}>
                       <Pressable  onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
                       <Text style={styles.text}>Note</Text>
                       </Pressable>
@@ -1010,7 +1020,7 @@ export default function App() {
                 }
                 else if(item.type !== undefined && !item.completeDate){ // List Item
                   return (
-                    <View style={styles.listItem}>
+                    <View style={style}>
                       <Text style={styles.text}>List Item</Text>
                       <Pressable onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
                         <Text style={styles.text}>{item.title}</Text>
@@ -1023,11 +1033,15 @@ export default function App() {
               }
             }
           }}
-          renderSectionHeader={({section: {title, color, showCompleted}}) => {
+          renderSectionHeader={({section: {title, color, showCompleted, show}}) => {
             currentCategory = title;
+            let style = [styles.sectionHeader];
             if(title == "Pinned"){
+              if(!show || categoryData.find((e) => e.isPinned && e.completeDate == undefined) == undefined  || showCompleted && categoryData.find((e) => e.isPinned) == undefined){
+                style.push(styles.endBorder);
+              }
               return(
-                <View style={styles.sectionHeader}>
+                <View style={style}>
                   <Pressable onPress={() => {}}>
                     <Text style={styles.text}>{title} : {color}</Text>
                   </Pressable>
@@ -1043,8 +1057,11 @@ export default function App() {
               );
             }
             if(title == "List Items"){
+              if(!show || categoryData.find((e) => e.type !== 0 && e.completeDate == undefined) == undefined  || (showCompleted && categoryData.find((e) => e.type !== 0) == undefined)){
+                style.push(styles.endBorder);
+              }
               return(
-                <View style={styles.sectionHeader}>
+                <View style={style}>
                   <Pressable onPress={() => {}}>
                     <Text style={styles.text}>{title} : {color}</Text>
                   </Pressable>
@@ -1060,8 +1077,11 @@ export default function App() {
                 );
             }
             else if(title == "Notes"){
+              if(!show || categoryData.find((e) => e.type == 0 && e.completeDate == undefined) == undefined  || (showCompleted && categoryData.find((e) => e.type == 0) == undefined)){
+                style.push(styles.endBorder);
+              }
               return(
-                <View style={styles.sectionHeader}>
+                <View style={style}>
                   <Pressable onPress={() => {}}>
                     <Text style={styles.text}>{title} : {color}</Text>
                   </Pressable>
@@ -1076,8 +1096,11 @@ export default function App() {
                 </View>
                 );
             }
+            if(!show || categoryData.find((e) => e.category == title && e.completeDate == undefined) == undefined  || (showCompleted && categoryData.find((e) => e.category == title) == undefined)){
+              style.push(styles.endBorder);
+            }
             return(
-              <View style={styles.sectionHeader}>
+              <View style={style}>
                   <Pressable onPress={() => {setUserTitle(title); setUserText(color); setUserArr([title, color]); setChecked('second');  setUpdateModalVisibility(true)}}>
                     <Text style={styles.text}>{title} : {color}</Text>
                   </Pressable>
@@ -1219,6 +1242,7 @@ export default function App() {
   }
 }
 
+const borderWidth = 1;
 const styles = StyleSheet.create({
   app: {
     backgroundColor: '#707371',
@@ -1239,6 +1263,8 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#3c3e3c'
   },
   settingsBtn: {
     alignSelf: 'flex-start',
@@ -1251,37 +1277,44 @@ const styles = StyleSheet.create({
 
   },
   section: {
-    borderWidth: 2,
+    borderWidth: borderWidth,
+    backgroundColor: 'blue',
+  },
+  endBorder: {
+    borderBottomStartRadius: 8,
+    borderBottomEndRadius: 8,
   },
   sectionHeader: {
-    paddingTop: 20,
-    paddingHorizontal: 8,
+    marginTop: 12,
+    paddingBottom: 8,
+    paddingHorizontal: 4,
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 8,
+    marginHorizontal: 8,
+    borderWidth: borderWidth,
+    borderTopEndRadius: 8,
+    borderTopStartRadius: 8,
   },
   checkboxContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  noteItem: {
+  item: {
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    marginHorizontal: 8,
+    paddingHorizontal: 12,
     display: 'flex',
     flexDirection: 'row',
     gap: 8,
-  },
-  listItem: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    display: 'flex',
-    flexDirection: 'row',
-    gap: 8,
-  },
+    borderLeftWidth: borderWidth,
+    borderRightWidth: borderWidth,
+    borderBottomWidth: borderWidth,
 
+  },
   modalView: {
     margin: 20,
     backgroundColor: 'white',
