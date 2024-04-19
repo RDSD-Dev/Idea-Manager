@@ -972,9 +972,13 @@ export default function App() {
             if(show){
               const showCompleted = categoryCheckedVisibility.includes(currentCategory);
               if(showCompleted){
-                if(item.sortingNum == categoryData.filter((e) => e.category == item.category).length -1){
+                if(currentCategory == 'Pinned' && item.sortingNum == categoryData.filter((e) => e.isPinned).length -1){
                   style.push(styles.endBorder);
                 }
+                else if(currentCategory != 'Pinned' && item.sortingNum == categoryData.filter((e) => e.category == item.category).length -1){
+                  style.push(styles.endBorder);
+                }
+
                 if(item.type == 0){ // Note
                   return (
                     <View style={style}>
@@ -1002,9 +1006,13 @@ export default function App() {
                 }
               }
               else{
-                if(item.sortingNum == categoryData.filter((e) => e.category == item.category).length -1 - categoryData.filter((e) => e.category == item.category && item.completeDate !== undefined).length){
+                if(currentCategory == 'Pinned' && item.sortingNum == categoryData.filter((e) => e.isPinned).length -1 - categoryData.filter((e) => e.isPinned && e.completeDate !== undefined).length){
                   style.push(styles.endBorder);
                 }
+                else if(currentCategory != 'Pinned' && item.sortingNum == categoryData.filter((e) => e.category == item.category).length -1 - categoryData.filter((e) => e.category == item.category && e.completeDate !== undefined).length){
+                  style.push(styles.endBorder);
+                }
+
                 if(item.type == 0){ // Note
                   return (
                     <View style={style}>
