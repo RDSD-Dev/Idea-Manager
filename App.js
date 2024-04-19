@@ -972,10 +972,7 @@ export default function App() {
             if(show){
               const showCompleted = categoryCheckedVisibility.includes(currentCategory);
               if(showCompleted){
-                if(currentCategory == 'Pinned' && item.sortingNum == categoryData.filter((e) => e.isPinned).length -1){
-                  style.push(styles.endBorder);
-                }
-                else if(currentCategory != 'Pinned' && item.sortingNum == categoryData.filter((e) => e.category == item.category).length -1){
+                if(currentCategory == item.category && item.sortingNum == categoryData.filter((e) => e.category == item.category).length -1){
                   style.push(styles.endBorder);
                 }
 
@@ -1006,10 +1003,16 @@ export default function App() {
                 }
               }
               else{
-                if(currentCategory == 'Pinned' && item.sortingNum == categoryData.filter((e) => e.isPinned).length -1 - categoryData.filter((e) => e.isPinned && e.completeDate !== undefined).length){
+                if(currentCategory == 'Pinned' && item.title == categories[0].data[categories[0].data.length -1].title){
                   style.push(styles.endBorder);
                 }
-                else if(currentCategory != 'Pinned' && item.sortingNum == categoryData.filter((e) => e.category == item.category).length -1 - categoryData.filter((e) => e.category == item.category && e.completeDate !== undefined).length){
+                else if(currentCategory == 'List Items' && item.title == categories[categories.length-2].data[categories[categories.length-2].data.length -1].title){
+                  style.push(styles.endBorder);
+                }
+                else if(currentCategory == 'Notes' && item.title == categories[categories.length-1].data[categories[categories.length-2].data.length -1].title){
+                  style.push(styles.endBorder);
+                }
+                else if(currentCategory == item.category && item.sortingNum == categoryData.filter((e) => e.category == item.category).length -1 - categoryData.filter((e) => e.category == item.category && e.completeDate !== undefined).length){
                   style.push(styles.endBorder);
                 }
 
