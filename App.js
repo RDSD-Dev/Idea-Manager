@@ -652,12 +652,16 @@ export default function App() {
           <Text>Color: </Text>
           <TextInput value={userText} placeholder={userArr[1]} onChangeText={setUserText}/>
 
-
-
           <Pressable
               style={[styles.button, styles.buttonClose]}
               onPress={() => {updateCategory(userArr[0])}}>
               <Text style={styles.textStyle}>Add Item</Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.button, styles.buttonClose]}
+              onPress={() =>{ deleteCategory(); eraseUserInputs(); setUpdateModalVisibility(!updateModalVisibility); }}>
+              <Text style={styles.textStyle}>Delete</Text>
             </Pressable>
 
             <Pressable
@@ -720,6 +724,9 @@ export default function App() {
               onPress={() => {updateItem(title)}}>
               <Text style={styles.textStyle}>Update Item</Text>
             </Pressable>
+
+            <Button style={[styles.button, styles.buttonClose]} title="Delete" onPress={() => {deleteItem(); setUpdateModalVisibility(!updateModalVisibility); eraseUserInputs();}}/>
+
 
             <Pressable
               style={[styles.button, styles.buttonClose]}
@@ -1019,7 +1026,6 @@ export default function App() {
                       <Pressable onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
                         <Text style={styles.text}>{item.title}</Text>
                       </Pressable>
-                      <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
                   </View>
                   );
                 }
@@ -1061,7 +1067,6 @@ export default function App() {
                       <Pressable onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
                         <Text style={styles.text}>{item.title}</Text>
                       </Pressable>
-                      <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
                   </View>
                   );
                 }
@@ -1096,11 +1101,10 @@ export default function App() {
               }
               return(
                 <View style={style}>
-                  <Pressable onPress={() => {}}>
-                    <Text style={styles.text}>{title} : {color}</Text>
-                  </Pressable>
                   <View style={styles.checkboxContainer}>
-                    <Text style={styles.text}>Show Items?</Text>
+                  <Pressable onPress={() => {}}>
+                    <Text style={styles.text}>{title}</Text>
+                  </Pressable>
                     <Checkbox 
                     status={categoryVisibility.includes(title) ? 'checked' : 'unchecked'}
                     onPress={() => {toggleCategoryVisibility(title);}}
@@ -1116,11 +1120,10 @@ export default function App() {
               }
               return(
                 <View style={style}>
-                  <Pressable onPress={() => {}}>
-                    <Text style={styles.text}>{title} : {color}</Text>
-                  </Pressable>
                   <View style={styles.checkboxContainer}>
-                    <Text style={styles.text}>Show Items?</Text>
+                  <Pressable onPress={() => {}}>
+                    <Text style={styles.text}>{title}</Text>
+                  </Pressable>
                     <Checkbox 
                     status={categoryVisibility.includes(title) ? 'checked' : 'unchecked'}
                     onPress={() => {toggleCategoryVisibility(title);}}
@@ -1135,11 +1138,10 @@ export default function App() {
             }
             return(
               <View style={style}>
-                  <Pressable onPress={() => {setUserTitle(title); setUserText(color); setUserArr([title, color]); setChecked('second');  setUpdateModalVisibility(true)}}>
-                    <Text style={styles.text}>{title} : {color}</Text>
-                  </Pressable>
                   <View style={styles.checkboxContainer}>
-                    <Text style={styles.text}>Items?</Text>
+                  <Pressable onPress={() => {setUserTitle(title); setUserText(color); setUserArr([title, color]); setChecked('second');  setUpdateModalVisibility(true)}}>
+                    <Text style={styles.text}>{title}</Text>
+                  </Pressable>
                     <Checkbox 
                     status={categoryVisibility.includes(title) ? 'checked' : 'unchecked'}
                     onPress={() => {toggleCategoryVisibility(title);}}
@@ -1153,7 +1155,6 @@ export default function App() {
                     />
                   </View>
                 <Button title='+' onPress={() => {setCategoryValue(title); setUserText(""+categoryData.filter((e) => e.category == title).length); setAddItemVisibility(true)}}/>
-                <Button title='Delete' onPress={() =>{setChecked('second'); setUserTitle(title); setUserText(color); setDeleteConfirmationVisibility(true)}}/>
               </View>
               );
           }}
@@ -1349,7 +1350,7 @@ const styles = StyleSheet.create({
   },
   modalView: {
     margin: 20,
-    backgroundColor: 'white',
+    backgroundColor: '#707371',
     borderRadius: 20,
     padding: 35,
     alignItems: 'center',
@@ -1364,7 +1365,7 @@ const styles = StyleSheet.create({
   },
   noteView: {
     margin: 20,
-    backgroundColor: 'white',
+    backgroundColor: '#707371',
     borderRadius: 20,
     padding: 35,
     height: '92%',
@@ -1378,7 +1379,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   textContainer: {
-    alignItems: 'left'
+    alignItems: 'left',
   },
   textBox: {
     width: '100%',
