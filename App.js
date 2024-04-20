@@ -151,11 +151,11 @@ export default function App() {
     editCatagories.splice(index, 1);
 
     let tempData = categoryData;
-    const editItems = tempData.filter(e => e.category === category);
+    const editItems = tempData.filter(e => e.category == category);
     if(editItems.length > 0){
       for(let i=0; i< editItems.length; i++){
         index = tempData.indexOf(editItems[i]);
-        tempData[index].category = null;
+        tempData.splice(index, 1);
       }
       setCategoryData(tempData);
       AsyncStorage.setItem('appCategoryData', JSON.stringify(tempData));
@@ -386,14 +386,26 @@ export default function App() {
   const completeItem = (title, category, oldSortingNum) => {
     let data = categoryData;
     const index = data.findIndex((e) => e.title == title);
+    if(data[index].completeDate != undefined){
+      unCheckItem(title, category, oldSortingNum);
+      eraseUserInputs();
+      return;
+    }
     const today = new Date();
     data[index].completeDate = (today.getFullYear() + "-" + today.getMonth() + "-" + today.getDate());
     console.log(oldSortingNum);
-    for(let i=data.filter((e) => e.category == category).length -1; i>oldSortingNum; i--){
-      const tempIndex = data.findIndex((e) => e.category == category && e.sortingNum == i);
-      data[tempIndex].sortingNum = i-1;
-    }
-    data[index].sortingNum = data.filter((e) => e.category == category).length -1;
+
+    AsyncStorage.setItem('appCategoryData', JSON.stringify(data));
+    setCategoryData(data);
+    sortCategory(category, data);
+    eraseUserInputs();
+  }
+  const unCheckItem = (title, category, oldSortingNum) => {
+    console.log("UnCheck: ", title);
+    let data = categoryData;
+    const index = data.findIndex((e) => e.title == title);
+    data[index].completeDate = undefined;
+    console.log(oldSortingNum);
 
     AsyncStorage.setItem('appCategoryData', JSON.stringify(data));
     setCategoryData(data);
@@ -515,26 +527,32 @@ export default function App() {
         <View style={styles.modalView}>
           <Text style={styles.modalText}>Add List Item</Text>
           <Text>{errorMessage}</Text>
-          <Text>List Item</Text>
-          <RadioButton 
-            value='first'
-            status={checked === 'first' ? 'checked' : 'unchecked'}
-            onPress={() => {setChecked('first')}}
-          />
-          <Text>Note Item</Text>
-          <RadioButton 
-            value='second'
-            status={checked === 'second' ? 'checked' : 'unchecked'}
-            onPress={() => {setChecked('second')}}
-          />
+          <View style={styles.checkboxContainer}>
+            <Text>List Item</Text>
+            <RadioButton 
+              value='first'
+              status={checked === 'first' ? 'checked' : 'unchecked'}
+              onPress={() => {setChecked('first')}}
+            />
+            <Text>Note Item</Text>
+            <RadioButton 
+              value='second'
+              status={checked === 'second' ? 'checked' : 'unchecked'}
+              onPress={() => {setChecked('second')}}
+            />
+          </View>
+          <View style={styles.checkboxContainer}>
+            <Text>Title: </Text>
+            <TextInput value={userTitle} onChangeText={setUserTitle}/>
+          </View>
+          <View style={styles.checkboxContainer}>
+            <Text>Pinned?: </Text>
+            <Checkbox 
+              status={userBoolean ? 'checked' : 'unchecked'}
+              onPress={() => {setUserBoolean(!userBoolean); console.log(userBoolean)}}
+            />
+          </View>
 
-          <Text>Title: </Text>
-          <TextInput value={userTitle} onChangeText={setUserTitle}/>
-          <Text>Pinned?: </Text>
-          <Checkbox 
-            status={userBoolean ? 'checked' : 'unchecked'}
-            onPress={() => {setUserBoolean(!userBoolean); console.log(userBoolean)}}
-          />
           <Text>Category: </Text>
           <DropDownPicker
             open={categoryOpen}
@@ -562,32 +580,37 @@ export default function App() {
           </View>
       );
     }
-    else{
+    else{ // Note Item
       return(
         <View style={styles.modalView}>
           <Text style={styles.modalText}>Add Note</Text>
           <Text>{errorMessage}</Text>
-          <Text>List Item</Text>
-          <RadioButton 
-            value='first'
-            status={checked === 'first' ? 'checked' : 'unchecked'}
-            onPress={() => setChecked('first')}
-          />
-          <Text>Note Item</Text>
-          <RadioButton 
-            value='second'
-            status={checked === 'second' ? 'checked' : 'unchecked'}
-            onPress={() => setChecked('second')}
-          />
-
-          <Text>Title: </Text>
-          <TextInput value={userTitle} onChangeText={setUserTitle}/>
-          <Text>Pinned?: </Text>
-          <Checkbox 
-            status={userBoolean ? 'checked' : 'unchecked'}
-            onPress={() => {setUserBoolean(!userBoolean); console.log(userBoolean)}}
-          />
-          <Text>category: </Text>
+          <View style={styles.checkboxContainer}>
+            <Text>List Item</Text>
+            <RadioButton 
+              value='first'
+              status={checked === 'first' ? 'checked' : 'unchecked'}
+              onPress={() => {setChecked('first')}}
+            />
+            <Text>Note Item</Text>
+            <RadioButton 
+              value='second'
+              status={checked === 'second' ? 'checked' : 'unchecked'}
+              onPress={() => {setChecked('second')}}
+            />
+          </View>
+          <View style={styles.checkboxContainer}>
+            <Text>Title: </Text>
+            <TextInput value={userTitle} onChangeText={setUserTitle}/>
+          </View>
+          <View style={styles.checkboxContainer}>
+            <Text>Pinned?: </Text>
+            <Checkbox 
+              status={userBoolean ? 'checked' : 'unchecked'}
+              onPress={() => {setUserBoolean(!userBoolean); console.log(userBoolean)}}
+            />
+            </View>
+          <Text>Category: </Text>
           <DropDownPicker
             open={categoryOpen}
             value={categoryValue}
@@ -963,9 +986,6 @@ export default function App() {
         <SectionList
           sections={categories}
           keyExtractor={(item, index) => item + index}
-          ItemSeparatorComponent={() => {
-            return(<View style={styles.separator}></View>);
-          }}
           renderItem={({item}) => {
             let style = [styles.item];
             const show = categoryVisibility.includes(currentCategory);
@@ -992,27 +1012,29 @@ export default function App() {
                 else if(item.type !== undefined){ // List Item
                   return (
                     <View style={style}>
-                      <Text style={styles.text}>List Item</Text>
+                      <Checkbox 
+                        status={item.completeDate != undefined? 'checked' : 'unchecked'}
+                        onPress={() => completeItem(item.title, item.category, item.sortingNum)}
+                      />
                       <Pressable onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
                         <Text style={styles.text}>{item.title}</Text>
                       </Pressable>
-                      <Button title='Complete' onPress={() => {completeItem(item.title, item.category, item.sortingNum)}}/>
                       <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
                   </View>
                   );
                 }
               }
               else{
-                if(currentCategory == 'Pinned' && item.title == categories[0].data[categories[0].data.length -1].title){
-                  style.push(styles.endBorder);
+                const catIndex = categories.findIndex((e) => e.title == currentCategory);
+                const catData = categories[catIndex].data;
+                let lastIndex = null;
+                for(let i=catData.length-1; i != 0; i--){
+                  if(catData[i].completeDate == undefined){
+                    lastIndex = catData[i].sortingNum;
+                    break;
+                  }
                 }
-                else if(currentCategory == 'List Items' && item.title == categories[categories.length-2].data[categories[categories.length-2].data.length -1].title){
-                  style.push(styles.endBorder);
-                }
-                else if(currentCategory == 'Notes' && item.title == categories[categories.length-1].data[categories[categories.length-2].data.length -1].title){
-                  style.push(styles.endBorder);
-                }
-                else if(currentCategory == item.category && item.sortingNum == categoryData.filter((e) => e.category == item.category).length -1 - categoryData.filter((e) => e.category == item.category && e.completeDate !== undefined).length){
+                if(item.sortingNum == lastIndex){
                   style.push(styles.endBorder);
                 }
 
@@ -1032,11 +1054,13 @@ export default function App() {
                 else if(item.type !== undefined && !item.completeDate){ // List Item
                   return (
                     <View style={style}>
-                      <Text style={styles.text}>List Item</Text>
+                      <Checkbox 
+                        status={item.completeDate != undefined? 'checked' : 'unchecked'}
+                        onPress={() => completeItem(item.title, item.category, item.sortingNum)}
+                      />
                       <Pressable onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
                         <Text style={styles.text}>{item.title}</Text>
                       </Pressable>
-                      <Button title='Complete' onPress={() => {completeItem(item.title, item.category, item.sortingNum)}}/>
                       <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
                   </View>
                   );
@@ -1053,11 +1077,10 @@ export default function App() {
               }
               return(
                 <View style={style}>
-                  <Pressable onPress={() => {}}>
-                    <Text style={styles.text}>{title} : {color}</Text>
-                  </Pressable>
                   <View style={styles.checkboxContainer}>
-                    <Text style={styles.text}>Show Items?</Text>
+                  <Pressable onPress={() => {}}>
+                    <Text style={styles.text}>{title}</Text>
+                  </Pressable>
                     <Checkbox 
                     status={categoryVisibility.includes(title) ? 'checked' : 'unchecked'}
                     onPress={() => {toggleCategoryVisibility(title);}}
@@ -1253,7 +1276,7 @@ export default function App() {
   }
 }
 
-const borderWidth = 1;
+const borderWidth = 2;
 const styles = StyleSheet.create({
   app: {
     backgroundColor: '#707371',
@@ -1267,6 +1290,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: '#f4f4f4',
+    fontSize: 16,
   },
   topHeader: {
     paddingTop: 28,
@@ -1286,10 +1310,6 @@ const styles = StyleSheet.create({
   },
   addBtn: {
 
-  },
-  section: {
-    borderWidth: borderWidth,
-    backgroundColor: 'blue',
   },
   endBorder: {
     borderBottomStartRadius: 8,
@@ -1320,6 +1340,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     display: 'flex',
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
     borderLeftWidth: borderWidth,
     borderRightWidth: borderWidth,
