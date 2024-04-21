@@ -272,25 +272,29 @@ export default function App() {
     }
     const newSortingNum = parseInt(userText);
 
+    let sortCategories =[];
     let editCategoryData = categoryData;
     const oldItem = categoryData.filter((e) => e.title == updateTitle)[0];
     let index = editCategoryData.indexOf(editCategoryData.filter((e) => e.title == updateTitle)[0]);
 
     editCategoryData[index].title = newTitle;
-    editCategoryData[index].category = newCategory;
     editCategoryData[index].isPinned = newIsPinned;
     const oldSortingNum = editCategoryData[index].sortingNum;
 
     if(oldItem.category !== newCategory){ // Is in different category
-      const oldCategoryData = categoryData.filter((e) => e.category == oldItem.category);
-      for(let i=oldItem.sortingNum+1; i<oldCategoryData.length -1; i++){  // needs to iterate through and edit sorting numbers
-        const tempIndex = editCategoryData.indexOf(editCategoryData.filter((e) => e.category == oldItem.category && e.sortingNum == i)[0]);
-        editCategoryData[tempIndex].sortingNum = i-1;
-      }
-      const newCategoryData = categoryData.filter((e) => e.category == newCategory);
-      for(let i=newSortingNum; i<newCategoryData; i++){
-        const tempIndex = editCategoryData.indexOf(editCategoryData.filter((e) => e.category == oldItem.category && e.sortingNum == i && e.title !== newTitle)[0]);
+      sortCategories.push(oldItem.category);
+      sortCategories.push(newCategory);
+      const newCat= editCategoryData.filter((e) => e.category == newCategory);
+      for(let i=newCat.length-1; i >= newSortingNum; i--){
+        const tempIndex = editCategoryData.findIndex((e) => e.category == newCategory && e.sortingNum == i);
         editCategoryData[tempIndex].sortingNum = i+1;
+      }
+
+      const oldCategory = editCategoryData[index].category;
+      const oldCat= editCategoryData.filter((e) => e.category == oldCategory);
+      for(let i=oldCat.length-1; i > oldSortingNum; i--){
+        const tempIndex = editCategoryData.findIndex((e) => e.category == oldCategory && e.sortingNum == i);
+        editCategoryData[tempIndex].sortingNum = i-1;
       }
     }
     else{ // Is in same category
@@ -309,10 +313,10 @@ export default function App() {
       }
     }
 
+    editCategoryData[index].category = newCategory;
     editCategoryData[index].sortingNum = newSortingNum;
 
     setCategoryData(editCategoryData);
-    console.log("Update Data: ", editCategoryData);
     AsyncStorage.setItem('appCategoryData', JSON.stringify(editCategoryData));
 
     sortCategory("Pinned");
@@ -325,19 +329,12 @@ export default function App() {
         AsyncStorage.setItem(newTitle + "Pics", value);
       });
       AsyncStorage.removeItem(updateTitle + "Pics");
-      sortCategory("Notes");
+      sortCategories.push("Notes");
     }
     else{ // List Items
-     sortCategory("List Items");
+     sortCategories.push("List Items");
     }
-
-    if(oldItem.category !== newCategory){
-      sortCategory(oldItem);
-      sortCategory(newCategory);
-    }
-    else{
-      sortCategory(newCategory);
-    }
+    sortCategories.forEach(function (currentCat) {sortCategory(currentCat)});
 
     setUpdateModalVisibility(false);
     eraseUserInputs();
@@ -674,7 +671,6 @@ export default function App() {
     }
     else{ // Item
       let title = '';
-
       let type = 'Note';
       if(userArr.length > 0){
         title = userArr[0].title;
@@ -683,7 +679,10 @@ export default function App() {
         type = 'List';
       }
       if(updateModalVisibility){
-        const limit = categoryData.filter((e) => e.category == categoryValue && !e.completeDate).length -1;
+        let limit = categoryData.filter((e) => e.category == categoryValue && !e.completeDate).length -1;
+        if(categoryValue != userArr[0].category){
+          limit = categoryData.filter((e) => e.category == categoryValue && !e.completeDate).length;
+        }
         if(parseInt(userText) < 0){
           setUserText("" + 0);
         }
