@@ -21,7 +21,6 @@ export default function App() {
   const [noteVisibility, setNoteVisibility] = useState(false);
   const [picsVisibility, setPicsVisibility] = useState(false);
 
-
   const [categoryValue, setCategoryValue] = useState(null);
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [checked, setChecked] = useState('first');
@@ -38,7 +37,7 @@ export default function App() {
     if(noteVisibility){
       AsyncStorage.setItem(JSON.stringify(userTitle), userText);
     }
-  }, [categoryData, userText, categoryItems]);
+  }, [userText]);
 
   // Category Stuff
   const addCategory = () => {
@@ -71,12 +70,15 @@ export default function App() {
 
 
       setCategoryItems([...categoryItems, {label: addCategoryTitle, value: addCategoryTitle}]);
-      setCategoryVisibility([...categoryCheckedVisibility, addCategoryTitle]);
+      console.log(categoryVisibility);
+      setCategoryVisibility([...categoryVisibility, addCategoryTitle]);
+      console.log(categoryVisibility);
       console.log("Added :", categoryItems);
 
       let editCatagories = categories;
       editCatagories.splice(editCatagories.length-2, 0, newCategory);
       setCategories(editCatagories);
+      editCatagories.forEach((currentCat, index) => {editCatagories[index].data = [];});
       AsyncStorage.setItem('appCategories',JSON.stringify(editCatagories));
 
       setAddCategoryVisibility(false);
@@ -177,6 +179,13 @@ export default function App() {
   const addItem = () => { // Title: userTitle, Category: categoryValue, isPinned: userBoolean
     let isValid = true;
     let addItem;
+    let newSortingNum;
+    if(userText != "" && userText != undefined){
+      newSortingNum = parseInt(userText);
+    }
+    else{
+      newSortingNum = editCategoryData.filter((e) => e.category == categoryValue).length;
+    }
     if(checked == 'second'){ // Note
       addItem = {
         title: userTitle,
@@ -286,18 +295,36 @@ export default function App() {
     if(isValid){
       const newIsPinned = userBoolean;
       const newCategory = categoryValue;
-      const limit = categoryData.filter((e) => e.category == categoryValue).length -1;
-      if(parseInt(userText) < 0){
-        setUserText("" + 0);
+      const oldItem = categoryData.filter((e) => e.title == updateTitle)[0];
+      let newSortingNum;
+      if(newCategory == oldItem.category){
+        const limit = categoryData.filter((e) => e.category == categoryValue).length -1;
+        if(parseInt(userText) < 0){
+          newSortingNum = 0;
+        }
+        else if(parseInt(userText) > limit){
+          newSortingNum = limit;
+        }
+        else{
+          newSortingNum = parseInt(userText);
+        }
       }
-      else if(parseInt(userText) > limit){
-        setUserText("" + limit);
+      else{
+        const limit = categoryData.filter((e) => e.category == categoryValue).length ;
+        if(parseInt(userText) < 0){
+          newSortingNum = 0;
+        }
+        else if(parseInt(userText) > limit){
+          newSortingNum = limit;
+        }
+        else{
+          newSortingNum = parseInt(userText);
+        }
       }
-      const newSortingNum = parseInt(userText);
+
 
       let sortCategories =[];
       let editCategoryData = categoryData;
-      const oldItem = categoryData.filter((e) => e.title == updateTitle)[0];
       let index = editCategoryData.indexOf(editCategoryData.filter((e) => e.title == updateTitle)[0]);
 
       editCategoryData[index].title = newTitle;
