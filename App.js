@@ -279,7 +279,7 @@ export default function App() {
     editCategoryData[index].title = newTitle;
     editCategoryData[index].category = newCategory;
     editCategoryData[index].isPinned = newIsPinned;
-    editCategoryData[index].sortingNum = newSortingNum;
+    const oldSortingNum = editCategoryData[index].sortingNum;
 
     if(oldItem.category !== newCategory){ // Is in different category
       const oldCategoryData = categoryData.filter((e) => e.category == oldItem.category);
@@ -295,24 +295,24 @@ export default function App() {
     }
     else{ // Is in same category
       console.log("Same");
-      const currentCategoryData = editCategoryData.filter((e) => e.category == newCategory);
-      if(oldItem.sortingNum < newSortingNum){ // Item was moved back in the array
-          for(let i=oldItem.sortingNum; i<newSortingNum; i++){
-            const tempIndex = editCategoryData.indexOf(editCategoryData.filter((e) => e.category == newCategory && e.sortingNum == i+1)[0]);
-            editCategoryData[tempIndex].sortingNum = i-1;
-          }
+      if(oldSortingNum > newSortingNum){ // Item was moved up
+        for(let i=oldSortingNum-1; i >= newSortingNum; i--){
+          const tempIndex = editCategoryData.findIndex((e) => e.category == newCategory && e.sortingNum == i);
+          editCategoryData[tempIndex].sortingNum = i+1;
+        }
       }
-      else{
-      for(let i=newSortingNum; i<currentCategoryData.length; i++){
-        const tempIndex = editCategoryData.indexOf(currentCategoryData.filter((e) => e.category == newCategory && e.sortingNum == i && e.title !== newTitle)[0]);
-        if(tempIndex >= 0){
+      else{ // Item was moved down
+        for(let i=newSortingNum; i > oldSortingNum; i--){
+          const tempIndex = editCategoryData.findIndex((e) => e.category == newCategory && e.sortingNum == i);
           editCategoryData[tempIndex].sortingNum = i-1;
         }
       }
     }
-    }
+
+    editCategoryData[index].sortingNum = newSortingNum;
 
     setCategoryData(editCategoryData);
+    console.log("Update Data: ", editCategoryData);
     AsyncStorage.setItem('appCategoryData', JSON.stringify(editCategoryData));
 
     sortCategory("Pinned");
