@@ -271,7 +271,7 @@ export default function App() {
       eraseUserInputs();
     }
   }
-  const updateItem= (updateTitle) => { // userArr == [{title: category title, num: sorting num}]
+  const updateItem= (updateTitle) => {
     console.log("Updating Item: ", updateTitle);
     const newTitle = userTitle;
     const itemType = categoryData.find((e) => e.title == updateTitle).type;
@@ -511,10 +511,14 @@ export default function App() {
       const tempTitle = userArr[0];
       const tempText = userText;
       const tempArr = userArr;
+      const tempCat = categoryValue;
+      const tempBool = userBoolean;
       eraseUserInputs();
       setUserTitle(tempTitle);
       setUserText(tempText);
       setUserArr(tempArr);
+      setUserBoolean(tempBool);
+      setCategoryValue(tempCat);
       setImages(temp);
       AsyncStorage.setItem(title, JSON.stringify(temp));
 
@@ -542,7 +546,8 @@ export default function App() {
     setDeleteConfirmationVisibility(false);
   }
   const closeNote = () => {
-    if(userTitle != userArr[0]){ // Name has been changed
+    if(userTitle != userArr[0] || categoryValue != userArr[1] || userBoolean != userArr[2]){ // Name has been changed
+      /*
       AsyncStorage.setItem(JSON.stringify(userTitle + "Pics"), JSON.stringify(images));
       AsyncStorage.setItem(JSON.stringify(userTitle), userText);
       AsyncStorage.removeItem(userArr[0]);
@@ -550,6 +555,7 @@ export default function App() {
       let tempData = categoryData;
       const index = tempData.findIndex((e) => e.title == userArr[0]);
       tempData[index].title = userTitle;
+      tempData[index].isPinned = userBoolean;
       tempData[index].category = categoryValue;
       setCategoryData(tempData);
       AsyncStorage.setItem('appCategoryData', JSON.stringify(tempData));
@@ -557,6 +563,10 @@ export default function App() {
       sortCategory(userArr[1]);
       sortCategory('Pinned');
       sortCategory('Notes');
+      */
+      AsyncStorage.setItem(JSON.stringify(userTitle + "Pics"), JSON.stringify(images));
+      AsyncStorage.setItem(JSON.stringify(userTitle), userText).then(() =>{eraseUserInputs() });
+      updateItem(userArr[0]);
     }
     else{
       AsyncStorage.setItem(JSON.stringify(userTitle + "Pics"), JSON.stringify(images));
@@ -568,9 +578,39 @@ export default function App() {
 
   // Modals
   const noteModal = () => {
+    let displayInt = 0;
+    if(noteVisibility){
+      let limit = categoryData.filter((e) => e.category == categoryValue).length;
+      if(userInt < 0){
+        setUserInt(0);
+      }
+      else if(userArr[1] == categoryValue && userInt >= limit){
+        setUserInt(limit-1);
+      }
+      else if(userArr[1] != categoryValue && userInt >= limit){
+        setUserInt(limit);
+      }
+      displayInt = userInt;
+    }
     return(
       <View style={styles.noteView}>
         <TextInput value={userTitle} onChangeText={setUserTitle}/>
+        <Text>Pinned?: </Text>
+          <Checkbox 
+            status={userBoolean ? 'checked' : 'unchecked'}
+            onPress={() => {setUserBoolean(!userBoolean);}}
+          />
+          
+          <Text>Category: </Text>
+          <DropDownPicker
+            open={categoryOpen}
+            value={categoryValue}
+            items={categoryItems}
+            setOpen={setCategoryOpen}
+            setValue={setCategoryValue}
+            setItems={setCategoryItems}
+            onChangeValue={() => {setUserInt(categoryData.filter((e) => e.category == categoryValue).length); setUserText("" + categoryData.filter((e) => e.category == categoryValue).length)}}
+          />
           <Button title='Exit' onPress={() => {closeNote()}}/>
           <Button title="Pick an image from camera roll" onPress={pickImage} />
           {/*displayPics()*/}
@@ -1091,10 +1131,10 @@ export default function App() {
                 if(item.type == 0){ // Note
                   return (
                     <View style={style}>
-                      <Pressable  onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
+                      <Pressable  onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserBoolean(item.isPinned); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
                       <Text style={styles.text}>Note</Text>
                       </Pressable>
-                      <Pressable onPress={() => {setUserTitle(item.title); setUserArr([item.title, item.category]); setCategoryValue(item.category); displayNote(item.title)}}>
+                      <Pressable onPress={() => {setUserTitle(item.title); setUserInt(item.sortingNum); setUserBoolean(item.isPinned); setUserArr([item.title, item.category, item.isPinned]); setCategoryValue(item.category); displayNote(item.title)}}>
                         <Text style={styles.text}>{item.title}</Text>
                       </Pressable>
                       <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
@@ -1135,7 +1175,7 @@ export default function App() {
                       <Pressable  onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
                       <Text style={styles.text}>Note</Text>
                       </Pressable>
-                      <Pressable onPress={() => {setUserTitle(item.title); setUserArr([item.title, item.category]); setCategoryValue(item.category); displayNote(item.title)}}>
+                      <Pressable onPress={() => {setUserTitle(item.title); setUserInt(item.sortingNum); setUserBoolean(item.isPinned); setUserArr([item.title, item.category, item.isPinned]); setCategoryValue(item.category); displayNote(item.title)}}>
                         <Text style={styles.text}>{item.title}</Text>
                       </Pressable>
                       <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
