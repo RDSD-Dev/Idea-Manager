@@ -35,7 +35,7 @@ export default function App() {
 
   useEffect(() => {
     if(noteVisibility){
-      AsyncStorage.setItem(JSON.stringify(userTitle), userText);
+      AsyncStorage.setItem(JSON.stringify(userArr[0]), userText);
     }
   }, [userText]);
 
@@ -60,12 +60,16 @@ export default function App() {
     }
 
     if(isValid){
-      const newCategory = {
+      let newCategory = {
         title: addCategoryTitle,
         color: userText,
         data: [],
+        sortNum: categoryItems.length,
         show: true,
         showCompleted: false
+      }
+      if(userInt != null){
+        newCategory.sortNum = userInt;
       }
 
 
@@ -463,7 +467,7 @@ export default function App() {
     eraseUserInputs();
   }
 
-  // Note Pictures
+  // Note Stuff
   const displayNote = (noteTitle) =>{
     const str = noteTitle + "Pics";
     noteTitle = JSON.stringify(noteTitle);
@@ -499,16 +503,18 @@ export default function App() {
     });
 
     if (!result.canceled) {
-      let title = userTitle;
+      let title = userArr[0];
       title += "Pics";
       console.log("Picture Added");
       let temp = images;
       temp.push(result.assets[0].uri);
-      const tempTitle = userTitle;
+      const tempTitle = userArr[0];
       const tempText = userText;
+      const tempArr = userArr;
       eraseUserInputs();
       setUserTitle(tempTitle);
       setUserText(tempText);
+      setUserArr(tempArr);
       setImages(temp);
       AsyncStorage.setItem(title, JSON.stringify(temp));
 
@@ -535,13 +541,37 @@ export default function App() {
     AsyncStorage.setItem(str, JSON.stringify(pics));
     setDeleteConfirmationVisibility(false);
   }
+  const closeNote = () => {
+    if(userTitle != userArr[0]){ // Name has been changed
+      AsyncStorage.setItem(JSON.stringify(userTitle + "Pics"), JSON.stringify(images));
+      AsyncStorage.setItem(JSON.stringify(userTitle), userText);
+      AsyncStorage.removeItem(userArr[0]);
+      AsyncStorage.removeItem(userArr[0] + "Pics");
+      let tempData = categoryData;
+      const index = tempData.findIndex((e) => e.title == userArr[0]);
+      tempData[index].title = userTitle;
+      tempData[index].category = categoryValue;
+      setCategoryData(tempData);
+      AsyncStorage.setItem('appCategoryData', JSON.stringify(tempData));
+      sortCategory(categoryValue);
+      sortCategory(userArr[1]);
+      sortCategory('Pinned');
+      sortCategory('Notes');
+    }
+    else{
+      AsyncStorage.setItem(JSON.stringify(userTitle + "Pics"), JSON.stringify(images));
+      AsyncStorage.setItem(JSON.stringify(userTitle), userText).then(() =>{eraseUserInputs() });
+    }
+    eraseUserInputs()
+    setNoteVisibility(false);
+  }
 
   // Modals
   const noteModal = () => {
     return(
       <View style={styles.noteView}>
-          <Text >{userTitle}</Text>
-          <Button title='Exit' onPress={() => {AsyncStorage.setItem(JSON.stringify(userTitle + "Pics"), JSON.stringify(images)); AsyncStorage.setItem(JSON.stringify(userTitle), userText).then(() =>{eraseUserInputs() });setNoteVisibility(false);}}/>
+        <TextInput value={userTitle} onChangeText={setUserTitle}/>
+          <Button title='Exit' onPress={() => {closeNote()}}/>
           <Button title="Pick an image from camera roll" onPress={pickImage} />
           {/*displayPics()*/}
           <TextInput style={styles.textBox} multiline={true} value={userText} onChangeText={setUserText}/>
@@ -961,6 +991,7 @@ export default function App() {
             title: "Pinned",
             color: "Pinned",
             data: [],
+            sortNum: 0,
             show: true,
             showCompleted: false
           },
@@ -968,6 +999,7 @@ export default function App() {
             title: "List Items",
             color: "List Items",
             data: [],
+            sortNum: 1,
             show: false,
             showCompleted: false
           },
@@ -975,6 +1007,7 @@ export default function App() {
             title: "Notes",
             color: "Notes",
             data: [],
+            sortNum: 2,
             show: false,
             showCompleted: false
           },
@@ -1061,7 +1094,7 @@ export default function App() {
                       <Pressable  onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
                       <Text style={styles.text}>Note</Text>
                       </Pressable>
-                      <Pressable onPress={() => {setUserTitle(item.title); displayNote(item.title)}}>
+                      <Pressable onPress={() => {setUserTitle(item.title); setUserArr([item.title, item.category]); setCategoryValue(item.category); displayNote(item.title)}}>
                         <Text style={styles.text}>{item.title}</Text>
                       </Pressable>
                       <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
@@ -1102,7 +1135,7 @@ export default function App() {
                       <Pressable  onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
                       <Text style={styles.text}>Note</Text>
                       </Pressable>
-                      <Pressable onPress={() => {setUserTitle(item.title); displayNote(item.title)}}>
+                      <Pressable onPress={() => {setUserTitle(item.title); setUserArr([item.title, item.category]); setCategoryValue(item.category); displayNote(item.title)}}>
                         <Text style={styles.text}>{item.title}</Text>
                       </Pressable>
                       <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
