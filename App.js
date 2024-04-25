@@ -33,6 +33,8 @@ export default function App() {
   const [userInt, setUserInt] = useState(0);
   const [userBoolean, setUserBoolean] = useState(false);
 
+  let itemSortNums = [];
+
   useEffect(() => {
     if(noteVisibility){
       AsyncStorage.setItem(JSON.stringify(userArr[0]), userText);
@@ -465,6 +467,30 @@ export default function App() {
     setCategoryData(data);
     sortCategory(category, data);
     eraseUserInputs();
+  }
+  const updateSortNum = (title, category, newSortingNum) => {
+    const limit = categoryData.filter((e) => e.category == category).length -1;
+    let isValid = true;
+    itemSortNums[itemSortNums.findIndex((e) => e.title == title)].num = newSortingNum;
+    let newInt = parseInt(newSortingNum);
+    if(newInt !== null){
+      if(newInt < 0){
+        newInt = 0;
+        itemSortNums[itemSortNums.findIndex((e) => e.title == title)].num = '0';
+      }
+      else if(newInt > limit){
+        newInt = limit;
+        itemSortNums[itemSortNums.findIndex((e) => e.title == title)].num = '' + limit;
+      }
+
+    }
+    else{
+      isValid = false;
+    }
+
+    if(isValid){
+      
+    }
   }
 
   // Note Stuff
@@ -1119,6 +1145,7 @@ export default function App() {
           sections={categories}
           keyExtractor={(item, index) => item + index}
           renderItem={({item}) => {
+            itemSortNums.push({title: item.title, num: JSON.stringify(item.sortingNum)});
             let style = [styles.item];
             const show = categoryVisibility.includes(currentCategory);
             if(show){
@@ -1185,6 +1212,7 @@ export default function App() {
                 else if(item.type !== undefined && !item.completeDate){ // List Item
                   return (
                     <View style={style}>
+                    <TextInput value={itemSortNums[itemSortNums.findIndex((e) => e.title == item.title)].num} onChangeText={newText => {updateSortNum(item.title, item.category, newText)}}/>
                       <Checkbox 
                         status={item.completeDate != undefined? 'checked' : 'unchecked'}
                         onPress={() => completeItem(item.title, item.category, item.sortingNum)}
