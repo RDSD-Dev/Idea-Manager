@@ -29,6 +29,7 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState(undefined);
   const [userTitle, setUserTitle] = useState(undefined);
   const [userText, setUserText] = useState(undefined);
+  const [userText2, setUserText2] = useState(undefined);
   const [userArr, setUserArr] = useState([]);
   const [userInt, setUserInt] = useState(0);
   const [userBoolean, setUserBoolean] = useState(false);
@@ -39,7 +40,7 @@ export default function App() {
     if(noteVisibility){
       AsyncStorage.setItem(JSON.stringify(userArr[0]), userText);
     }
-  }, [userText]);
+  }, [userText, itemSortNums]);
 
   // Category Stuff
   const addCategory = () => {
@@ -314,6 +315,9 @@ export default function App() {
         else{
           newSortingNum = parseInt(userText);
         }
+        if(userText2 != null && userText2 != undefined){
+          newSortingNum = parseInt(userText2);
+        }
       }
       else{
         const limit = categoryData.filter((e) => e.category == categoryValue).length ;
@@ -473,7 +477,8 @@ export default function App() {
     let isValid = true;
     itemSortNums[itemSortNums.findIndex((e) => e.title == title)].num = newSortingNum;
     let newInt = parseInt(newSortingNum);
-    if(newInt !== null){
+    console.log("NewInt: ", newInt);
+    if(newInt = null && !isNaN(newInt)){
       if(newInt < 0){
         newInt = 0;
         itemSortNums[itemSortNums.findIndex((e) => e.title == title)].num = '0';
@@ -485,11 +490,18 @@ export default function App() {
 
     }
     else{
+      console.log("fail");
       isValid = false;
+      eraseUserInputs();
     }
 
     if(isValid){
-      
+      console.log("Valid");
+      const item = categoryData.find((e) => e.title == title);
+      setUserBoolean(item.isPinned);
+      setUserText(itemSortNums);
+      //updateItem(title);
+      eraseUserInputs();
     }
   }
 
@@ -539,12 +551,14 @@ export default function App() {
       const tempArr = userArr;
       const tempCat = categoryValue;
       const tempBool = userBoolean;
+      const tempText2 = userText2;
       eraseUserInputs();
       setUserTitle(tempTitle);
       setUserText(tempText);
       setUserArr(tempArr);
       setUserBoolean(tempBool);
       setCategoryValue(tempCat);
+      setUserText2(tempText2);
       setImages(temp);
       AsyncStorage.setItem(title, JSON.stringify(temp));
 
@@ -555,7 +569,7 @@ export default function App() {
       return(
         <View key={name}>
           <Pressable onPress={() => {setUserInt(index); setChecked('third'); setDeleteConfirmationVisibility(true)}}>
-            <Image key={name} source={{ uri: name}} style={{ width: 200, height: 200 }} />
+            <Image key={name} source={{ uri: name}} style={styles.pic} />
           </Pressable>
         </View>
       );
@@ -572,7 +586,7 @@ export default function App() {
     setDeleteConfirmationVisibility(false);
   }
   const closeNote = () => {
-    if(userTitle != userArr[0] || categoryValue != userArr[1] || userBoolean != userArr[2]){ // Name has been changed
+    if(userTitle != userArr[0] || categoryValue != userArr[1] || userBoolean != userArr[2] || parseInt(userText2) != userArr[3]){ // Name has been changed
       /*
       AsyncStorage.setItem(JSON.stringify(userTitle + "Pics"), JSON.stringify(images));
       AsyncStorage.setItem(JSON.stringify(userTitle), userText);
@@ -592,6 +606,7 @@ export default function App() {
       */
       AsyncStorage.setItem(JSON.stringify(userTitle + "Pics"), JSON.stringify(images));
       AsyncStorage.setItem(JSON.stringify(userTitle), userText).then(() =>{eraseUserInputs() });
+      setUserText(userText2);
       updateItem(userArr[0]);
     }
     else{
@@ -600,6 +615,7 @@ export default function App() {
     }
     eraseUserInputs()
     setNoteVisibility(false);
+    setPicsVisibility(false);
   }
 
   // Modals
@@ -607,16 +623,18 @@ export default function App() {
     let displayInt = 0;
     if(noteVisibility){
       let limit = categoryData.filter((e) => e.category == categoryValue).length;
-      if(userInt < 0){
-        setUserInt(0);
+      const sortNum = parseInt(userText2);
+      console.log("Limit: ", limit, " : ", sortNum);
+      if(sortNum < 0){
+        setUserText2("0");
       }
-      else if(userArr[1] == categoryValue && userInt >= limit){
-        setUserInt(limit-1);
+      else if(userArr[1] == categoryValue && sortNum >= limit){
+        setUserText2(JSON.stringify(limit-1));
       }
-      else if(userArr[1] != categoryValue && userInt >= limit){
-        setUserInt(limit);
+      else if(userArr[1] != categoryValue && sortNum > limit){
+        setUserText2(JSON.stringify(limit));
       }
-      displayInt = userInt;
+      displayInt = userText2;
     }
     return(
       <View style={styles.noteView}>
@@ -626,7 +644,6 @@ export default function App() {
             status={userBoolean ? 'checked' : 'unchecked'}
             onPress={() => {setUserBoolean(!userBoolean);}}
           />
-          
           <Text>Category: </Text>
           <DropDownPicker
             open={categoryOpen}
@@ -637,9 +654,12 @@ export default function App() {
             setItems={setCategoryItems}
             onChangeValue={() => {setUserInt(categoryData.filter((e) => e.category == categoryValue).length); setUserText("" + categoryData.filter((e) => e.category == categoryValue).length)}}
           />
+          <Text>Sorting Index: </Text>
+          <TextInput value={userText2} onChangeText={setUserText2}/>
+          <Button title='Gallery' onPress={() => setPicsVisibility(!picsVisibility)}/>
           <Button title='Exit' onPress={() => {closeNote()}}/>
+          <Button title="Delete" onPress={() => {setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
           <Button title="Pick an image from camera roll" onPress={pickImage} />
-          {/*displayPics()*/}
           <TextInput style={styles.textBox} multiline={true} value={userText} onChangeText={setUserText}/>
 
       </View>
@@ -647,10 +667,14 @@ export default function App() {
   }
   const notePicturesModal = () => {
     return(
-      <View>
+      <View style={styles.noteView}>
+        <Text>{userTitle} Gallery</Text>
         <Button title='Back' onPress={() => {setPicsVisibility(false)}}/>
-        <Button title='Exit' onPress={() => {setPicsVisibility(false); setNoteVisibility(false)}}/>
-        {displayPics()}
+        <Button title='Exit' onPress={() => {closeNote()}}/>
+        <Button title="Pick an image from camera roll" onPress={pickImage} />
+        <ScrollView contentContainerStyle={styles.picturesContainer}>
+          {displayPics()}
+        </ScrollView>
       </View>
     );
   }
@@ -941,13 +965,13 @@ export default function App() {
   
           <Pressable
             style={[styles.button, styles.buttonClose]}
-            onPress={() => deleteItem()}>
+            onPress={() => {setNoteVisibility(false); deleteItem()}}>
             <Text style={styles.textStyle}>Delete</Text>
           </Pressable>
     
           <Pressable
             style={[styles.button, styles.buttonClose]}
-            onPress={() => {eraseUserInputs(); setDeleteConfirmationVisibility(!deleteConfirmationVisibility)}}>
+            onPress={() => {setDeleteConfirmationVisibility(!deleteConfirmationVisibility)}}>
             <Text style={styles.textStyle}>Cancel</Text>
           </Pressable>
         </View>
@@ -997,6 +1021,7 @@ export default function App() {
     setErrorMessage(null);
     setUserTitle(null);
     setUserText(null);
+    setUserText2(null);
     setChecked('first');
     setUserInt(0);
     setUserBoolean(false);
@@ -1158,13 +1183,9 @@ export default function App() {
                 if(item.type == 0){ // Note
                   return (
                     <View style={style}>
-                      <Pressable  onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserBoolean(item.isPinned); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
-                      <Text style={styles.text}>Note</Text>
-                      </Pressable>
-                      <Pressable onPress={() => {setUserTitle(item.title); setUserInt(item.sortingNum); setUserBoolean(item.isPinned); setUserArr([item.title, item.category, item.isPinned]); setCategoryValue(item.category); displayNote(item.title)}}>
+                      <Pressable onPress={() => {setUserText2(JSON.stringify(item.sortingNum)); setUserTitle(item.title); setUserInt(item.sortingNum); setUserBoolean(item.isPinned); setUserArr([item.title, item.category, item.isPinned, item.sortingNum]); setCategoryValue(item.category); displayNote(item.title)}}>
                         <Text style={styles.text}>{item.title}</Text>
                       </Pressable>
-                      <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
                   </View>
                   );
                 }
@@ -1199,20 +1220,15 @@ export default function App() {
                 if(item.type == 0){ // Note
                   return (
                     <View style={style}>
-                      <Pressable  onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
-                      <Text style={styles.text}>Note</Text>
-                      </Pressable>
-                      <Pressable onPress={() => {setUserTitle(item.title); setUserInt(item.sortingNum); setUserBoolean(item.isPinned); setUserArr([item.title, item.category, item.isPinned]); setCategoryValue(item.category); displayNote(item.title)}}>
+                      <Pressable onPress={() => {setUserText2(JSON.stringify(item.sortingNum)); setUserTitle(item.title); setUserInt(item.sortingNum); setUserBoolean(item.isPinned); setUserArr([item.title, item.category, item.isPinned, item.sortingNum]); setCategoryValue(item.category); displayNote(item.title)}}>
                         <Text style={styles.text}>{item.title}</Text>
                       </Pressable>
-                      <Button title="Delete" onPress={() => {setUserBoolean(false); setUserTitle(item.title); setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
                   </View>
                   );
                 }
                 else if(item.type !== undefined && !item.completeDate){ // List Item
                   return (
                     <View style={style}>
-                    <TextInput value={itemSortNums[itemSortNums.findIndex((e) => e.title == item.title)].num} onChangeText={newText => {updateSortNum(item.title, item.category, newText)}}/>
                       <Checkbox 
                         status={item.completeDate != undefined? 'checked' : 'unchecked'}
                         onPress={() => completeItem(item.title, item.category, item.sortingNum)}
@@ -1530,6 +1546,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+  },
+  picturesContainer: {
+    alignItems: 'center',
+  },
+  pic :{
+    width: 200,
+    height: 200,
   },
   textContainer: {
     alignItems: 'left',
