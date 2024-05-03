@@ -20,6 +20,7 @@ export default function App() {
   const [deleteConfirmationVisibility, setDeleteConfirmationVisibility] = useState(false); // addCategory, 
   const [noteVisibility, setNoteVisibility] = useState(false);
   const [picsVisibility, setPicsVisibility] = useState(false);
+  const [settingsVisibility, setSettingsVisibility] = useState(false);
 
   const [categoryValue, setCategoryValue] = useState(null);
   const [categoryOpen, setCategoryOpen] = useState(false);
@@ -638,7 +639,7 @@ export default function App() {
     }
     return(
       <View style={styles.noteView}>
-        <TextInput value={userTitle} onChangeText={setUserTitle}/>
+        <TextInput multiline={true} value={userTitle} onChangeText={setUserTitle}/>
         <Text>Pinned?: </Text>
           <Checkbox 
             status={userBoolean ? 'checked' : 'unchecked'}
@@ -668,7 +669,7 @@ export default function App() {
   const notePicturesModal = () => {
     return(
       <View style={styles.noteView}>
-        <Text>{userTitle} Gallery</Text>
+        <Text multiline={true}>{userTitle} Gallery</Text>
         <Button title='Back' onPress={() => {setPicsVisibility(false)}}/>
         <Button title='Exit' onPress={() => {closeNote()}}/>
         <Button title="Pick an image from camera roll" onPress={pickImage} />
@@ -713,7 +714,7 @@ export default function App() {
           </View>
           <View style={styles.checkboxContainer}>
             <Text>Title: </Text>
-            <TextInput value={userTitle} onChangeText={setUserTitle}/>
+            <TextInput multiline={true} value={userTitle} onChangeText={setUserTitle}/>
           </View>
           <View style={styles.checkboxContainer}>
             <Text>Pinned?: </Text>
@@ -771,7 +772,7 @@ export default function App() {
           </View>
           <View style={styles.checkboxContainer}>
             <Text>Title: </Text>
-            <TextInput value={userTitle} onChangeText={setUserTitle}/>
+            <TextInput multiline={true} value={userTitle} onChangeText={setUserTitle}/>
           </View>
           <View style={styles.checkboxContainer}>
             <Text>Pinned?: </Text>
@@ -978,6 +979,16 @@ export default function App() {
       );
     }
   }
+  const settingsModal = () => {
+    return(
+      <View style={styles.noteView}>
+        <Text>Settings</Text>
+        <Text>Delete old list Items after x days</Text>
+        <Text>New items should be placed on x index</Text>
+        <Text></Text>
+      </View>
+    );
+  }
 
   // Misc
   const toggleCategoryVisibility = (title) => {
@@ -1161,7 +1172,7 @@ export default function App() {
     return(
       <SafeAreaView style={styles.app}>
         <View style={styles.topHeader}>
-        <Button style={styles.settingsBtn} title='*' onPress={() => {}}/>
+        <Button style={styles.settingsBtn} title='*' onPress={() => {setSettingsVisibility(true)}}/>
           <Text style={styles.appTitle}>Idea Manager</Text>
           <Button style={styles.addBtn} title='+' onPress={() => {setAddCategoryVisibility(true)}}/>
         </View>
@@ -1184,7 +1195,7 @@ export default function App() {
                   return (
                     <View style={style}>
                       <Pressable onPress={() => {setUserText2(JSON.stringify(item.sortingNum)); setUserTitle(item.title); setUserInt(item.sortingNum); setUserBoolean(item.isPinned); setUserArr([item.title, item.category, item.isPinned, item.sortingNum]); setCategoryValue(item.category); displayNote(item.title)}}>
-                        <Text style={styles.text}>{item.title}</Text>
+                        <Text multiline='true' style={styles.text}>{item.title}</Text>
                       </Pressable>
                   </View>
                   );
@@ -1197,7 +1208,7 @@ export default function App() {
                         onPress={() => completeItem(item.title, item.category, item.sortingNum)}
                       />
                       <Pressable onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
-                        <Text style={styles.text}>{item.title}</Text>
+                        <Text multiline='true' style={styles.text}>{item.title}</Text>
                       </Pressable>
                   </View>
                   );
@@ -1221,7 +1232,7 @@ export default function App() {
                   return (
                     <View style={style}>
                       <Pressable onPress={() => {setUserText2(JSON.stringify(item.sortingNum)); setUserTitle(item.title); setUserInt(item.sortingNum); setUserBoolean(item.isPinned); setUserArr([item.title, item.category, item.isPinned, item.sortingNum]); setCategoryValue(item.category); displayNote(item.title)}}>
-                        <Text style={styles.text}>{item.title}</Text>
+                        <Text multiline='true' style={styles.text}>{item.title}</Text>
                       </Pressable>
                   </View>
                   );
@@ -1234,7 +1245,7 @@ export default function App() {
                         onPress={() => completeItem(item.title, item.category, item.sortingNum)}
                       />
                       <Pressable onPress={() => {setUserArr([item]); setUserTitle(item.title); setUserText('' + item.sortingNum); setUserInt(item.sortingNum); setCategoryValue(item.category); setUserBoolean(item.isPinned); setUpdateModalVisibility(true)}}>
-                        <Text style={styles.text}>{item.title}</Text>
+                        <Text multiline='true' style={styles.text}>{item.title}</Text>
                       </Pressable>
                   </View>
                   );
@@ -1309,7 +1320,7 @@ export default function App() {
               <View style={style}>
                   <View style={styles.checkboxContainer}>
                   <Pressable onPress={() => {setUserTitle(title); setUserText(color); setUserArr([title, color]); setChecked('second');  setUpdateModalVisibility(true)}}>
-                    <Text style={styles.text}>{title}</Text>
+                    <Text multiline='true' style={styles.text}>{title}</Text>
                   </Pressable>
                     <Checkbox 
                     status={categoryVisibility.includes(title) ? 'checked' : 'unchecked'}
@@ -1344,7 +1355,7 @@ export default function App() {
               <Text style={styles.modalText}>Add Category</Text>
               <Text>{errorMessage}</Text>
               <Text>Title: </Text>
-              <TextInput value={userTitle} onChangeText={setUserTitle}/>
+              <TextInput multiline={true} value={userTitle} onChangeText={setUserTitle}/>
               <Text>Color: </Text>
               <TextInput value={userText} onChangeText={setUserText}/>
 
@@ -1438,6 +1449,22 @@ export default function App() {
         >
           <View style={styles.centeredView}>
             {notePicturesModal()}
+          </View>
+        </Modal>
+
+        {/* Display Settings*/}
+        <Modal 
+          animationType='slide'
+          transparent={true}
+          visible={settingsVisibility}
+          onRequestClose={() => {
+            Alert.alert('Modal has been closed.');
+            eraseUserInputs();
+            setSettingsVisibility(!settingsVisibility);
+          }}
+        >
+          <View style={styles.centeredView}>
+            {settingsModal()}
           </View>
         </Modal>
 
