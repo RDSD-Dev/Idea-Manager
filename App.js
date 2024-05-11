@@ -35,6 +35,7 @@ export default function App() {
   const [userText, setUserText] = useState(undefined);
   const [userText2, setUserText2] = useState(undefined);
   const [userArr, setUserArr] = useState([]);
+  const [userArr2, setUserArr2] = useState([]);
   const [userInt, setUserInt] = useState(0);
   const [userBoolean, setUserBoolean] = useState(false);
 
@@ -698,6 +699,9 @@ export default function App() {
       setUserText('' + categoryData.filter((e) => e.category == categoryValue && !e.completeDate).length);
     }
     if(checked != 'second'){ // List Item
+      if(addItemVisibility && userArr2.length == 0){
+        setUserArr2(['first', '0']);
+      }
       return(
         <View style={styles.modalView}>
           <Text style={styles.modalText}>Add List Item</Text>
@@ -740,6 +744,22 @@ export default function App() {
           />
           <Text>Sorting Index: </Text>
           <TextInput style={styles.TextInput} value={userText} onChangeText={setUserText}/>
+          <Text>Would you like this item to remake itself?</Text>
+          <View style={styles.checkboxContainer}>
+            <Text>From make date</Text>
+            <RadioButton 
+              value='first'
+              status={userArr2[0] === 'first' ? 'checked' : 'unchecked'}
+              onPress={() => {setUserArr2(['first', userArr2[1]])}}
+            />
+            <Text>From complete date</Text>
+            <RadioButton 
+              value='second'
+              status={userArr2[0] === 'second' ? 'checked' : 'unchecked'}
+              onPress={() => {setUserArr2(['second', userArr2[1]])}}
+            />
+          </View>
+          <TextInput style={styles.TextInput} value={userArr2[1]} onChangeText={(value) => {setUserArr2([userArr2[0], value])}}/>
 
           <Pressable
               style={[styles.button, styles.buttonClose]}
@@ -1050,6 +1070,7 @@ export default function App() {
     setCategoryValue(null);    
     setUserArr([]);
     setImages([]);
+    setUserArr2([]);
   }
   const sortCategory = (editCategory, items=[]) => {
     console.log("Sorting: ", editCategory);
