@@ -6,7 +6,10 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 
+let appSettings;
+
 export default function App() {
+  const [settings, setSettings] = useState([]);
   const [categories, setCategories] = useState([]);
   const [categoryData, setCategoryData] = useState([]);
   const [categoryItems, setCategoryItems] = useState([]);
@@ -204,7 +207,7 @@ export default function App() {
         makeDate: null
       };
 
-      if(addItem.title == "appCategories" || addItem.title == "appCategoryData"){ // Note Name check
+      if(addItem.title == "appCategories" || addItem.title == "appCategoryData" || addItem.title == "appSettings"){ // Note Name check
         setErrorMessage("Note title cannot be ", addItem.title, ".");
         isValid = false;
       }
@@ -290,7 +293,7 @@ export default function App() {
       isValid = false;
     }
     if(itemType == 0){ // Is Note
-      if(newTitle == "appCategories" || newTitle == "appCategoryData"){ // Note Name check
+      if(newTitle == "appCategories" || newTitle == "appCategoryData" || newTitle == "appSettings"){ // Note Name check
         setErrorMessage("Note title cannot be ", newTitle, ".");
         isValid = false;
       }
@@ -638,8 +641,8 @@ export default function App() {
       displayInt = userText2;
     }
     return(
-      <View style={styles.noteView}>
-        <TextInput multiline={true} value={userTitle} onChangeText={setUserTitle}/>
+        <ScrollView style={styles.noteView}>
+        <TextInput style={styles.TextInput} multiline={true} value={userTitle} onChangeText={setUserTitle}/>
         <Text>Pinned?: </Text>
           <Checkbox 
             status={userBoolean ? 'checked' : 'unchecked'}
@@ -656,14 +659,15 @@ export default function App() {
             onChangeValue={() => {setUserInt(categoryData.filter((e) => e.category == categoryValue).length); setUserText("" + categoryData.filter((e) => e.category == categoryValue).length)}}
           />
           <Text>Sorting Index: </Text>
-          <TextInput value={userText2} onChangeText={setUserText2}/>
+          <TextInput style={styles.TextInput} value={userText2} onChangeText={setUserText2}/>
           <Button title='Gallery' onPress={() => setPicsVisibility(!picsVisibility)}/>
           <Button title='Exit' onPress={() => {closeNote()}}/>
           <Button title="Delete" onPress={() => {setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
           <Button title="Pick an image from camera roll" onPress={pickImage} />
-          <TextInput style={styles.textBox} multiline={true} value={userText} onChangeText={setUserText}/>
+          
+          <TextInput style={styles.TextInput} multiline={true} value={userText} onChangeText={setUserText}/>
+        </ScrollView>
 
-      </View>
     );
   }
   const notePicturesModal = () => {
@@ -714,7 +718,7 @@ export default function App() {
           </View>
           <View style={styles.checkboxContainer}>
             <Text>Title: </Text>
-            <TextInput multiline={true} value={userTitle} onChangeText={setUserTitle}/>
+            <TextInput style={styles.TextInput} multiline={true} value={userTitle} onChangeText={setUserTitle}/>
           </View>
           <View style={styles.checkboxContainer}>
             <Text>Pinned?: </Text>
@@ -735,7 +739,7 @@ export default function App() {
             onChangeValue={() => {setUserText(""+categoryData.filter((e) => e.category == categoryValue).length)}}
           />
           <Text>Sorting Index: </Text>
-          <TextInput value={userText} onChangeText={setUserText}/>
+          <TextInput style={styles.TextInput} value={userText} onChangeText={setUserText}/>
 
           <Pressable
               style={[styles.button, styles.buttonClose]}
@@ -772,7 +776,7 @@ export default function App() {
           </View>
           <View style={styles.checkboxContainer}>
             <Text>Title: </Text>
-            <TextInput multiline={true} value={userTitle} onChangeText={setUserTitle}/>
+            <TextInput style={styles.TextInput} multiline={true} value={userTitle} onChangeText={setUserTitle}/>
           </View>
           <View style={styles.checkboxContainer}>
             <Text>Pinned?: </Text>
@@ -792,7 +796,7 @@ export default function App() {
             onChangeValue={() => {setUserText(""+categoryData.filter((e) => e.category == categoryValue).length)}}
           />
           <Text>Sorting Index: </Text>
-          <TextInput value={userText} onChangeText={setUserText}/>
+          <TextInput style={styles.TextInput} value={userText} onChangeText={setUserText}/>
 
           <Pressable
               style={[styles.button, styles.buttonClose]}
@@ -818,10 +822,10 @@ export default function App() {
           <Text>List Item</Text>
 
           <Text>Title: </Text>
-          <TextInput value={userTitle} placeholder={userArr[0]} onChangeText={setUserTitle}/>
+          <TextInput style={styles.TextInput} value={userTitle} placeholder={userArr[0]} onChangeText={setUserTitle}/>
 
           <Text>Color: </Text>
-          <TextInput value={userText} placeholder={userArr[1]} onChangeText={setUserText}/>
+          <TextInput style={styles.TextInput} value={userText} placeholder={userArr[1]} onChangeText={setUserText}/>
 
           <Pressable
               style={[styles.button, styles.buttonClose]}
@@ -870,7 +874,7 @@ export default function App() {
           <Text>{errorMessage}</Text>
 
           <Text>Title: </Text>
-          <TextInput value={userTitle} placeholder={title} onChangeText={setUserTitle}/>
+          <TextInput style={styles.TextInput} value={userTitle} placeholder={title} onChangeText={setUserTitle}/>
 
           <Text>Pinned?: </Text>
           <Checkbox 
@@ -890,7 +894,7 @@ export default function App() {
           />
 
           <Text>Sorting Index: </Text>
-          <TextInput value={userText} onChangeText={setUserText}/>
+          <TextInput style={styles.TextInput} value={userText} onChangeText={setUserText}/>
 
           <Pressable
               style={[styles.button, styles.buttonClose]}
@@ -980,12 +984,18 @@ export default function App() {
     }
   }
   const settingsModal = () => {
+    if(settingsVisibility){
+      if(userText == null|| userText == undefined){
+        console.log(appSettings.deleteAfter);
+        setUserText(JSON.stringify(appSettings.deleteAfter));
+      }
+    }
     return(
       <View style={styles.noteView}>
+        <Button title='<-' onPress={() => {closeSettings()}}/>
         <Text>Settings</Text>
-        <Text>Delete old list Items after x days</Text>
-        <Text>New items should be placed on x index</Text>
-        <Text></Text>
+        <Text>Completed list items will be deleted after : </Text>
+        <TextInput style={styles.TextInput} value={userText} onChangeText={setUserText}/>
       </View>
     );
   }
@@ -1082,6 +1092,19 @@ export default function App() {
     fixCategories[index].data = sortedData;
     setCategories(fixCategories);
   }
+  const closeSettings = () => {
+    console.log('Updating Settings');
+    let deleteAfter = parseInt(userText);
+    if(deleteAfter < 0){
+      deleteAfter = 0;
+    }
+    if(appSettings.deleteAfter != deleteAfter){
+      appSettings.deleteAfter = deleteAfter;
+      AsyncStorage.setItem('appSettings', JSON.stringify(appSettings));
+    }
+
+    setSettingsVisibility(false);
+  }
 
   if(shouldLoadData){
     //Store Categories Pinned should always be first List Items and Notes should always be last
@@ -1163,6 +1186,19 @@ export default function App() {
       }
     }); 
 
+    value = AsyncStorage.getItem('appSettings').then((value) => {
+      if(!value){
+        const tempAppSettings = {
+          deleteAfter: 30,
+        };
+        appSettings = tempAppSettings;
+        AsyncStorage.setItem('appSettings', JSON.stringify(tempAppSettings));
+      }
+      else{
+        appSettings = JSON.parse(value);
+      }
+    });
+
     if(categories.length >= 3){
       setShouldLoadData(false);
     }
@@ -1181,9 +1217,42 @@ export default function App() {
           sections={categories}
           keyExtractor={(item, index) => item + index}
           renderItem={({item}) => {
+            let show = categoryVisibility.includes(currentCategory);
+            // Complete date YYYY-MM-DD
+            if('completeDate' in item){
+              let completeDate = item.completeDate;
+              let year = parseInt(completeDate.substr(0, 4));
+              completeDate = completeDate.slice(5);
+              let month = parseInt(completeDate.substr(0, completeDate.search('-')));
+              completeDate = completeDate.slice(completeDate.search('-')+1);
+              let day = parseInt(completeDate);
+              completeDate = new Date(""+ year+ "-"+ month+ "-"+ day);
+              let deleteAfter;
+              let deleteDate;
+              AsyncStorage.getItem('appSettings').then((value) => {
+                if(!value){
+                  const tempAppSettings = {
+                    deleteAfter: 30
+                  };
+                  deleteAfter = 30;
+                  AsyncStorage.setItem('appSettings', JSON.stringify(tempAppSettings));
+                }
+                else{
+                  deleteAfter = JSON.parse(value).deleteAfter;
+                }
+                deleteDate = new Date();
+                deleteDate.setDate(completeDate + deleteAfter);
+                if(deleteDate <= new Date()){
+                  console.log("Deleting ", item.title);
+                  setUserTitle(item.title);
+                  deleteItem();
+                  show = false;
+                }
+
+              });
+            }
             itemSortNums.push({title: item.title, num: JSON.stringify(item.sortingNum)});
             let style = [styles.item];
-            const show = categoryVisibility.includes(currentCategory);
             if(show){
               const showCompleted = categoryCheckedVisibility.includes(currentCategory);
               if(showCompleted){
@@ -1355,9 +1424,7 @@ export default function App() {
               <Text style={styles.modalText}>Add Category</Text>
               <Text>{errorMessage}</Text>
               <Text>Title: </Text>
-              <TextInput multiline={true} value={userTitle} onChangeText={setUserTitle}/>
-              <Text>Color: </Text>
-              <TextInput value={userText} onChangeText={setUserText}/>
+              <TextInput style={styles.TextInput} multiline={true} value={userTitle} onChangeText={setUserTitle}/>
 
               <Pressable
                   style={[styles.button, styles.buttonClose]}
@@ -1474,6 +1541,30 @@ export default function App() {
 }
 
 const borderWidth = 2;
+let headerBackgroundColor;
+let headerTextColor;
+let headerTextSize;
+
+let backgroundColor;
+let textColor;
+let textSize;
+let buttonColor;
+let buttonTextColor;
+
+let categoryBackgroundColor;
+let categoryTextColor;
+let categoryBorderWidth;
+let categoryBorderColor;
+
+let modalBackgroundColor;
+let modalTextColor;
+let modalTextSize;
+let modalButtonColor;
+let modalButtonTextColor;
+
+let textInputBackgroundColor;
+let textInputTextColor;
+
 const styles = StyleSheet.create({
   app: {
     backgroundColor: '#707371',
@@ -1581,15 +1672,13 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
   },
+  TextInput: {
+    padding: 2,
+    borderWidth: 1,
+    backgroundColor: 'white',
+  },
   textContainer: {
     alignItems: 'left',
-  },
-  textBox: {
-    width: '100%',
-    borderStyle: 'solid',
-    borderColor: 'black',
-    borderWidth: 2,
-    borderRadius: 2
   },
   button: {
     borderRadius: 20,
