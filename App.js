@@ -39,6 +39,10 @@ export default function App() {
   const [userInt, setUserInt] = useState(0);
   const [userBoolean, setUserBoolean] = useState(false);
 
+  const themes = [
+    {title: 'Light'},
+   {title: 'Dark'}
+  ];
   let itemSortNums = [];
 
   useEffect(() => {
@@ -572,11 +576,11 @@ export default function App() {
   const displayPics = () => {
     return images.map((name, index) => {
       return(
-        <View key={name}>
+        <ScrollView key={name}>
           <Pressable onPress={() => {setUserInt(index); setChecked('third'); setDeleteConfirmationVisibility(true)}}>
             <Image key={name} source={{ uri: name}} style={styles.pic} />
           </Pressable>
-        </View>
+        </ScrollView>
       );
     })
   }
@@ -643,7 +647,10 @@ export default function App() {
     }
     return(
         <ScrollView style={styles.noteView}>
+        <Button title='Exit' onPress={() => {closeNote()}}/>
         <TextInput style={styles.TextInput} multiline={true} value={userTitle} onChangeText={setUserTitle}/>
+        <Button title="Delete" onPress={() => {setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
+
         <Text>Pinned?: </Text>
           <Checkbox 
             status={userBoolean ? 'checked' : 'unchecked'}
@@ -661,12 +668,8 @@ export default function App() {
           />
           <Text>Sorting Index: </Text>
           <TextInput style={styles.TextInput} value={userText2} onChangeText={setUserText2}/>
-          <Button title='Gallery' onPress={() => setPicsVisibility(!picsVisibility)}/>
-          <Button title='Exit' onPress={() => {closeNote()}}/>
-          <Button title="Delete" onPress={() => {setUserInt(item.type); setDeleteConfirmationVisibility(true)}}/>
-          <Button title="Pick an image from camera roll" onPress={pickImage} />
-          
-          <TextInput style={styles.TextInput} multiline={true} value={userText} onChangeText={setUserText}/>
+          <Button title='Gallery' onPress={() => setPicsVisibility(!picsVisibility)}/>          
+          <TextInput style={styles.NoteInput} multiline={true} value={userText} onChangeText={setUserText}/>
         </ScrollView>
 
     );
@@ -744,22 +747,6 @@ export default function App() {
           />
           <Text>Sorting Index: </Text>
           <TextInput style={styles.TextInput} value={userText} onChangeText={setUserText}/>
-          <Text>Would you like this item to remake itself?</Text>
-          <View style={styles.checkboxContainer}>
-            <Text>From make date</Text>
-            <RadioButton 
-              value='first'
-              status={userArr2[0] === 'first' ? 'checked' : 'unchecked'}
-              onPress={() => {setUserArr2(['first', userArr2[1]])}}
-            />
-            <Text>From complete date</Text>
-            <RadioButton 
-              value='second'
-              status={userArr2[0] === 'second' ? 'checked' : 'unchecked'}
-              onPress={() => {setUserArr2(['second', userArr2[1]])}}
-            />
-          </View>
-          <TextInput style={styles.TextInput} value={userArr2[1]} onChangeText={(value) => {setUserArr2([userArr2[0], value])}}/>
 
           <Pressable
               style={[styles.button, styles.buttonClose]}
@@ -1006,8 +993,9 @@ export default function App() {
   const settingsModal = () => {
     if(settingsVisibility){
       if(userText == null|| userText == undefined){
-        console.log(appSettings.deleteAfter);
-        setUserText(JSON.stringify(appSettings.deleteAfter));
+        console.log(settings.deleteAfter);
+        setUserText(JSON.stringify(settings.deleteAfter));
+        setCategoryValue(settings.theme);
       }
     }
     return(
@@ -1016,6 +1004,16 @@ export default function App() {
         <Text>Settings</Text>
         <Text>Completed list items will be deleted after : </Text>
         <TextInput style={styles.TextInput} value={userText} onChangeText={setUserText}/>
+        <Text>Theme</Text>
+        <DropDownPicker
+            open={categoryOpen}
+            value={categoryValue}
+            items={settings.themes}
+            setOpen={setCategoryOpen}
+            setValue={setCategoryValue}
+            setItems={setCategoryItems}
+            onChangeValue={() => {console.log(categoryValue)}}
+          />
       </View>
     );
   }
@@ -1119,9 +1117,17 @@ export default function App() {
     if(deleteAfter < 0){
       deleteAfter = 0;
     }
-    if(appSettings.deleteAfter != deleteAfter){
-      appSettings.deleteAfter = deleteAfter;
-      AsyncStorage.setItem('appSettings', JSON.stringify(appSettings));
+    if(settings.deleteAfter != deleteAfter){
+      let temp = settings;
+      temp.deleteAfter = deleteAfter;
+      setSettings(temp);
+      AsyncStorage.setItem('appSettings', JSON.stringify(temp));
+    }
+    if(settings.theme != categoryValue){
+      let temp = settings;
+      temp.theme = categoryValue;
+      setSettings(temp);
+
     }
 
     setSettingsVisibility(false);
@@ -1209,14 +1215,18 @@ export default function App() {
 
     value = AsyncStorage.getItem('appSettings').then((value) => {
       if(!value){
+        console.log("Making new Settings key");
+        const themes = [{label: 'Light', value: 'Light'}, {label: 'Dark', value: 'Dark'}];
         const tempAppSettings = {
+          themes: themes,
+          theme: 'Light',
           deleteAfter: 30,
         };
-        appSettings = tempAppSettings;
+        setSettings(tempAppSettings);
         AsyncStorage.setItem('appSettings', JSON.stringify(tempAppSettings));
       }
       else{
-        appSettings = JSON.parse(value);
+        setSettings(JSON.parse(value));
       }
     });
 
@@ -1240,7 +1250,7 @@ export default function App() {
           renderItem={({item}) => {
             let show = categoryVisibility.includes(currentCategory);
             // Complete date YYYY-MM-DD
-            if('completeDate' in item){
+            if('completeDate' in item && item.completeDate != undefined){
               let completeDate = item.completeDate;
               let year = parseInt(completeDate.substr(0, 4));
               completeDate = completeDate.slice(5);
@@ -1694,6 +1704,14 @@ const styles = StyleSheet.create({
     height: 200,
   },
   TextInput: {
+    padding: 2,
+    borderRadius: 8,
+    borderWidth: 1,
+    backgroundColor: 'white',
+  },
+  NoteInput: {
+    borderRadius: 8,
+    marginTop: 12,
     padding: 2,
     borderWidth: 1,
     backgroundColor: 'white',
