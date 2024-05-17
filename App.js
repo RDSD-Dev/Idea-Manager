@@ -1572,29 +1572,21 @@ export default function App() {
 }
 
 const borderWidth = 2;
-let headerBackgroundColor;
-let headerTextColor;
-let headerTextSize;
+let headerBackgroundColor = '#3c3e3c';
 
-let backgroundColor;
-let textColor;
-let textSize;
-let buttonColor;
-let buttonTextColor;
+let textColor = '#f4f4f4';
 
-let categoryBackgroundColor;
-let categoryTextColor;
-let categoryBorderWidth;
-let categoryBorderColor;
+let backgroundColor = '#A9A9A9';
+let textSize = 16;
+let buttonColor = '#F194FF';
 
-let modalBackgroundColor;
-let modalTextColor;
-let modalTextSize;
-let modalButtonColor;
-let modalButtonTextColor;
+let categoryBackgroundColor = '#707371';
+let categoryBorderWidth = 2;
+let categoryBorderColor = 'Black';
 
-let textInputBackgroundColor;
-let textInputTextColor;
+let modalBackgroundColor = '#707371';
+
+let textInputBackgroundColor = 'white';
 
 const styles = StyleSheet.create({
   app: {
@@ -1603,13 +1595,13 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#A9A9A9',
+    backgroundColor: backgroundColor,
     alignItems: 'center',
     justifyContent: 'center',
   },
   text: {
-    color: '#f4f4f4',
-    fontSize: 16,
+    color: textColor,
+    fontSize: textSize,
   },
   topHeader: {
     paddingTop: 28,
@@ -1618,7 +1610,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#3c3e3c'
+    backgroundColor: headerBackgroundColor
   },
   settingsBtn: {
     alignSelf: 'flex-start',
@@ -1668,7 +1660,7 @@ const styles = StyleSheet.create({
   },
   modalView: {
     margin: 20,
-    backgroundColor: '#707371',
+    backgroundColor: modalBackgroundColor,
     borderRadius: 20,
     padding: 35,
     alignItems: 'center',
@@ -1707,7 +1699,7 @@ const styles = StyleSheet.create({
     padding: 2,
     borderRadius: 8,
     borderWidth: 1,
-    backgroundColor: 'white',
+    backgroundColor: textInputBackgroundColor,
   },
   NoteInput: {
     borderRadius: 8,
@@ -1723,9 +1715,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 10,
     elevation: 2,
+    backgroundColor: buttonColor,
   },
   buttonOpen: {
-    backgroundColor: '#F194FF',
+    backgroundColor: buttonColor,
   },
   buttonClose: {
     backgroundColor: '#2196F3',
