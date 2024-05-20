@@ -1018,15 +1018,16 @@ export default function App() {
       }
     }
     return(
-      <View style={styles.noteView}>
+      <View style={styles.modalView}>
         <Pressable style={styles.button} onPress={() => {closeSettings()}}>
           <Text>Back</Text>
         </Pressable>
-        <Text>Settings</Text>
-        <Text>Completed list items will be deleted after : </Text>
+        <Text style={styles.text}>Settings</Text>
+        <Text style={styles.text}>Completed list items will be deleted after : </Text>
         <TextInput style={styles.TextInput} value={userText} onChangeText={setUserText}/>
-        <Text>Theme</Text>
+        <Text style={styles.text}>Theme</Text>
         <DropDownPicker
+        style={styles.TextInput}
             open={categoryOpen}
             value={categoryValue}
             items={settings.themes}
