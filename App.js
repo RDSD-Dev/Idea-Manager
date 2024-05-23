@@ -26,6 +26,7 @@ export default function App() {
   const [settingsVisibility, setSettingsVisibility] = useState(false);
 
   const [categoryValue, setCategoryValue] = useState(null);
+  const [themeValue, setThemeValue] = useState('Dark');
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [checked, setChecked] = useState('first');
 
@@ -39,17 +40,183 @@ export default function App() {
   const [userInt, setUserInt] = useState(0);
   const [userBoolean, setUserBoolean] = useState(false);
 
-  const themes = [
-    {title: 'Light'},
-   {title: 'Dark'}
-  ];
+  const [themes, setThemes] = useState([
+    {label: 'Light', value: 'Light', backgroundColor: '#edede9', categoryBackgroundColor: '#D8C5B6', borderColor: '#000000', modalBackgroundColor: '#D8C5B6', buttonColor: '#C29F8B', textColor: '#000000', borderWidth: 0},
+    {label: 'Dark', value: 'Dark', backgroundColor: '#0D1B2A', categoryBackgroundColor: '#415A77', borderColor: '#000000', modalBackgroundColor: '#1B263B', buttonColor: '#778DA9', textColor: '#E0E1DD', borderWidth: 2},
+    {label: 'Blue', value: 'Blue', backgroundColor: '#0A369D', categoryBackgroundColor: '#5E7CE2', borderColor: '#000000', modalBackgroundColor: '#4472CA', buttonColor: '#92B4F4', textColor: '#CFDEE7', borderWidth: 0},
+    {label: 'Pastel', value: 'Pastel', backgroundColor: '#B0F2B4', categoryBackgroundColor: '#F2BAC9', borderColor: '#FFFFFF', modalBackgroundColor: '#F2BAC9', buttonColor: '#BAF2E9', textColor: '#000000', borderWidth: 4},
+  ]);
+  //let themes = ;
   let itemSortNums = [];
+
+  let themeIndex = themes.findIndex((e) => e.label == themeValue);
+
+  let textSize = 18;
+  let textColor = themes[themeIndex].textColor;
+  let headerBackgroundColor = themes[themeIndex].backgroundColor;
+  let backgroundColor = themes[themeIndex].backgroundColor;
+
+  let categoryBackgroundColor = themes[themeIndex].categoryBackgroundColor;
+  let borderColor = themes[themeIndex].borderColor;
+  let borderWidth = themes[themeIndex].borderWidth;
+
+  let buttonColor = themes[themeIndex].buttonColor;
+  let textInputBackgroundColor = buttonColor;
+  let modalBackgroundColor = themes[themeIndex].modalBackgroundColor;
+
+  const styles = StyleSheet.create({
+  app: {
+    backgroundColor: backgroundColor,
+    height: '100%',
+  },
+  container: {
+    flex: 1,
+    backgroundColor: backgroundColor,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  text: {
+    color: textColor,
+    fontSize: textSize,
+  },
+  topHeader: {
+    paddingTop: 28,
+    padding: 16,
+    display: 'flex',
+    flexDirection: 'row',
+
+    alignItems: 'center',
+    backgroundColor: headerBackgroundColor
+  },
+
+  sectionHeader: {
+    marginTop: 12,
+    paddingBottom: 8,
+    paddingHorizontal: 6,
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderColor: borderColor,
+    gap: 8,
+    marginHorizontal: 8,
+    borderWidth: borderWidth,
+    borderTopEndRadius: 8,
+    borderTopStartRadius: 8,
+    backgroundColor: categoryBackgroundColor,
+  },
+  item: {
+    paddingVertical: 8,
+    marginHorizontal: 8,
+    paddingHorizontal: 12,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderLeftWidth: borderWidth,
+    borderColor: borderColor,
+    borderRightWidth: borderWidth,
+    borderBottomWidth: borderWidth,
+    backgroundColor: categoryBackgroundColor,
+
+  },
+  endBorder: {
+    borderBottomStartRadius: 8,
+    borderBottomEndRadius: 8,
+    borderColor: borderColor,
+  },
+  eraseBottomBorder: {
+    borderBottomWidth: 0,
+  },
+
+  modalView: {
+    margin: 20,
+    color: textColor,
+    backgroundColor: modalBackgroundColor,
+    borderRadius: 20,
+    borderWidth: borderWidth,
+    borderColor: borderColor,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  noteView: {
+    margin: 20,
+    backgroundColor: modalBackgroundColor,
+    borderRadius: 20,
+    padding: 35,
+    height: '92%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  picturesContainer: {
+    alignItems: 'center',
+  },
+  pic :{
+    width: 260,
+    height: 260,
+    borderWidth: borderWidth,
+    borderColor: borderColor,
+    marginVertical: 8,
+  },
+
+  button: {
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+    color: textColor,
+    backgroundColor: buttonColor,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    color: textColor,
+  },
+  TextInput: {
+    color: textColor,
+    fontSize: textSize,
+    padding: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    backgroundColor: textInputBackgroundColor,
+  },
+  dropDown: {
+    color: textColor,
+    fontSize: textSize,
+    padding: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    backgroundColor: textInputBackgroundColor,
+    width: 'auto',
+    display: 'flex',
+  },
+  textContainer: {
+    alignItems: 'left',
+    color: textColor,
+  },
+  });
 
   useEffect(() => {
     if(noteVisibility){
       AsyncStorage.setItem(JSON.stringify(userArr[0]), userText);
     }
-  }, [userText, itemSortNums]);
+  }, [userText, itemSortNums, themes]);
 
   // Category Stuff
   const addCategory = () => {
@@ -127,6 +294,7 @@ export default function App() {
           console.log(editCategoryItems[i]);
           editCategoryItems[i].title = addCategoryTitle;
           editCategoryItems[i].color = userText;
+          editCategoryItems[i].showCompleted = userBoolean;
           break;
         }
       }
@@ -138,6 +306,7 @@ export default function App() {
           index = i;
           editCatagories[i].title = addCategoryTitle;
           editCatagories[i].color = userText;
+          editCatagories[i].showCompleted = userBoolean;
           break;
         }
       }
@@ -150,6 +319,14 @@ export default function App() {
       const editableData = editCategoryData.filter((e) => e.category == updateTitle);
       for(let i=0; i < editableData.length; i++){
         editableData[i].category = addCategoryTitle;
+      }
+
+      if(userBoolean == true && categoryCheckedVisibility.indexOf(addCategoryTitle) == -1){
+        categoryCheckedVisibility.push(addCategoryTitle);
+      }
+      else{
+        const i =categoryCheckedVisibility.indexOf(addCategoryTitle);
+        categoryCheckedVisibility.splice(i, 1);
       }
 
       setCategoryData(editCategoryData);
@@ -481,38 +658,6 @@ export default function App() {
     sortCategory(category, data);
     eraseUserInputs();
   }
-  const updateSortNum = (title, category, newSortingNum) => {
-    const limit = categoryData.filter((e) => e.category == category).length -1;
-    let isValid = true;
-    itemSortNums[itemSortNums.findIndex((e) => e.title == title)].num = newSortingNum;
-    let newInt = parseInt(newSortingNum);
-    console.log("NewInt: ", newInt);
-    if(newInt = null && !isNaN(newInt)){
-      if(newInt < 0){
-        newInt = 0;
-        itemSortNums[itemSortNums.findIndex((e) => e.title == title)].num = '0';
-      }
-      else if(newInt > limit){
-        newInt = limit;
-        itemSortNums[itemSortNums.findIndex((e) => e.title == title)].num = '' + limit;
-      }
-
-    }
-    else{
-      console.log("fail");
-      isValid = false;
-      eraseUserInputs();
-    }
-
-    if(isValid){
-      console.log("Valid");
-      const item = categoryData.find((e) => e.title == title);
-      setUserBoolean(item.isPinned);
-      setUserText(itemSortNums);
-      //updateItem(title);
-      eraseUserInputs();
-    }
-  }
 
   // Note Stuff
   const displayNote = (noteTitle) =>{
@@ -576,11 +721,11 @@ export default function App() {
   const displayPics = () => {
     return images.map((name, index) => {
       return(
-        <ScrollView key={name}>
+        <View key={name}>
           <Pressable onPress={() => {setUserInt(index); setChecked('third'); setDeleteConfirmationVisibility(true)}}>
-            <Image key={name} source={{ uri: name}} style={styles.pic} />
+            <Image key={name} source={{ uri: name}} style={styles.pic}/>
           </Pressable>
-        </ScrollView>
+        </View>
       );
     })
   }
@@ -646,54 +791,74 @@ export default function App() {
       displayInt = userText2;
     }
     return(
-        <ScrollView style={styles.noteView}>
-          <View>
-        <Pressable style={styles.button} onPress={() => {closeNote()}}>
-          <Text >Exit</Text>
-        </Pressable>
-        <TextInput style={styles.TextInput} multiline={true} value={userTitle} onChangeText={setUserTitle}/>
-        <Pressable style={styles.button} onPronPress={() => {setUserInt(item.type); setDeleteConfirmationVisibility(true)}}>
-          <Text>Delete</Text>
-        </Pressable>
+      <ScrollView style={styles.noteView}>
+        <View style={{display: 'flex',flexDirection: 'row',  alignItems: 'center', marginBottom: 6}}>
+          <View style={{flex:0}}>
+            <Pressable style={styles.button} onPress={() => {closeNote()}}>
+              <Text style={styles.text}>Exit</Text>
+            </Pressable>
+          </View>
+          <View style={{flex:2}}>
+            <TextInput style={styles.TextInput} multiline={true} value={userTitle} onChangeText={setUserTitle}/>
+          </View>
+          <View style={{flex:0}}>
+            <Pressable style={styles.button} onPronPress={() => {setUserInt(item.type); setDeleteConfirmationVisibility(true)}}>
+              <Text style={styles.text}>Delete</Text>
+            </Pressable>
+          </View>
         </View>
-        <Text style={styles.text}>Pinned?: </Text>
-          <Checkbox 
-            status={userBoolean ? 'checked' : 'unchecked'}
-            onPress={() => {setUserBoolean(!userBoolean);}}
-          />
-          <Text style={styles.text}>Category: </Text>
-          <DropDownPicker style={styles.TextInput}
+
+        <DropDownPicker style={styles.dropDown}
             open={categoryOpen}
             value={categoryValue}
             items={categoryItems}
             setOpen={setCategoryOpen}
             setValue={setCategoryValue}
             setItems={setCategoryItems}
-            onChangeValue={() => {setUserInt(categoryData.filter((e) => e.category == categoryValue).length); setUserText("" + categoryData.filter((e) => e.category == categoryValue).length)}}
-          />
-          <Text style={styles.text}>Sorting Index: </Text>
-          <TextInput style={styles.TextInput} value={userText2} onChangeText={setUserText2}/>
+          onChangeValue={() => {setUserInt(categoryData.filter((e) => e.category == categoryValue).length); setUserText("" + categoryData.filter((e) => e.category == categoryValue).length)}}
+        />
+
+        <View style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginVertical: 6}}>
+          <View style={styles.checkboxContainer}>
+            <Text style={styles.text}>Pin?: </Text>
+            <Checkbox 
+              status={userBoolean ? 'checked' : 'unchecked'}
+              onPress={() => {setUserBoolean(!userBoolean);}}
+            />
+          </View>
+          <View style={styles.checkboxContainer}>
+            <Text style={styles.text}>Index: </Text>
+            <TextInput style={styles.TextInput} value={userText2} onChangeText={setUserText2}/>
+          </View>
           <Pressable style={styles.button} onPress={() => setPicsVisibility(!picsVisibility)}>
-          <Text >Gallery</Text>
-        </Pressable>       
-          <TextInput style={styles.TextInput} multiline={true} value={userText} onChangeText={setUserText}/>
-        </ScrollView>
+          <Text style={styles.text}>Gallery</Text>
+          </Pressable>       
+        </View>
+
+        <TextInput style={styles.TextInput} multiline={true} value={userText} onChangeText={setUserText}/>
+      </ScrollView>
 
     );
   }
   const notePicturesModal = () => {
     return(
       <View style={styles.noteView}>
-        <Text style={styles.text} multiline={true}>{userTitle} Gallery</Text>
+        <View style={{display:'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', marginBottom: 6}}>
         <Pressable style={styles.button} onPress={() => {setPicsVisibility(false)}}>
-          <Text>Back</Text>
-        </Pressable>
-        <Pressable style={styles.button} onPress={() => {closeNote()}}>
-          <Text>Exit</Text>
-        </Pressable>
-        <Pressable style={styles.button} onPress={pickImage}>
-          <Text>Pick an Image from camera roll</Text>
-        </Pressable>
+            <Text style={styles.text}>Back</Text>
+          </Pressable>
+          <Text style={styles.text} multiline={true}>{userTitle} Gallery</Text>
+          <Pressable style={styles.button} onPress={() => {closeNote()}}>
+            <Text style={styles.text}>Exit</Text>
+          </Pressable>
+        </View>
+
+        <View style={{marginBottom: 6}}>
+          <Pressable style={styles.button} onPress={pickImage}>
+              <Text style={styles.text}>Pick an Image from camera roll</Text>
+            </Pressable>
+          </View>
+
         <ScrollView contentContainerStyle={styles.picturesContainer}>
           {displayPics()}
         </ScrollView>
@@ -722,6 +887,7 @@ export default function App() {
         <View style={styles.modalView}>
           <Text style={styles.text}>Add List Item</Text>
           <Text style={styles.text}>{errorMessage}</Text>
+
           <View style={styles.checkboxContainer}>
             <Text style={styles.text}>List Item</Text>
             <RadioButton 
@@ -736,10 +902,12 @@ export default function App() {
               onPress={() => {setChecked('second')}}
             />
           </View>
+
           <View style={styles.checkboxContainer}>
             <Text style={styles.text}>Title: </Text>
             <TextInput style={styles.TextInput} multiline={true} value={userTitle} onChangeText={setUserTitle}/>
           </View>
+
           <View style={styles.checkboxContainer}>
             <Text style={styles.text}>Pinned?: </Text>
             <Checkbox 
@@ -759,19 +927,22 @@ export default function App() {
             setItems={setCategoryItems}
             onChangeValue={() => {setUserText(""+categoryData.filter((e) => e.category == categoryValue).length)}}
           />
-          <Text style={styles.text}>Sorting Index: </Text>
-          <TextInput style={styles.TextInput} value={userText} onChangeText={setUserText}/>
+
+          <View style={styles.checkboxContainer}>
+            <Text style={styles.text}>Sorting Index: </Text>
+            <TextInput style={styles.TextInput} value={userText} onChangeText={setUserText}/>
+          </View>
 
           <Pressable
               style={[styles.button]}
               onPress={() => {addItem()}}>
-              <Text style={styles.textStyle}>Add Item</Text>
+              <Text style={styles.text}>Add Item</Text>
             </Pressable>
 
             <Pressable
               style={[styles.button]}
               onPress={() => {setAddItemVisibility(!addItemVisibility); eraseUserInputs();}}>
-              <Text style={styles.textStyle}>Cancel</Text>
+              <Text style={styles.text}>Cancel</Text>
             </Pressable>
           </View>
       );
@@ -781,6 +952,7 @@ export default function App() {
         <View style={styles.modalView}>
           <Text style={styles.text}>Add Note</Text>
           <Text style={styles.text}>{errorMessage}</Text>
+
           <View style={styles.checkboxContainer}>
             <Text style={styles.text}>List Item</Text>
             <RadioButton 
@@ -795,10 +967,12 @@ export default function App() {
               onPress={() => {setChecked('second')}}
             />
           </View>
+
           <View style={styles.checkboxContainer}>
             <Text style={styles.text}>Title: </Text>
             <TextInput style={styles.TextInput} multiline={true} value={userTitle} onChangeText={setUserTitle}/>
           </View>
+
           <View style={styles.checkboxContainer}>
             <Text style={styles.text}>Pinned?: </Text>
             <Checkbox 
@@ -806,9 +980,11 @@ export default function App() {
               onPress={() => {setUserBoolean(!userBoolean); console.log(userBoolean)}}
             />
             </View>
+
           <Text style={styles.text}>Category: </Text>
           <DropDownPicker
-          style={styles.TextInput}
+            style={styles.TextInput}
+            baseColor={textColor}
             open={categoryOpen}
             value={categoryValue}
             items={categoryItems}
@@ -817,19 +993,22 @@ export default function App() {
             setItems={setCategoryItems}
             onChangeValue={() => {setUserText(""+categoryData.filter((e) => e.category == categoryValue).length)}}
           />
-          <Text style={styles.text}>Sorting Index: </Text>
-          <TextInput style={styles.TextInput} value={userText} onChangeText={setUserText}/>
+
+          <View style={styles.checkboxContainer}>
+            <Text style={styles.text}>Sorting Index: </Text>
+            <TextInput style={styles.TextInput} value={userText} onChangeText={setUserText}/>
+          </View>
 
           <Pressable
               style={[styles.button]}
               onPress={() => {addItem()}}>
-              <Text style={styles.textStyle}>Add Item</Text>
+              <Text style={styles.text}>Add Item</Text>
             </Pressable>
 
             <Pressable
               style={[styles.button]}
               onPress={() => {setAddItemVisibility(!addItemVisibility); eraseUserInputs();}}>
-              <Text style={styles.textStyle}>Cancel</Text>
+              <Text style={styles.text}>Cancel</Text>
             </Pressable>
           </View>
       );
@@ -840,31 +1019,37 @@ export default function App() {
       return(
         <View style={styles.modalView}>
           <Text style={styles.text}>Update Category: {userArr[0]}</Text>
-          <Text>{errorMessage}</Text>
-          <Text style={styles.text}>List Item</Text>
+          <Text style={styles.text}>{errorMessage}</Text>
 
-          <Text style={styles.text}>Title: </Text>
-          <TextInput style={styles.TextInput} value={userTitle} placeholder={userArr[0]} onChangeText={setUserTitle}/>
+          <View style={styles.checkboxContainer}>
+            <Text style={styles.text}>Title: </Text>
+            <TextInput style={styles.TextInput} value={userTitle} placeholder={userArr[0]} onChangeText={setUserTitle}/>
+          </View>
 
-          <Text style={styles.text}>Color: </Text>
-          <TextInput style={styles.TextInput} value={userText} placeholder={userArr[1]} onChangeText={setUserText}/>
+          <View style={styles.checkboxContainer}>
+            <Text style={styles.text}>Display Completed Items: </Text>
+            <Checkbox 
+              status={userBoolean ? 'checked' : 'unchecked'}
+              onPress={() => {setUserBoolean(!userBoolean);}}
+            />
+          </View>
 
           <Pressable
               style={[styles.button]}
               onPress={() => {updateCategory(userArr[0])}}>
-              <Text style={styles.textStyle}>Add Item</Text>
+              <Text style={styles.text}>Update</Text>
             </Pressable>
 
             <Pressable
               style={[styles.button]}
               onPress={() =>{ deleteCategory(); eraseUserInputs(); setUpdateModalVisibility(!updateModalVisibility); }}>
-              <Text style={styles.textStyle}>Delete</Text>
+              <Text style={styles.text}>Delete</Text>
             </Pressable>
 
             <Pressable
               style={[styles.button]}
               onPress={() => {setUpdateModalVisibility(!updateModalVisibility); eraseUserInputs();}}>
-              <Text style={styles.textStyle}>Cancel</Text>
+              <Text style={styles.text}>Cancel</Text>
             </Pressable>
           </View>
       );
@@ -895,14 +1080,18 @@ export default function App() {
           <Text style={styles.text}>Update {type} Item: {title}</Text>
           <Text>{errorMessage}</Text>
 
-          <Text style={styles.text}>Title: </Text>
-          <TextInput style={styles.TextInput} value={userTitle} placeholder={title} onChangeText={setUserTitle}/>
+          <View style={styles.checkboxContainer}>
+            <Text style={styles.text}>Title: </Text>
+            <TextInput style={styles.TextInput} value={userTitle} placeholder={title} onChangeText={setUserTitle}/>
+          </View>
 
-          <Text style={styles.text}>Pinned?: </Text>
-          <Checkbox 
-            status={userBoolean ? 'checked' : 'unchecked'}
-            onPress={() => {setUserBoolean(!userBoolean);}}
-          />
+          <View style={styles.checkboxContainer}>
+            <Text style={styles.text}>Pinned?: </Text>
+            <Checkbox 
+              status={userBoolean ? 'checked' : 'unchecked'}
+              onPress={() => {setUserBoolean(!userBoolean);}}
+            />
+          </View>
           
           <Text style={styles.text}>Category: </Text>
           <DropDownPicker
@@ -916,27 +1105,29 @@ export default function App() {
             onChangeValue={() => {setUserInt(categoryData.filter((e) => e.category == categoryValue).length); setUserText("" + categoryData.filter((e) => e.category == categoryValue).length)}}
           />
 
-          <Text style={styles.text}>Sorting Index: </Text>
-          <TextInput style={styles.TextInput} value={userText} onChangeText={setUserText}/>
+          <View style={styles.checkboxContainer}>
+            <Text style={styles.text}>Sorting Index: </Text>
+            <TextInput style={styles.TextInput} value={userText} onChangeText={setUserText}/>
+          </View>
 
           <Pressable
               style={[styles.button]}
               onPress={() => {updateItem(title)}}>
               <Text style={styles.textStyle}>Update Item</Text>
-            </Pressable>
+          </Pressable>
 
-            <Pressable
-              style={[styles.button]}
-              onPress={() => {deleteItem(); setUpdateModalVisibility(!updateModalVisibility); eraseUserInputs();}}>
-              <Text style={styles.textStyle}>Delete</Text>
-            </Pressable>
+          <Pressable
+            style={[styles.button]}
+            onPress={() => {deleteItem(); setUpdateModalVisibility(!updateModalVisibility); eraseUserInputs();}}>
+            <Text style={styles.textStyle}>Delete</Text>
+          </Pressable>
 
-            <Pressable
-              style={[styles.button]}
-              onPress={() => {setUpdateModalVisibility(!updateModalVisibility); eraseUserInputs();}}>
-              <Text style={styles.textStyle}>Cancel</Text>
-            </Pressable>
-          </View>
+          <Pressable
+            style={[styles.button]}
+            onPress={() => {setUpdateModalVisibility(!updateModalVisibility); eraseUserInputs();}}>
+            <Text style={styles.textStyle}>Cancel</Text>
+          </Pressable>
+        </View>
       );
     }
   }
@@ -1019,23 +1210,34 @@ export default function App() {
     }
     return(
       <View style={styles.modalView}>
-        <Pressable style={styles.button} onPress={() => {closeSettings()}}>
-          <Text>Back</Text>
-        </Pressable>
-        <Text style={styles.text}>Settings</Text>
-        <Text style={styles.text}>Completed list items will be deleted after : </Text>
-        <TextInput style={styles.TextInput} value={userText} onChangeText={setUserText}/>
+        <View style={{display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center',}}>
+          <Text style={styles.text}>Settings</Text>
+        </View>
+
+        <View style={styles.checkboxContainer}>
+          <Text style={styles.text}>Delete Completed After </Text>
+          <TextInput style={styles.TextInput} value={userText} onChangeText={setUserText}/>
+          <Text style={styles.text}> Days</Text>
+        </View>
+
         <Text style={styles.text}>Theme</Text>
-        <DropDownPicker
-        style={styles.TextInput}
-            open={categoryOpen}
-            value={categoryValue}
-            items={settings.themes}
-            setOpen={setCategoryOpen}
-            setValue={setCategoryValue}
-            setItems={setCategoryItems}
-            onChangeValue={() => {console.log(categoryValue)}}
-          />
+        <DropDownPicker style={styles.TextInput}
+          open={categoryOpen}
+          value={themeValue}
+          items={themes}
+          setOpen={setCategoryOpen}
+          setValue={setThemeValue}
+          setItems={setThemes}
+          onChangeValue={() => {console.log(themeValue)}}
+        />
+      
+        <View>
+          
+        </View>
+
+        <Pressable style={styles.button} onPress={() => {closeSettings()}}>
+          <Text style={styles.text}>Confirm</Text>
+        </Pressable>
       </View>
     );
   }
@@ -1054,24 +1256,6 @@ export default function App() {
       temp = categories;
       let index = temp.findIndex((e) => e.title == title);
       temp[index].show = !temp[index].show;
-      setCategories(temp);
-      temp =  AsyncStorage.setItem('appCategories', JSON.stringify(temp));
-
-      eraseUserInputs();
-  }
-  const toggleCategoryCheckedVisibility = (title) => {
-    let temp = categoryCheckedVisibility;
-    if(temp.includes(title)){
-      temp.splice(temp.indexOf(title), 1)
-    }
-    else{
-      temp.push(title)
-    }
-      setCategoryCheckedVisibility(temp);
-
-      temp = categories;
-      let index = temp.findIndex((e) => e.title == title);
-      temp[index].showCompleted = !temp[index].showCompleted;
       setCategories(temp);
       temp =  AsyncStorage.setItem('appCategories', JSON.stringify(temp));
 
@@ -1145,11 +1329,11 @@ export default function App() {
       setSettings(temp);
       AsyncStorage.setItem('appSettings', JSON.stringify(temp));
     }
-    if(settings.theme != categoryValue){
+    if(settings.theme != themeValue){
       let temp = settings;
-      temp.theme = categoryValue;
+      temp.theme = themeValue;
       setSettings(temp);
-
+      AsyncStorage.setItem('appSettings', JSON.stringify(temp));
     }
 
     setSettingsVisibility(false);
@@ -1238,17 +1422,24 @@ export default function App() {
     value = AsyncStorage.getItem('appSettings').then((value) => {
       if(!value){
         console.log("Making new Settings key");
-        const themes = [{label: 'Light', value: 'Light'}, {label: 'Dark', value: 'Dark'}];
         const tempAppSettings = {
-          themes: themes,
-          theme: 'Light',
+          theme: 'Dark',
           deleteAfter: 30,
+          userThemes: []
         };
         setSettings(tempAppSettings);
+        setThemeValue('Dark');
         AsyncStorage.setItem('appSettings', JSON.stringify(tempAppSettings));
       }
       else{
         setSettings(JSON.parse(value));
+        if(settings.length == 0){
+          const userThemes = JSON.parse(value).userThemes;
+          for(let i=0; i< userThemes.length -1; i++){
+            setThemes(themes => [...themes, userThemes[i]]);
+          }
+        }
+        setThemeValue(JSON.parse(value).theme);
       }
     });
 
@@ -1261,13 +1452,21 @@ export default function App() {
     return(
       <SafeAreaView style={styles.app}>
         <View style={styles.topHeader}>
-          <Pressable style={styles.button}  onPress={() => {setSettingsVisibility(true)}}>
-            <Text>*</Text>
+          <View style={{flex:0,}}>
+          <Pressable style={styles.button }  onPress={() => {setSettingsVisibility(true)}}>
+            <Text style={styles.text}>Settings</Text>
           </Pressable>
+          </View>
+          <View style={{flex:1, }}></View>
+          <View style={{flex:3, }}>
           <Text style={styles.text}>Idea Manager</Text>
+          </View>
+          <View style={{flex:2, }}></View>
+          <View style={{flex:0}}>
           <Pressable style={styles.button}  onPress={() => {setAddCategoryVisibility(true)}}>
-            <Text>+</Text>
+            <Text style={styles.text}>+</Text>
           </Pressable>
+          </View>
         </View>
 
         <SectionList
@@ -1346,7 +1545,7 @@ export default function App() {
               else{
                 const catIndex = categories.findIndex((e) => e.title == currentCategory);
                 const catData = categories[catIndex].data;
-                let lastIndex = null;
+                let lastIndex = 0;
                 for(let i=catData.length-1; i != 0; i--){
                   if(catData[i].completeDate == undefined){
                     lastIndex = catData[i].sortingNum;
@@ -1407,7 +1606,7 @@ export default function App() {
                     />
                   </View>
                   <Pressable style={styles.button} onPress={() => {setUserTitle(title); setUserBoolean(true); setAddItemVisibility(true)}}>
-                    <Text>+</Text>
+                    <Text style={styles.text}>+</Text>
                   </Pressable>
                 </View>
               );
@@ -1431,7 +1630,7 @@ export default function App() {
                     />
                   </View>
                   <Pressable style={styles.button} onPress={() => {setAddItemVisibility(true)}}>
-                    <Text>+</Text>
+                    <Text style={styles.text}>+</Text>
                   </Pressable>
                 </View>
                 );
@@ -1455,7 +1654,7 @@ export default function App() {
                     />          
                   </View>
                   <Pressable style={styles.button} onPress={() => {setChecked('second'); setUserInt(0); setAddItemVisibility(true)}}>
-                    <Text>+</Text>
+                    <Text style={styles.text}>+</Text>
                   </Pressable>
                 </View>
                 );
@@ -1469,7 +1668,7 @@ export default function App() {
             return(
               <View style={style}>
                   <View style={styles.checkboxContainer}>
-                  <Pressable onPress={() => {setUserTitle(title); setUserText(color); setUserArr([title, color]); setChecked('second');  setUpdateModalVisibility(true)}}>
+                  <Pressable onPress={() => {setUserTitle(title); setUserText(color); setUserArr([title, color, showCompleted]); setUserBoolean(showCompleted); setChecked('second');  setUpdateModalVisibility(true)}}>
                     <Text multiline='true' style={styles.text}>{title}</Text>
                   </Pressable>
                     <Checkbox 
@@ -1477,15 +1676,8 @@ export default function App() {
                     onPress={() => {toggleCategoryVisibility(title);}}
                     />
                   </View>
-                  <View style={styles.checkboxContainer}>
-                    <Text style={styles.text}>Completed?</Text>
-                    <Checkbox 
-                    status={categoryCheckedVisibility.includes(title) ? 'checked' : 'unchecked'}
-                    onPress={() => {toggleCategoryCheckedVisibility(title);}}
-                    />
-                  </View>
                   <Pressable style={styles.button} onPress={() => {setCategoryValue(title); setUserText(""+categoryData.filter((e) => e.category == title).length); setAddItemVisibility(true)}}>
-                    <Text>+</Text>
+                    <Text style={styles.text}>+</Text>
                   </Pressable>
               </View>
               );
@@ -1504,21 +1696,22 @@ export default function App() {
         >
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
-              <Text style={styles.modalText}>Add Category</Text>
-              <Text>{errorMessage}</Text>
-              <Text>Title: </Text>
-              <TextInput style={styles.TextInput} multiline={true} value={userTitle} onChangeText={setUserTitle}/>
-
+              <Text style={styles.text}>Add Category</Text>
+              <Text style={styles.text}>{errorMessage}</Text>
+              <View style={styles.checkboxContainer}>
+                <Text style={styles.text}>Title: </Text>
+                <TextInput style={styles.TextInput} multiline={true} value={userTitle} onChangeText={setUserTitle}/>
+              </View>
               <Pressable
                   style={[styles.button, styles.buttonClose]}
                   onPress={() => addCategory()}>
-                  <Text style={styles.textStyle}>Add Category</Text>
+                  <Text style={styles.text}>Add Category</Text>
                 </Pressable>
 
                 <Pressable
                   style={[styles.button, styles.buttonClose]}
                   onPress={() => {setAddCategoryVisibility(!addCategoryVisibility); eraseUserInputs();}}>
-                  <Text style={styles.textStyle}>Cancel</Text>
+                  <Text style={styles.text}>Cancel</Text>
                 </Pressable>
               </View>
             </View>
@@ -1622,151 +1815,3 @@ export default function App() {
   );
   }
 }
-
-const borderWidth = 2;
-let headerBackgroundColor = '#090f13';
-
-let textColor = '#f4f4f4';
-
-let backgroundColor = '#153b47';
-let textSize = 18;
-let buttonColor = '#30535f';
-
-let categoryBackgroundColor = '#3d606e';
-let categoryBorderWidth = 2;
-let categoryBorderColor = 'Black';
-
-let modalBackgroundColor = '#09191f';
-
-let textInputBackgroundColor = '#3d606e';
-
-const styles = StyleSheet.create({
-  app: {
-    backgroundColor: backgroundColor,
-    height: '100%',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: backgroundColor,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  text: {
-    color: textColor,
-    fontSize: textSize,
-  },
-  topHeader: {
-    paddingTop: 28,
-    padding: 16,
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: headerBackgroundColor
-  },
-  settingsBtn: {
-    alignSelf: 'flex-start',
-    position: 'absolute',
-  },
-  appTitle: {
-    color: '#f4f4f4',
-  },
-  addBtn: {
-
-  },
-  endBorder: {
-    borderBottomStartRadius: 8,
-    borderBottomEndRadius: 8,
-  },
-  eraseBottomBorder: {
-    borderBottomWidth: 0,
-  },
-  sectionHeader: {
-    marginTop: 12,
-    paddingBottom: 8,
-    paddingHorizontal: 4,
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 8,
-    marginHorizontal: 8,
-    borderWidth: borderWidth,
-    borderTopEndRadius: 8,
-    borderTopStartRadius: 8,
-    backgroundColor: categoryBackgroundColor,
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  item: {
-    paddingVertical: 8,
-    marginHorizontal: 8,
-    paddingHorizontal: 12,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderLeftWidth: borderWidth,
-    borderRightWidth: borderWidth,
-    borderBottomWidth: borderWidth,
-    backgroundColor: categoryBackgroundColor,
-
-  },
-  modalView: {
-    margin: 20,
-    color: textColor,
-    backgroundColor: modalBackgroundColor,
-    borderRadius: 20,
-    padding: 35,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  noteView: {
-    margin: 20,
-    backgroundColor: modalBackgroundColor,
-    borderRadius: 20,
-    padding: 35,
-    height: '92%',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  picturesContainer: {
-    alignItems: 'center',
-  },
-  pic :{
-    width: 200,
-    height: 200,
-  },
-  TextInput: {
-    padding: 4,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    backgroundColor: textInputBackgroundColor,
-  },
-  textContainer: {
-    alignItems: 'left',
-  },
-  button: {
-    borderRadius: 20,
-    padding: 10,
-    elevation: 2,
-    backgroundColor: buttonColor,
-  },
-});
