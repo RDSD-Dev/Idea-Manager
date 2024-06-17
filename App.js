@@ -4,20 +4,31 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { Directory } from './Objects/Directory';
 
-var root = new Directory("/", 0,  [], 'blue');
-var children = [];
-
 export default function App() {
+  const [root, setRoot] = useState(null);
+  const [children, setChildren] = useState([]);
   const [adding, setAdding] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [nameInput, setNameInput] = useState('');
   const [colorInput, setColorInput] = useState('');
 
   useEffect(() => {
-  }, [adding, errorMessage, children]);
+  }, [adding, errorMessage, children, root]);
+
+  if(root == null){
+    AsyncStorage.getItem('/').then((value) => {
+      if(value !== null){
+        console.log("Get");
+        setRoot(JSON.parse(value));
+      }
+      else[
+        setRoot(new Directory("/", 0,  [], 'blue'))
+      ]
+    });
+  }
 
   function addChild(name, order, parent, type){ // Makes child object and makes sure it is saved
-    console.log("Adding: ", name);
+    //console.log("Adding: ", name);
     parent.addChild(name);
 
     let parents = [];
@@ -27,7 +38,6 @@ export default function App() {
     parents.push(parent.name);
     let child = {name: name, order: order, parent: parents, type: type};
     children.push(child);
-    console.log("Added: ", children);
   }
 
   function addChildCheck(name, color, parent, type){
@@ -37,13 +47,20 @@ export default function App() {
     }
     else if(parent.children.indexOf(name) == -1){
       addChild(name, color, parent, "Task");
-      setAdding(null);
+      clearInputs();
       return;
     }
     else{
       setErrorMessage('Name is Taken.');
       return;
     }
+  }
+
+  function clearInputs(){
+    setAdding(false);
+    setErrorMessage('');
+    setNameInput('');
+    setColorInput('');
   }
 
   function displayDirectory(directory){
@@ -84,7 +101,7 @@ export default function App() {
     const tempChildren = children.filter((e) => e.parent[e.parent.length-1] == parents[parents.length-1] &&  e.parent[e.parent.length-2] == parents[parents.length-2]);
     return tempChildren.map((child) => {
       return (
-        <View key={child.name+child.order} >
+        <View key={child.name+child.order} style={styles.child}>
           <Text>{child.name}</Text>
           <Text>{child.type}</Text>
         </View>
@@ -92,13 +109,18 @@ export default function App() {
     });
   }
 
-  return (
-    <View style={styles.container}>
-      {displayDirectory(root)}
-      {displayForm(root)}
-      {displayChildren(root)}
-    </View>
-  );
+  if(root !== null){
+    return (
+      <View style={styles.container}>
+        {displayDirectory(root)}
+        {displayForm(root)}
+        {displayChildren(root)}
+      </View>
+    );
+  }
+  else{
+    
+  }
 }
 
 const styles = StyleSheet.create({
@@ -134,5 +156,12 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderStyle: 'solid',
     borderColor: 'black',
-  }
+  },
+
+  child: {
+    borderWidth: 2,
+    borderStyle: 'dotted',
+    borderColor: 'black',
+    marginBottom: 4,
+  },
 });
