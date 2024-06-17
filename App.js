@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { Button, StyleSheet, Text, View, TextInput } from 'react-native';
+import {TextInput, Button, StyleSheet, Text, View, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { Directory } from './Objects/Directory';
@@ -10,14 +10,14 @@ var children = [];
 export default function App() {
   const [adding, setAdding] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
-  var nameInput = '';
-  var colorInput = '';
+  const [nameInput, setNameInput] = useState('');
+  const [colorInput, setColorInput] = useState('');
 
   useEffect(() => {
-    console.log("LL");
-  }, [adding, errorMessage]);
+  }, [adding, errorMessage, children]);
 
   function addChild(name, order, parent, type){ // Makes child object and makes sure it is saved
+    console.log("Adding: ", name);
     parent.addChild(name);
 
     let parents = [];
@@ -30,9 +30,8 @@ export default function App() {
     console.log("Added: ", children);
   }
 
-  function addChildCheck(name, order, parent, type){
-    console.log("GG: ", parent.children);
-    if(name = "" || name.length == 0){
+  function addChildCheck(name, color, parent, type){
+    if(name == "" || name.length == 0){
       setErrorMessage('Name cannot be blank.');
       return;
     }
@@ -63,12 +62,12 @@ export default function App() {
         <View>
           <Text>{errorMessage}</Text>
             <Text>Add Name: </Text>
-            <TextInput style={styles.textInput} value={nameInput} onChangeText={(text) => {console.log("nameInput: ", text);}} placeholder='Enter Name'/>
+            <TextInput style={styles.textInput} onChangeText={setNameInput} value={nameInput}/>
 
             <Text>Add Color: </Text>
-            <TextInput style={styles.textInput} value={colorInput} onChangeText={(text) => {color = text}} placeholder='Enter Color'/>
+            <TextInput style={styles.textInput} onChangeText={setColorInput} value={colorInput} placeholder='Enter Color'/>
 
-            <Button title="Submit" onPress={() => {addChildCheck(name, color, directory, "Task" )}} />
+            <Button title="Submit" onPress={() => {addChildCheck(nameInput,colorInput, directory, "Task")}} />
             <Button title="Cancel" onPress={() => {setAdding(null)}} />
         </View>
     );
@@ -76,22 +75,16 @@ export default function App() {
   }
 
   function displayChildren(directory){
-    console.log("Childs: ", directory.parent);
     let parents = [];
     if(directory.parent.length > 0){
       parents = directory.parent;
     }
 
     parents.push(directory.name);
-    if(children.length > 0){
-      console.log("Check: ", parents = children[0].parent);
-
-    }
     const tempChildren = children.filter((e) => e.parent[e.parent.length-1] == parents[parents.length-1] &&  e.parent[e.parent.length-2] == parents[parents.length-2]);
-    console.log("Temp ", tempChildren, " : ", children);
     return tempChildren.map((child) => {
       return (
-        <View key={child.name+child.order} style={styles.container}>
+        <View key={child.name+child.order} >
           <Text>{child.name}</Text>
           <Text>{child.type}</Text>
         </View>
@@ -104,7 +97,6 @@ export default function App() {
       {displayDirectory(root)}
       {displayForm(root)}
       {displayChildren(root)}
-
     </View>
   );
 }
