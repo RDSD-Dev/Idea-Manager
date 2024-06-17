@@ -10,6 +10,19 @@ export class Directory {
     // Parent consists of an array of the names of their parents example: ['/', 'Test'] would mean that you are inside the Test directory which is located in the / directory
     // Child consists of an array of the names of their children example: [{name: 'Note', order: 0, parent:['/', 'this.name'], child: [], type: 'Note', text: "Note stuff"}]
     constructor(name, order, parent, color){ // Name: string, Order: int, Parent: string[], color: string
+        this.name = name;
+        this.order = order;
+        this.parent = parent;
+        this.color = color;
+        this.children = [];
+        this.childrenKeys = [];
+        this.childrenNum = 0;
+
+        this.isOpen = true;
+        this.isAdding = false;
+        this.saveAsync();
+        return;
+        
         let parents = parent;
         parents.push(name);
         let childKey = '';

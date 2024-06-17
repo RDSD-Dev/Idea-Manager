@@ -22,6 +22,7 @@ export default function App() {
         setRoot(JSON.parse(value));
       }
       else[
+        console.log("Making Root"),
         setRoot(new Directory("/", 0,  [], 'blue'))
       ]
     });
@@ -93,7 +94,7 @@ export default function App() {
 
   function displayChildren(directory){
     let parents = [];
-    if(directory.parent.length > 0){
+    if(directory.parent == undefined || directory.parent.length > 0){
       parents = directory.parent;
     }
 
