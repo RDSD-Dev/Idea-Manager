@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Directory } from './Objects/Directory';
 
 let root = new Directory('/', 0,  [], 'blue');
+let children = [];
 
 export default function App() {
   const [adding, setAdding] = useState(null);
@@ -13,6 +14,14 @@ export default function App() {
   useEffect(() => {
     //console.log('Effect');
   }, [adding]);
+
+  function addChild(name, order, parent, type){ // Makes child object and makes sure it is saved
+    parent.addChild(name);
+    let parents = parent.parent;
+    parents.push(parent.name);
+    let child = {name: name, order: order, parent: parents, type: type};
+    children.push(child);
+  }
 
   function displayDirectory(directory){
     return(
@@ -31,7 +40,7 @@ export default function App() {
         <View>
             <Text>Add Name: </Text>
             <Text>Add Color: </Text>
-            <Button title="Submit" onPress={() => {directory.addChild("Test", directory.childrenNum, "Task"); setAdding(null)}} />
+            <Button title="Submit" onPress={() => {addChild('Test', directory.childrenNum, directory, "Task") ;setAdding(null)}} />
             <Button title="Cancel" onPress={() => {setAdding(null)}} />
         </View>
     );
@@ -40,32 +49,18 @@ export default function App() {
 
   function displayChildren(directory){
     let jsx;
-    directory.children.map((child) => {
-
-      if(child.order == 0){
-        jsx = (
-          <View>
-            <Text>{child.name}</Text>
-            <Text>{child.type}</Text>
-          </View>
-        );
-      }
-      else{      
-        jsx += (
-          <View>
-            <Text>{child.name}</Text>
-            <Text>{child.type}</Text>
-          </View>
-        );
-      }
+    console.log("Children: ",directory.children);
+    return directory.children.map((child) => {
+      let parents = directory.parent;
+      parents.push(directory.name);
+      let current = children.find((e) => e.name = child && e.parent == parents);
+      return (
+        <View key={child.name+child.order}>
+          <Text>{child.name}</Text>
+          <Text>{child.type}</Text>
+        </View>
+      );
     });
-
-    console.log("Children",jsx);
-    return(
-      <View>{jsx}</View>
-
-    );
-
   }
 
   return (

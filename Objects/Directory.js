@@ -41,10 +41,10 @@ export class Directory {
         this.isAdding = bool;
     }
 
-    addChild(name, order, type){
-        this.children.push({name: name, order: order, type: type});
-        console.log(this.children);
-
+    addChild(name){
+        this.children.push(name);
+        this.childrenNum++;
+        
     }
 
     loadChildren(){
@@ -59,9 +59,5 @@ export class Directory {
         }
         key += this.name;
         AsyncStorage.setItem(key, JSON.stringify(this));
-    }
-
-    toggle(){ // Opens or closes depending on current state
-
     }
 }
