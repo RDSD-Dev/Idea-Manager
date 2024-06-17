@@ -44,7 +44,6 @@ export class Directory {
     addChild(name){
         this.children.push(name);
         this.childrenNum++;
-        
     }
 
     loadChildren(){

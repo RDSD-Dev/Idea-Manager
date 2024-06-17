@@ -1,26 +1,50 @@
 import { StatusBar } from 'expo-status-bar';
-import { Button, StyleSheet, Text, View } from 'react-native';
+import { Button, StyleSheet, Text, View, TextInput } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { Directory } from './Objects/Directory';
 
-let root = new Directory('/', 0,  [], 'blue');
-let children = [];
+var root = new Directory("/", 0,  [], 'blue');
+var children = [];
 
 export default function App() {
   const [adding, setAdding] = useState(null);
-  console.log(root.name);
+  const [errorMessage, setErrorMessage] = useState('');
+  var nameInput = '';
+  var colorInput = '';
 
   useEffect(() => {
-    //console.log('Effect');
-  }, [adding]);
+    console.log("LL");
+  }, [adding, errorMessage]);
 
   function addChild(name, order, parent, type){ // Makes child object and makes sure it is saved
     parent.addChild(name);
-    let parents = parent.parent;
+
+    let parents = [];
+    if(parent.parent.length > 0){
+      let parents = parent.parent;
+    }
     parents.push(parent.name);
     let child = {name: name, order: order, parent: parents, type: type};
     children.push(child);
+    console.log("Added: ", children);
+  }
+
+  function addChildCheck(name, order, parent, type){
+    console.log("GG: ", parent.children);
+    if(name = "" || name.length == 0){
+      setErrorMessage('Name cannot be blank.');
+      return;
+    }
+    else if(parent.children.indexOf(name) == -1){
+      addChild(name, color, parent, "Task");
+      setAdding(null);
+      return;
+    }
+    else{
+      setErrorMessage('Name is Taken.');
+      return;
+    }
   }
 
   function displayDirectory(directory){
@@ -34,13 +58,17 @@ export default function App() {
   }
 
   function displayForm(directory){
-    console.log(directory.isAdding);
     if(adding == directory.name){
       return(
         <View>
+          <Text>{errorMessage}</Text>
             <Text>Add Name: </Text>
+            <TextInput style={styles.textInput} value={nameInput} onChangeText={(text) => {console.log("nameInput: ", text);}} placeholder='Enter Name'/>
+
             <Text>Add Color: </Text>
-            <Button title="Submit" onPress={() => {addChild('Test', directory.childrenNum, directory, "Task") ;setAdding(null)}} />
+            <TextInput style={styles.textInput} value={colorInput} onChangeText={(text) => {color = text}} placeholder='Enter Color'/>
+
+            <Button title="Submit" onPress={() => {addChildCheck(name, color, directory, "Task" )}} />
             <Button title="Cancel" onPress={() => {setAdding(null)}} />
         </View>
     );
@@ -48,14 +76,22 @@ export default function App() {
   }
 
   function displayChildren(directory){
-    let jsx;
-    console.log("Children: ",directory.children);
-    return directory.children.map((child) => {
-      let parents = directory.parent;
-      parents.push(directory.name);
-      let current = children.find((e) => e.name = child && e.parent == parents);
+    console.log("Childs: ", directory.parent);
+    let parents = [];
+    if(directory.parent.length > 0){
+      parents = directory.parent;
+    }
+
+    parents.push(directory.name);
+    if(children.length > 0){
+      console.log("Check: ", parents = children[0].parent);
+
+    }
+    const tempChildren = children.filter((e) => e.parent[e.parent.length-1] == parents[parents.length-1] &&  e.parent[e.parent.length-2] == parents[parents.length-2]);
+    console.log("Temp ", tempChildren, " : ", children);
+    return tempChildren.map((child) => {
       return (
-        <View key={child.name+child.order}>
+        <View key={child.name+child.order} style={styles.container}>
           <Text>{child.name}</Text>
           <Text>{child.type}</Text>
         </View>
@@ -68,6 +104,7 @@ export default function App() {
       {displayDirectory(root)}
       {displayForm(root)}
       {displayChildren(root)}
+
     </View>
   );
 }
@@ -101,4 +138,9 @@ const styles = StyleSheet.create({
       right: 0,
       paddingLeft: 10,
   },
+  textInput: {
+    borderWidth: 2,
+    borderStyle: 'solid',
+    borderColor: 'black',
+  }
 });
