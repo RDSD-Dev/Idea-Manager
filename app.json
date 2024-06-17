@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "IdeaManager",
-    "slug": "Test2",
+    "slug": "IdeaManager",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -11,9 +11,6 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
     "ios": {
       "supportsTablet": true
     },
@@ -21,16 +18,10 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      },
-      "package": "com.shockedwhistle.Test2"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "879eb0a8-27c4-4740-a99b-9113fe98ffb2"
-      }
     }
   }
 }
