@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Button } from 'react-native';
+import { useEffect, useState } from 'react';
 
 export class Directory {
     // Directories should store their children their grand children and the names of their grandchildren
@@ -13,8 +14,11 @@ export class Directory {
         this.order = order;
         this.parent = parent;
         this.color = color;
+        this.children = [];
+        this.childrenNum = 0;
 
         this.isOpen = true;
+        this.isAdding = false;
         this.saveAsync();
     }
 
@@ -33,9 +37,13 @@ export class Directory {
     setParent(parent){
         this.parent = parent;
     }
-
+    setIsAdding(bool){
+        this.isAdding = bool;
+    }
 
     addChild(name, order, type){
+        this.children.push({name: name, order: order, type: type});
+        console.log(this.children);
 
     }
 
@@ -44,7 +52,7 @@ export class Directory {
     }
 
     saveAsync(){
-        console.log('Saving: ', this.name);
+        //console.log('Saving: ', this.name);
         let key = '';
         for(let i=0;i<this.parent.length; i++){
             key += this.parent[i]+'/';
@@ -56,59 +64,4 @@ export class Directory {
     toggle(){ // Opens or closes depending on current state
 
     }
-
-    open(){
-
-    }
-
-    close(){
-
-    }
-    
-    displayMain(){
-        var header;
-        var body = <Text>This seems to work.</Text>;
-        if(this.parent.length == 0){ // Is root
-            header = (
-                <View style={styles.header}>
-                    <Text style={ styles.headerLeft}>Settings</Text>
-                    <Text style={styles.headerMiddle}>Idea Manager</Text>
-                    <Text style={styles.headerRight}>Add</Text>
-                </View>
-            );
-        }
-        return(
-            <View>
-                {header}
-                <ScrollView>{body}</ScrollView>
-            </View>
-        );
-    }
 }
-
-const styles = StyleSheet.create({
-    header: {
-      display: 'flex',
-      flexDirection: 'row',
-      backgroundColor: '#fff',
-      alignItems: 'center',
-      paddingTop: 40,
-    },
-    headerLeft: {
-        position: 'relative',
-        left: 0,
-        alignItems: 'flex-start',
-        justifySelf: 'flex-start', 
-        paddingRight: 10,
-    },
-    headerMiddle: {
-        flexDirection: 'column'
-    },
-    headerRight: {
-        justifySelf: 'right',
-        alignItems: 'right',
-        right: 0,
-        paddingLeft: 10,
-    },
-    
-  });
