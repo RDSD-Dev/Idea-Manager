@@ -1,0 +1,6 @@
+Ket :root: [
+    Directory: {Name, Order, Color, Parents[], Children[
+        Task: {Name, Order, Color, isComplete},
+        Directory: {Name, Order, Key}
+    ]}
+]

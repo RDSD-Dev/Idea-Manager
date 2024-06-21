@@ -3,51 +3,60 @@ import {TextInput, Button, StyleSheet, Text, View, ScrollView } from 'react-nati
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { Directory } from './Objects/Directory';
+import { Task } from './Objects/Task';
+import { jsx } from 'react/jsx-runtime';
 
 export default function App() {
-  const [root, setRoot] = useState(null);
-  const [children, setChildren] = useState([]);
+  const [directory, setDirectory] = useState(null);
   const [adding, setAdding] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [nameInput, setNameInput] = useState('');
   const [colorInput, setColorInput] = useState('');
 
   useEffect(() => {
-  }, [adding, errorMessage, children, root]);
+  }, [adding, errorMessage, directory]);
 
-  if(root == null){
-    AsyncStorage.getItem('/').then((value) => {
+  if(directory == null){
+    AsyncStorage.getItem("root").then((value) => {
       if(value !== null){
-        console.log("Get");
-        setRoot(JSON.parse(value));
+        console.log("Get: ", JSON.parse(value));
+        setDirectory(JSON.parse(value));
       }
-      else[
-        console.log("Making Root"),
-        setRoot(new Directory("/", 0,  [], 'blue'))
-      ]
+      else{
+        console.log("Making Root");
+        let temp = {name: 'root', children: [], key: 'root'}
+        setDirectory(temp);
+        AsyncStorage.setItem("root", JSON.stringify(temp));
+      }
     });
   }
 
-  function addChild(name, order, parent, type){ // Makes child object and makes sure it is saved
-    //console.log("Adding: ", name);
-    parent.addChild(name);
-
-    let parents = [];
-    if(parent.parent.length > 0){
-      let parents = parent.parent;
+  function addChild(name, order, type){ // Makes child object and makes sure it is saved
+    console.log("Adding: ", name);
+    let tempDirectory = directory;
+    let newChild;
+    switch(type){
+      case "Task":
+        newChild = new Task(name, order, directory.key, colorInput);
+        break;
     }
-    parents.push(parent.name);
-    let child = {name: name, order: order, parent: parents, type: type};
-    children.push(child);
+
+    tempDirectory.children.push(newChild);
+    saveDirectory(tempDirectory);
   }
 
-  function addChildCheck(name, color, parent, type){
+  function saveDirectory(tempDirectory){
+    setDirectory(tempDirectory);
+    AsyncStorage.setItem(tempDirectory.key, JSON.stringify(tempDirectory));
+  }
+
+  function addChildCheck(name, color, type){
     if(name == "" || name.length == 0){
       setErrorMessage('Name cannot be blank.');
       return;
     }
-    else if(parent.children.indexOf(name) == -1){
-      addChild(name, color, parent, "Task");
+    else if(directory.children.indexOf(name) == -1){ // Name dose not exist
+      addChild(name, color, "Task");
       clearInputs();
       return;
     }
@@ -64,7 +73,7 @@ export default function App() {
     setColorInput('');
   }
 
-  function displayDirectory(directory){
+  function displayDirectory(){
     return(
       <View style={styles.header}>
         <Text style={ styles.headerLeft}>Settings</Text>
@@ -74,7 +83,7 @@ export default function App() {
     );
   }
 
-  function displayForm(directory){
+  function displayForm(){
     if(adding == directory.name){
       return(
         <View>
@@ -85,22 +94,16 @@ export default function App() {
             <Text>Add Color: </Text>
             <TextInput style={styles.textInput} onChangeText={setColorInput} value={colorInput} placeholder='Enter Color'/>
 
-            <Button title="Submit" onPress={() => {addChildCheck(nameInput,colorInput, directory, "Task")}} />
+            <Button title="Submit" onPress={() => {addChildCheck(nameInput, colorInput, "Task")}} />
             <Button title="Cancel" onPress={() => {setAdding(null)}} />
         </View>
     );
     }
   }
 
-  function displayChildren(directory){
-    let parents = [];
-    if(directory.parent == undefined || directory.parent.length > 0){
-      parents = directory.parent;
-    }
-
-    parents.push(directory.name);
-    const tempChildren = children.filter((e) => e.parent[e.parent.length-1] == parents[parents.length-1] &&  e.parent[e.parent.length-2] == parents[parents.length-2]);
-    return tempChildren.map((child) => {
+  function displayChildren(){
+    console.log(directory);
+    return directory.children.map((child) => {
       return (
         <View key={child.name+child.order} style={styles.child}>
           <Text>{child.name}</Text>
@@ -110,12 +113,12 @@ export default function App() {
     });
   }
 
-  if(root !== null){
+  if(directory !== null){
     return (
       <View style={styles.container}>
-        {displayDirectory(root)}
-        {displayForm(root)}
-        {displayChildren(root)}
+        {displayDirectory()}
+        {displayForm()}
+        {displayChildren()}
       </View>
     );
   }

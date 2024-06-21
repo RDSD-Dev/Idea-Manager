@@ -4,16 +4,14 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Directory } from './Directory';
 
 export class Task extends Directory {
-    constructor(name, order, parent, color){
-        super(name, order, parent, color);
+    constructor(name, order, parentKey, color){
+        super(name, order, parentKey, color);
         this.name = name;
         this.order = order;
-        this.parent = parent;
+        this.parentKey = parentKey;
         this.color = color;
 
-        this.isOpen = true;
         this.isComplete = false;
-        this.saveAsync();
     }
 
     toggleCompletion(){
