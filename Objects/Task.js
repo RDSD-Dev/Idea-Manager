@@ -10,7 +10,7 @@ export class Task extends Directory {
         this.order = order;
         this.parentKey = parentKey;
         this.color = color;
-
+        
         this.isComplete = false;
     }
 

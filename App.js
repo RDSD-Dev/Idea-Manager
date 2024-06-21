@@ -19,19 +19,18 @@ export default function App() {
   if(directory == null){
     AsyncStorage.getItem("root").then((value) => {
       if(value !== null){
-        console.log("Get: ", JSON.parse(value));
         setDirectory(JSON.parse(value));
       }
       else{
         console.log("Making Root");
-        let temp = {name: 'root', children: [], key: 'root'}
+        let temp = new Directory('root', 0, '', 'Grey');
         setDirectory(temp);
         AsyncStorage.setItem("root", JSON.stringify(temp));
       }
     });
   }
 
-  function addChild(name, order, type){ // Makes child object and makes sure it is saved
+  function addChild(name, order, type, color){ // Makes child object and makes sure it is saved
     console.log("Adding: ", name);
     let tempDirectory = directory;
     let newChild;
@@ -44,19 +43,23 @@ export default function App() {
     tempDirectory.children.push(newChild);
     saveDirectory(tempDirectory);
   }
+  function deleteChild(name, order){
+    let tempDirectory = directory;
+    tempDirectory.deleteChild(name, order);
+  }
 
   function saveDirectory(tempDirectory){
     setDirectory(tempDirectory);
     AsyncStorage.setItem(tempDirectory.key, JSON.stringify(tempDirectory));
   }
 
-  function addChildCheck(name, color, type){
+  function addChildCheck(name, order, type, color){
     if(name == "" || name.length == 0){
       setErrorMessage('Name cannot be blank.');
       return;
     }
     else if(directory.children.indexOf(name) == -1){ // Name dose not exist
-      addChild(name, color, "Task");
+      addChild(name, order, type, color);
       clearInputs();
       return;
     }
@@ -94,7 +97,7 @@ export default function App() {
             <Text>Add Color: </Text>
             <TextInput style={styles.textInput} onChangeText={setColorInput} value={colorInput} placeholder='Enter Color'/>
 
-            <Button title="Submit" onPress={() => {addChildCheck(nameInput, colorInput, "Task")}} />
+            <Button title="Submit" onPress={() => {addChildCheck(nameInput, directory.children.length, "Task", colorInput)}} />
             <Button title="Cancel" onPress={() => {setAdding(null)}} />
         </View>
     );
@@ -102,12 +105,12 @@ export default function App() {
   }
 
   function displayChildren(){
-    console.log(directory);
     return directory.children.map((child) => {
       return (
         <View key={child.name+child.order} style={styles.child}>
           <Text>{child.name}</Text>
           <Text>{child.type}</Text>
+          <Button title='Delete' onPress={() => {deleteChild(child.name, child.order)}}/>
         </View>
       );
     });

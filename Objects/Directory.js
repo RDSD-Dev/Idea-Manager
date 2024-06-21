@@ -44,6 +44,10 @@ export class Directory {
         this.childrenKeys.push(childKey);
         this.childrenNum++;
     }
+    deleteChild(name, order){
+        console.log("Deleting : #", order, " ", name);
+        console.log("Delete: ", this.children.findIndex((e) => e.name == name && e.order == order ));
+    }
 
     setName(name){
         this.name = name;
