@@ -21,32 +21,26 @@ export class Directory {
             this.key += parentKey[i] + "/";
         }
         this.key += this.name;
-
-        this.isOpen = true;
-        this.isAdding = false;
         return;
     }
+    setAll(name, order, parentKey, color, key, children){
+        this.name = name;
+        this.order = order;
+        this.parentKey = parentKey;
+        this.color = color;
+        this.key = key;
+        this.children = children;
+    }
 
-    pushChild(name){
-        this.children.push(name);
-        let parents = this.parent;
-        parents.push(this.name);
-        let childKey = '';
-        parents.map((parentName) => {
-            if(parentName == "/"){
-                childKey += parentName;
-            }
-            else{
-                childKey += parentName + '/';
-            }
-        });
-        childKey += name;
-        this.childrenKeys.push(childKey);
-        this.childrenNum++;
+    pushChild(newChild){
+        this.children.push(newChild);
+        this.saveAsync();
     }
     deleteChild(name, order){
         console.log("Deleting : #", order, " ", name);
-        console.log("Delete: ", this.children.findIndex((e) => e.name == name && e.order == order ));
+        const index = this.children.findIndex((e) => e.name == name && e.order == order );
+        this.children.splice(index, 1);
+        this.saveAsync();
     }
 
     setName(name){
@@ -63,5 +57,9 @@ export class Directory {
     }
     setParentKey(parentKey){
         this.parentKey = parentKey;
+    }
+
+    saveAsync(){
+        AsyncStorage.setItem(this.key, JSON.stringify(this));
     }
 }

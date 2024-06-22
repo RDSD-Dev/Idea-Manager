@@ -8,18 +8,24 @@ import { jsx } from 'react/jsx-runtime';
 
 export default function App() {
   const [directory, setDirectory] = useState(null);
-  const [adding, setAdding] = useState(null);
+  const [addItem, setAddItem] = useState(null);
+  const [updateItem, setUpdateItem] = useState(null); // Stores [name, order]
+  const [deleteItem, setDeleteItem] = useState(null); // Stores [name, order]
   const [errorMessage, setErrorMessage] = useState('');
   const [nameInput, setNameInput] = useState('');
   const [colorInput, setColorInput] = useState('');
 
   useEffect(() => {
-  }, [adding, errorMessage, directory]);
+
+  }, [directory, errorMessage, addItem, updateItem, deleteItem]);
 
   if(directory == null){
     AsyncStorage.getItem("root").then((value) => {
       if(value !== null){
-        setDirectory(JSON.parse(value));
+        let valObj = JSON.parse(value);
+        let temp = new Directory('', 0, '', '');
+        temp.setAll(valObj.name, valObj.order, valObj.parentKey, valObj.color, valObj.key, valObj.children);
+        setDirectory(temp);
       }
       else{
         console.log("Making Root");
@@ -30,8 +36,31 @@ export default function App() {
     });
   }
 
+  function clearInputs(){ // Clears all inputs
+    setAddItem(null);
+    setUpdateItem(null);
+    setDeleteItem(null);
+    setErrorMessage('');
+    setNameInput('');
+    setColorInput('');
+  }
+
+  function addChildCheck(name, order, type, color){ // Checks if the child is valid
+    if(name == "" || name.length == 0){ // Name cannot be blank
+      setErrorMessage('Name cannot be blank.');
+      return;
+    }
+    else if(type == 'directory' && directory.children.findIndex((e) => e.name == name) == -1){ // Dose not allow 2 directories of the same name to exist in the same directory
+      setErrorMessage('Name is Taken.');
+      return;
+    }
+    else{
+      addChild(name, order, type, color);
+      return;
+    }
+  }
   function addChild(name, order, type, color){ // Makes child object and makes sure it is saved
-    console.log("Adding: ", name);
+    console.log("add: ", name);
     let tempDirectory = directory;
     let newChild;
     switch(type){
@@ -40,54 +69,28 @@ export default function App() {
         break;
     }
 
-    tempDirectory.children.push(newChild);
-    saveDirectory(tempDirectory);
+    tempDirectory.pushChild(newChild);
+    setDirectory(tempDirectory);
+    clearInputs();
   }
-  function deleteChild(name, order){
+  function deleteChild(name, order){ // Deletes Child
     let tempDirectory = directory;
     tempDirectory.deleteChild(name, order);
-  }
-
-  function saveDirectory(tempDirectory){
     setDirectory(tempDirectory);
-    AsyncStorage.setItem(tempDirectory.key, JSON.stringify(tempDirectory));
+    clearInputs();
   }
 
-  function addChildCheck(name, order, type, color){
-    if(name == "" || name.length == 0){
-      setErrorMessage('Name cannot be blank.');
-      return;
-    }
-    else if(directory.children.indexOf(name) == -1){ // Name dose not exist
-      addChild(name, order, type, color);
-      clearInputs();
-      return;
-    }
-    else{
-      setErrorMessage('Name is Taken.');
-      return;
-    }
-  }
-
-  function clearInputs(){
-    setAdding(false);
-    setErrorMessage('');
-    setNameInput('');
-    setColorInput('');
-  }
-
-  function displayDirectory(){
+  function displayDirectory(){ // Displays Directory at top
     return(
       <View style={styles.header}>
         <Text style={ styles.headerLeft}>Settings</Text>
         <Text style={styles.headerMiddle}>Idea Manager</Text>
-        <Button title="Add" style={styles.headerRight} onPress={() => {setAdding(directory.name)}} />
+        <Button title="Add" style={styles.headerRight} onPress={() => {setAddItem(directory.name)}} />
       </View>
     );
   }
-
-  function displayForm(){
-    if(adding == directory.name){
+  function displayAddForm(){ // Displays add child form
+    if(addItem == directory.name){
       return(
         <View>
           <Text>{errorMessage}</Text>
@@ -98,35 +101,37 @@ export default function App() {
             <TextInput style={styles.textInput} onChangeText={setColorInput} value={colorInput} placeholder='Enter Color'/>
 
             <Button title="Submit" onPress={() => {addChildCheck(nameInput, directory.children.length, "Task", colorInput)}} />
-            <Button title="Cancel" onPress={() => {setAdding(null)}} />
+            <Button title="Cancel" onPress={() => {setAddItem(null)}} />
         </View>
     );
     }
   }
-
-  function displayChildren(){
+  function displayChildren(){ // Displays children of directory
     return directory.children.map((child) => {
       return (
         <View key={child.name+child.order} style={styles.child}>
           <Text>{child.name}</Text>
           <Text>{child.type}</Text>
-          <Button title='Delete' onPress={() => {deleteChild(child.name, child.order)}}/>
+          <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order])}}/>
+            {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order &&
+              <View>
+                <Text>Delete {child.name}?</Text>
+                <Button title='Yes' onPress={() => deleteChild(child.name, child.order)}/>
+              </View>
+            }
         </View>
       );
     });
   }
 
-  if(directory !== null){
+  if(directory !== null){ // Displays directory if not null
     return (
       <View style={styles.container}>
         {displayDirectory()}
-        {displayForm()}
+        {displayAddForm()}
         {displayChildren()}
       </View>
     );
-  }
-  else{
-    
   }
 }
 
