@@ -6,6 +6,8 @@ import { Directory } from './Objects/Directory';
 import { Task } from './Objects/Task';
 import { jsx } from 'react/jsx-runtime';
 
+import {updateChild} from './Child';
+
 export default function App() {
   const [directory, setDirectory] = useState(null);
   const [addItem, setAddItem] = useState(null);
@@ -44,7 +46,6 @@ export default function App() {
     setNameInput('');
     setColorInput('');
   }
-
   function addChildCheck(name, order, type, color){ // Checks if the child is valid
     if(name == "" || name.length == 0){ // Name cannot be blank
       setErrorMessage('Name cannot be blank.');
@@ -59,6 +60,7 @@ export default function App() {
       return;
     }
   }
+  
   function addChild(name, order, type, color){ // Makes child object and makes sure it is saved
     console.log("add: ", name);
     let tempDirectory = directory;
@@ -125,7 +127,7 @@ export default function App() {
     return(
       <View>
         <Text>Update {child.name}?</Text>
-        <Text>{}</Text>
+        <Text>{updateChild()}</Text>
         <Button title='Submit' onPress={() => deleteChild(child.name, child.order)}/>
         <Button title='Cancel' onPress={() => clearInputs()}/>
       </View>
