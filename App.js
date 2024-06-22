@@ -114,22 +114,31 @@ export default function App() {
           <Text>{child.type}</Text>
           <Button title='Update' onPress={() => {setUpdateItem([child.name, child.order])}}/>
           <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order])}}/>
-            
-            {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && <View>
-                <Text>Delete {child.name}?</Text>
-                <Button title='Yes' onPress={() => deleteChild(child.name, child.order)}/>
-                <Button title='No' onPress={() => clearInputs()}/>
-              </View>}
-            {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && <View>
-              <Text>Update {child.name}</Text>
-              <Text>Name: </Text>
-              <TextInput multiline={true} value={nameInput} onChangeText={setNameInput}/>
-              <Button title='Submit' onPress={() => clearInputs()}/>
-              <Button title='Cancel' onPress={() => clearInputs()}/>
-              </View>}
+
+            {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
+            {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && displayUpdateChildForm(child)}
         </View>
       );
     });
+  }
+  function displayUpdateChildForm(child){ // Displays item update form
+    return(
+      <View>
+        <Text>Update {child.name}?</Text>
+        <Text>{}</Text>
+        <Button title='Submit' onPress={() => deleteChild(child.name, child.order)}/>
+        <Button title='Cancel' onPress={() => clearInputs()}/>
+      </View>
+    );
+  }
+  function displayDeleteChildForm(child){ // Displays item delete form
+    return(
+      <View>
+          <Text>Delete {child.name}?</Text>
+                <Button title='Yes' onPress={() => deleteChild(child.name, child.order)}/>
+                <Button title='No' onPress={() => clearInputs()}/>
+      </View>
+    );
   }
 
   if(directory !== null){ // Displays directory if not null

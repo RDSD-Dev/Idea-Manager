@@ -18,4 +18,8 @@ export class Task extends Directory {
         this.isComplete = !this.isComplete;
         this.saveAsync();
     }
+
+    test(){
+        return 'Succsess';
+    }
 }
