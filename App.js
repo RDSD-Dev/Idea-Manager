@@ -112,13 +112,21 @@ export default function App() {
         <View key={child.name+child.order} style={styles.child}>
           <Text>{child.name}</Text>
           <Text>{child.type}</Text>
+          <Button title='Update' onPress={() => {setUpdateItem([child.name, child.order])}}/>
           <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order])}}/>
-            {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order &&
-              <View>
+            
+            {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && <View>
                 <Text>Delete {child.name}?</Text>
                 <Button title='Yes' onPress={() => deleteChild(child.name, child.order)}/>
-              </View>
-            }
+                <Button title='No' onPress={() => clearInputs()}/>
+              </View>}
+            {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && <View>
+              <Text>Update {child.name}</Text>
+              <Text>Name: </Text>
+              <TextInput multiline={true} value={nameInput} onChangeText={setNameInput}/>
+              <Button title='Submit' onPress={() => clearInputs()}/>
+              <Button title='Cancel' onPress={() => clearInputs()}/>
+              </View>}
         </View>
       );
     });
