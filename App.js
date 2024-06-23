@@ -243,8 +243,8 @@ export default function App() {
       <View key={child.name+child.order} style={child.style}>  
         <Button title='Back' onPress={() => clearInputs()}/>
         <Text>{child.name}</Text>
-        <Text>{child.type}</Text>
-        <Button title='Update' onPress={() => {setDeleteItem([child.name, child.order])}}/>
+        <TextInput value={nameInput} onChangeText={setNameInput} placeholder={child.name}/>
+        <Button title='Update' onPress={() => {updateChildCheck(child, nameInput); setTextInput(child.text); setUpdateItem([child.name, child.order, child.type])}}/>
         <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order])}}/>
         {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
         <TextInput value={textInput} onChangeText={setTextInput} multiline={true} placeholder='Enter Note Here'/>
