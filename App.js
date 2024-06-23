@@ -2,14 +2,12 @@ import { StatusBar } from 'expo-status-bar';
 import {TextInput, Button, StyleSheet, Text, View, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
-import { Directory } from './Objects/Directory';
-import { Task } from './Objects/Task';
 import { jsx } from 'react/jsx-runtime';
 
 import {updateChild} from './Child';
 
 export default function App() {
-  const [directory, setDirectory] = useState(null);
+  const [directory, setDirectory] = useState(null); // name, order#, parentKey, color, key, children[]
   const [addItem, setAddItem] = useState(null);
   const [updateItem, setUpdateItem] = useState(null); // Stores [name, order]
   const [deleteItem, setDeleteItem] = useState(null); // Stores [name, order]
@@ -25,20 +23,18 @@ export default function App() {
     AsyncStorage.getItem("root").then((value) => {
       if(value !== null){
         let valObj = JSON.parse(value);
-        let temp = new Directory('', 0, '', '');
-        temp.setAll(valObj.name, valObj.order, valObj.parentKey, valObj.color, valObj.key, valObj.children);
-        setDirectory(temp);
+        setDirectory(valObj);
       }
       else{
         console.log("Making Root");
-        let temp = new Directory('root', 0, '', 'Grey');
-        setDirectory(temp);
-        AsyncStorage.setItem("root", JSON.stringify(temp));
+        let temp = {name: 'root', order: 0, parentKey: '', color: 'Grey', key: 'root', children: []};
+        saveDirectory(temp);
       }
     });
   }
 
   function clearInputs(){ // Clears all inputs
+    console.log("Clear");
     setAddItem(null);
     setUpdateItem(null);
     setDeleteItem(null);
@@ -60,6 +56,10 @@ export default function App() {
       return;
     }
   }
+  function saveDirectory(directory){
+    setDirectory(directory);
+    AsyncStorage.setItem(directory.key, JSON.stringify(directory));
+  }
   
   function addChild(name, order, type, color){ // Makes child object and makes sure it is saved
     console.log("add: ", name);
@@ -67,18 +67,19 @@ export default function App() {
     let newChild;
     switch(type){
       case "Task":
-        newChild = new Task(name, order, directory.key, colorInput);
+        newChild = {name: name, order: order, parentKey: directory.key, color: colorInput};
         break;
     }
 
-    tempDirectory.pushChild(newChild);
-    setDirectory(tempDirectory);
+    tempDirectory.children.push(newChild);
+    saveDirectory(tempDirectory);
     clearInputs();
   }
   function deleteChild(name, order){ // Deletes Child
     let tempDirectory = directory;
-    tempDirectory.deleteChild(name, order);
-    setDirectory(tempDirectory);
+    const index = tempDirectory.children.findIndex((e) => e.name == name && e.order == order );
+    tempDirectory.children.splice(index, 1);
+    saveDirectory(tempDirectory);
     clearInputs();
   }
 
@@ -97,7 +98,7 @@ export default function App() {
         <View>
           <Text>{errorMessage}</Text>
             <Text>Add Name: </Text>
-            <TextInput style={styles.textInput} onChangeText={setNameInput} value={nameInput}/>
+            <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Name'/>
 
             <Text>Add Color: </Text>
             <TextInput style={styles.textInput} onChangeText={setColorInput} value={colorInput} placeholder='Enter Color'/>
@@ -108,6 +109,7 @@ export default function App() {
     );
     }
   }
+
   function displayChildren(){ // Displays children of directory
     return directory.children.map((child) => {
       return (
