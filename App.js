@@ -3,6 +3,7 @@ import {TextInput, Button, StyleSheet, Text, View, ScrollView , Pressable} from 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { Dropdown } from 'react-native-element-dropdown';
+import * as ImagePicker from 'expo-image-picker';
 import { jsx } from 'react/jsx-runtime';
 
 import {} from './Child';
@@ -172,7 +173,7 @@ export default function App() {
       <View style={styles.header}>
         <Text style={ styles.headerLeft}>Settings</Text>
         <Text style={styles.headerMiddle}>Idea Manager</Text>
-        <Button title="Add" style={styles.headerRight} onPress={() => {setAddItem(directory.name)}} />
+        <Button title="Add" style={styles.headerRight} onPress={() => {setDropdownInput({type: 'Task'}); setAddItem(directory.name)}} />
       </View>
     );
   }
@@ -184,7 +185,6 @@ export default function App() {
           <Text>{errorMessage}</Text>
             <Text>Add Name: </Text>
             <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Name'/>
-
             <Text>Add Color: </Text>
             <TextInput style={styles.textInput} onChangeText={setColorInput} value={colorInput} placeholder='Enter Color'/>
             <Dropdown data={childTypes} labelField='type' valueField='type' value={dropdownInput} onChange={setDropdownInput}/>
@@ -209,7 +209,7 @@ export default function App() {
     return (
       <View key={child.name+child.order} style={child.style}>
         <Text>{child.name}</Text>
-        <Text>{child.type}</Text>
+        <Text>{child.isComplete}</Text>
         <Button title='Update' onPress={() => {setUpdateItem([child.name, child.order])}}/>
         <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order])}}/>
 
@@ -222,7 +222,7 @@ export default function App() {
     if(updateItem == null || updateItem[0] !== child.name && updateItem[1] !== child.order){
       return (
         <View key={child.name+child.order} style={child.style}>  
-          <Pressable onPress={() => {setTextInput(child.text); setUpdateItem([child.name, child.order, child.type])}}>
+          <Pressable onPress={() => {clearInputs(); setTextInput(child.text); setUpdateItem([child.name, child.order, child.type])}}>
             <Text>{child.name}</Text>
             <Text>{child.type}</Text>
             <Text multiline={false} style={styles.NoteTextPrev}>{child.text}</Text>
