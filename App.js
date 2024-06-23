@@ -32,6 +32,9 @@ export default function App() {
       tempDirectory.children[index].text = textInput;
       saveDirectory(tempDirectory);
     }
+    if(errorMessage == 'Refresh'){
+      setErrorMessage('');
+    }
   }, [directory, errorMessage, addItem, updateItem, deleteItem, numberInput, textInput]);
 
   if(directory == null){
@@ -167,6 +170,12 @@ export default function App() {
     saveDirectory(tempDirectory);
     clearInputs();
   }
+  function toggleTask(child){
+    let tempDirectory = directory;
+    const index = directory.children.findIndex((e) => e == child);
+    tempDirectory.children[index].isComplete = !tempDirectory.children[index].isComplete;
+    saveDirectory(tempDirectory);
+  }
 
   function displayDirectory(){ // Displays Directory at top
     return(
@@ -209,7 +218,8 @@ export default function App() {
     return (
       <View key={child.name+child.order} style={child.style}>
         <Text>{child.name}</Text>
-        <Text>{child.isComplete}</Text>
+        <Text>{JSON.stringify(child.isComplete)}</Text>
+        <Button title='Complete' onPress={() => {setErrorMessage('Refresh'); toggleTask(child)}}/>
         <Button title='Update' onPress={() => {setUpdateItem([child.name, child.order])}}/>
         <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order])}}/>
 
