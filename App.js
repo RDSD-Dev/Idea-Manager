@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import {TextInput, Button, StyleSheet, Text, View, ScrollView } from 'react-native';
+import {TextInput, Button, StyleSheet, Text, View, ScrollView , Pressable} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { Dropdown } from 'react-native-element-dropdown';
@@ -15,16 +15,23 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState('');
   const [nameInput, setNameInput] = useState('');
   const [colorInput, setColorInput] = useState('');
+  const [textInput, setTextInput] = useState('');
   const [numberInput, setNumberInput] = useState('');
   const [dropdownInput, setDropdownInput] = useState(null);
 
   const childTypes = [
-    {type: 'Task'}
+    {type: 'Task'},
+    {type: 'Note'}
   ]
 
   useEffect(() => {
-
-  }, [directory, errorMessage, addItem, updateItem, deleteItem, numberInput]);
+    if(updateItem !== null && updateItem.length == 3){
+      const index = directory.children.findIndex((e) => e.name == updateItem[0] && e.order == updateItem[1]);
+      let tempDirectory = directory;
+      tempDirectory.children[index].text = textInput;
+      saveDirectory(tempDirectory);
+    }
+  }, [directory, errorMessage, addItem, updateItem, deleteItem, numberInput, textInput]);
 
   if(directory == null){
     AsyncStorage.getItem("root").then((value) => {
@@ -48,6 +55,7 @@ export default function App() {
     setErrorMessage('');
     setNameInput('');
     setColorInput('');
+    setTextInput('');
     setDropdownInput(null);
   }
   function addChildCheck(name, order, type, color){ // Checks if the child is valid
@@ -60,13 +68,28 @@ export default function App() {
       return;
     }
     else if(type == 'directory' && directory.children.findIndex((e) => e.name == name) == -1){ // Dose not allow 2 directories of the same name to exist in the same directory
-      setErrorMessage('Name is Taken.');
+      setErrorMessage('Directory Name is Taken.');
       return;
     }
     else{
       addChild(name, order, type, color);
       return;
     }
+  }
+  function updateChildCheck(child, updateName, updateOrder, updateColor){
+      if(updateName == '' || updateName == null){
+        updateName = child.name;
+      }
+      if(updateColor == ''|| updateColor == null){
+        updateColor = child.color;
+      }
+
+      if(child.type == 'Directory' && updateName !== child.name && directory.children.findIndex((e) => e.name == name) == -1){
+        setErrorMessage('Directory Name is Taken.');
+      }
+      else{
+        updateChild(child, updateName, updateOrder, updateColor);
+      }
   }
   function saveDirectory(directory){
     setDirectory(directory);
@@ -85,10 +108,15 @@ export default function App() {
   function addChild(name, order, type, color){ // Makes child object and makes sure it is saved
     console.log("add: ", name);
     let tempDirectory = directory;
-    let newChild;
+    let newChild = {name: name, order: order, parentKey: directory.key, color: colorInput, type: type};
     switch(type){
       case "Task":
-        newChild = {name: name, order: order, parentKey: directory.key, color: colorInput, type: type, style: styles.Task};
+        newChild.style = styles.Task;
+        newChild.isComplete = false;
+        break;
+      case "Note":
+        newChild.style = styles.Note;
+        newChild.text = '';
         break;
     }
 
@@ -171,7 +199,9 @@ export default function App() {
     return directory.children.map((child) => {
       switch(child.type){
         case 'Task':
-        return displayTask(child);
+          return displayTask(child);
+        case 'Note':
+          return displayNote(child);
       }
     });
   }
@@ -188,7 +218,39 @@ export default function App() {
       </View>
     );
   }
+  function displayNote(child){
+    if(updateItem == null || updateItem[0] !== child.name && updateItem[1] !== child.order){
+      return (
+        <View key={child.name+child.order} style={child.style}>  
+          <Pressable onPress={() => {setTextInput(child.text); setUpdateItem([child.name, child.order, child.type])}}>
+            <Text>{child.name}</Text>
+            <Text>{child.type}</Text>
+            <Text multiline={false} style={styles.NoteTextPrev}>{child.text}</Text>
+          </Pressable>
+          <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order])}}/>
+  
+            {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
+        </View>
+      );
+    }
+    else{
+      return displayNoteForm(child);
+    }
+  }
   // Child Forms
+  function displayNoteForm(child){
+    return(
+      <View key={child.name+child.order} style={child.style}>  
+        <Button title='Back' onPress={() => clearInputs()}/>
+        <Text>{child.name}</Text>
+        <Text>{child.type}</Text>
+        <Button title='Update' onPress={() => {setDeleteItem([child.name, child.order])}}/>
+        <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order])}}/>
+        {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
+        <TextInput value={textInput} onChangeText={setTextInput} multiline={true} placeholder='Enter Note Here'/>
+      </View>
+    );
+  }
   function displayUpdateChildForm(child){ // Displays item update form
     let tempNum;
     if(updateItem !== null){
@@ -212,7 +274,7 @@ export default function App() {
 
         <TextInput value={colorInput} onChangeText={setColorInput} placeholder='Enter Updated Color'/>
         
-        <Button title='Submit' onPress={() => updateChild(child, nameInput, tempNum, colorInput)}/>
+        <Button title='Submit' onPress={() => updateChildCheck(child, nameInput, tempNum, colorInput)}/>
         <Button title='Cancel' onPress={() => clearInputs()}/>
       </View>
     );
@@ -222,7 +284,7 @@ export default function App() {
       <View>
           <Text>Delete {child.name}?</Text>
                 <Button title='Yes' onPress={() => deleteChild(child.name, child.order)}/>
-                <Button title='No' onPress={() => clearInputs()}/>
+                <Button title='No' onPress={() => {if(updateItem[0] == child.name && updateItem[1] == child.order){setDeleteItem(null)}else{clearInputs()}}}/>
       </View>
     );
   }
@@ -291,5 +353,15 @@ const styles = StyleSheet.create({
     borderColor: 'red',
     marginBottom: 4,
   },
+  Note: {
+    borderWidth: 2,
+    borderStyle: 'dotted',
+    borderColor: 'blue',
+    marginBottom: 4,
+    width: '80vw',
+  },
+  NoteTextPrev: {
+    height: 16,
+  }
 
 });
