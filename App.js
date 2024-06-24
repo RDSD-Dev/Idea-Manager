@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import {TextInput, Button, StyleSheet, Text, View, ScrollView , Pressable} from 'react-native';
+import {TextInput, Button, StyleSheet, Text, View, ScrollView , Pressable, Image} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { Dropdown } from 'react-native-element-dropdown';
@@ -19,10 +19,12 @@ export default function App() {
   const [textInput, setTextInput] = useState('');
   const [numberInput, setNumberInput] = useState('');
   const [dropdownInput, setDropdownInput] = useState(null);
+  const [imageInput, setImageInput] = useState(null);
 
   const childTypes = [
     {type: 'Task'},
-    {type: 'Note'}
+    {type: 'Note'},
+    {type: 'Image'}
   ]
 
   useEffect(() => {
@@ -35,7 +37,10 @@ export default function App() {
     if(errorMessage == 'Refresh'){
       setErrorMessage('');
     }
-  }, [directory, errorMessage, addItem, updateItem, deleteItem, numberInput, textInput]);
+    if(imageInput !== null){
+      console.log("Effect Image: ", imageInput);
+    }
+  }, [directory, errorMessage, addItem, updateItem, deleteItem, numberInput, textInput, imageInput]);
 
   if(directory == null){
     AsyncStorage.getItem("root").then((value) => {
@@ -62,7 +67,8 @@ export default function App() {
     setTextInput('');
     setDropdownInput(null);
   }
-  function addChildCheck(name, order, type, color){ // Checks if the child is valid
+  function addChildCheck(name, order, type, color, image){ // Checks if the child is valid
+    console.log("Image: ", image);
     if(name == "" || name.length == 0){ // Name cannot be blank
       setErrorMessage('Name cannot be blank.');
       return;
@@ -71,12 +77,16 @@ export default function App() {
       setErrorMessage('Please define a type.');
       return;
     }
-    else if(type == 'directory' && directory.children.findIndex((e) => e.name == name) == -1){ // Dose not allow 2 directories of the same name to exist in the same directory
+    else if(type == 'Directory' && directory.children.findIndex((e) => e.name == name) == -1){ // Dose not allow 2 directories of the same name to exist in the same directory
       setErrorMessage('Directory Name is Taken.');
       return;
     }
+    else if(type == 'Image' && image == null){
+      setErrorMessage('Image cannot be empty.');
+      return;
+    }
     else{
-      addChild(name, order, type, color);
+      addChild(name, order, type, color, image);
       return;
     }
   }
@@ -109,10 +119,10 @@ export default function App() {
     return tempChildren;
   }
   
-  function addChild(name, order, type, color){ // Makes child object and makes sure it is saved
-    console.log("add: ", name);
+  function addChild(name, order, type, color, image){ // Makes child object and makes sure it is saved
+    console.log("add: ", name, " : ", image);
     let tempDirectory = directory;
-    let newChild = {name: name, order: order, parentKey: directory.key, color: colorInput, type: type};
+    let newChild = {name: name, order: order, parentKey: directory.key, color: color, type: type};
     switch(type){
       case "Task":
         newChild.style = styles.Task;
@@ -121,6 +131,10 @@ export default function App() {
       case "Note":
         newChild.style = styles.Note;
         newChild.text = '';
+        break;
+      case 'Image':
+        newChild.style = styles.Picture;
+        newChild.image = image;
         break;
     }
 
@@ -176,6 +190,18 @@ export default function App() {
     tempDirectory.children[index].isComplete = !tempDirectory.children[index].isComplete;
     saveDirectory(tempDirectory);
   }
+  const pickImage = async () => {
+    // No permissions request is necessary for launching the image library
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      quality: 1,
+    });
+    console.log(result);
+    if(!result.canceled){
+      setImageInput(result);
+    }
+  }
 
   function displayDirectory(){ // Displays Directory at top
     return(
@@ -197,11 +223,19 @@ export default function App() {
             <Text>Add Color: </Text>
             <TextInput style={styles.textInput} onChangeText={setColorInput} value={colorInput} placeholder='Enter Color'/>
             <Dropdown data={childTypes} labelField='type' valueField='type' value={dropdownInput} onChange={setDropdownInput}/>
-            <Button title="Submit" onPress={() => {addChildCheck(nameInput, directory.children.length, dropdownInput.type, colorInput)}} />
+            {dropdownInput !== null && dropdownInput.type == 'Image' && displayImageForm()}
+            <Button title="Submit" onPress={() => {addChildCheck(nameInput, directory.children.length, dropdownInput.type, colorInput, imageInput)}} />
             <Button title="Cancel" onPress={() => {clearInputs(); setAddItem(null)}} />
         </View>
     );
     }
+  }
+  function displayImageForm(){
+    return(
+      <View>
+        <Button title="Pick an image from camera roll" onPress={pickImage} />
+    </View>
+    );
   }
 // Display Children
   function displayChildren(){ // Displays children of directory
@@ -211,6 +245,8 @@ export default function App() {
           return displayTask(child);
         case 'Note':
           return displayNote(child);
+        case 'Image':
+          return displayImage(child);
       }
     });
   }
@@ -246,6 +282,22 @@ export default function App() {
     else{
       return displayNoteForm(child);
     }
+  }
+  function displayImage(child){
+    return (
+      <View key={child.name+child.order} style={child.style}>
+        <Pressable>
+          <Text>{child.name}</Text>
+          <Text>{JSON.stringify(child.isComplete)}</Text>
+          <Image style={styles.miniPic} source={child.image.assets}/>
+        </Pressable>
+        <Button title='Update' onPress={() => {setUpdateItem([child.name, child.order])}}/>
+        <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order])}}/>
+
+          {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
+          {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && displayUpdateChildForm(child)}
+      </View>
+    );
   }
   // Child Forms
   function displayNoteForm(child){
@@ -304,7 +356,9 @@ export default function App() {
       <View style={styles.container}>
         {displayDirectory()}
         {displayAddForm()}
+        <ScrollView>
         {displayChildren()}
+        </ScrollView>
       </View>
     );
   }
@@ -372,6 +426,17 @@ const styles = StyleSheet.create({
   },
   NoteTextPrev: {
     height: 16,
-  }
+  },
+  Picture:{
+    borderWidth: 2,
+    borderStyle: 'dotted',
+    borderColor: 'grey',
+    marginBottom: 4,
+  },
+  miniPic: {
+    width: 100,
+    height: 100,
+  },
+
 
 });
