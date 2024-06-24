@@ -65,6 +65,8 @@ export default function App() {
     setNameInput('');
     setColorInput('');
     setTextInput('');
+    setNumberInput('');
+    setImageInput(null);
     setDropdownInput(null);
   }
   function addChildCheck(name, order, type, color, image){ // Checks if the child is valid
@@ -90,7 +92,7 @@ export default function App() {
       return;
     }
   }
-  function updateChildCheck(child, updateName, updateOrder, updateColor){
+  function updateChildCheck(child, updateName, updateOrder, updateColor, updateImage){
       if(updateName == '' || updateName == null){
         updateName = child.name;
       }
@@ -102,7 +104,7 @@ export default function App() {
         setErrorMessage('Directory Name is Taken.');
       }
       else{
-        updateChild(child, updateName, updateOrder, updateColor);
+        updateChild(child, updateName, updateOrder, updateColor, updateImage);
       }
   }
   function saveDirectory(directory){
@@ -142,7 +144,7 @@ export default function App() {
     saveDirectory(tempDirectory);
     clearInputs();
   }
-  function updateChild(child, updateName, updateOrder, updateColor){
+  function updateChild(child, updateName, updateOrder, updateColor, updateImage){
     const oldOrder = child.order;
     console.log("Update: ", child.name, updateOrder, child.order);
     let tempDirectory = directory;
@@ -152,6 +154,9 @@ export default function App() {
     updateChild.name = updateName;
     updateChild.order = updateOrder;
     updateChild.color = updateColor;
+    if(updateImage !== null){
+      updateChild.image = updateImage; 
+    }
     tempDirectory.children[index] = updateChild;
 
     console.log("Old: ", oldOrder);
@@ -295,7 +300,7 @@ export default function App() {
         <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order])}}/>
 
           {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
-          {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && displayUpdateChildForm(child)}
+          {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && displayUpdateImageForm(child)}
       </View>
     );
   }
@@ -337,6 +342,34 @@ export default function App() {
         <TextInput value={colorInput} onChangeText={setColorInput} placeholder='Enter Updated Color'/>
         
         <Button title='Submit' onPress={() => updateChildCheck(child, nameInput, tempNum, colorInput)}/>
+        <Button title='Cancel' onPress={() => clearInputs()}/>
+      </View>
+    );
+  }
+  function displayUpdateImageForm(child){
+    let tempNum;
+    if(updateItem !== null){
+      tempNum = parseInt(numberInput);
+      console.log(tempNum);
+      const limit = directory.children.length;
+      if(tempNum < 0){
+        setNumberInput('0');
+      }
+      else if(tempNum >= limit){
+        setNumberInput('' + limit-1);
+      }
+      else if(numberInput == null || ''){
+        tempNum = child.order;
+      }
+    }
+    return(
+      <View>
+        <TextInput value={nameInput} onChangeText={setNameInput} placeholder='Enter Updated Name'/>
+        <TextInput value={numberInput} onChangeText={setNumberInput} keyboardType='numeric'placeholder='Enter Updated Order #'/>
+
+        <TextInput value={colorInput} onChangeText={setColorInput} placeholder='Enter Updated Color'/>
+        {displayImageForm()}
+        <Button title='Submit' onPress={() => updateChildCheck(child, nameInput, tempNum, colorInput, imageInput)}/>
         <Button title='Cancel' onPress={() => clearInputs()}/>
       </View>
     );
