@@ -434,8 +434,10 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   miniPic: {
-    width: 100,
     height: 100,
+  },
+  fullPic: { 
+    height: 260,
   },
 
 
