@@ -159,7 +159,6 @@ export default function App() {
     }
     tempDirectory.children[index] = updateChild;
 
-    console.log("Old: ", oldOrder);
     if(oldOrder > updateOrder){
       console.log("New is less");
       for(let i=updateOrder; i<oldOrder;i++){
@@ -202,7 +201,6 @@ export default function App() {
       allowsEditing: true,
       quality: 1,
     });
-    console.log(result);
     if(!result.canceled){
       setImageInput(result);
     }
@@ -322,7 +320,6 @@ export default function App() {
     let tempNum;
     if(updateItem !== null){
       tempNum = parseInt(numberInput);
-      console.log(tempNum);
       const limit = directory.children.length;
       if(tempNum < 0){
         setNumberInput('0');
@@ -330,7 +327,7 @@ export default function App() {
       else if(tempNum >= limit){
         setNumberInput('' + limit-1);
       }
-      else if(numberInput == null || ''){
+      else if(numberInput == null || numberInput == ''){
         tempNum = child.order;
       }
     }
@@ -350,7 +347,6 @@ export default function App() {
     let tempNum;
     if(updateItem !== null){
       tempNum = parseInt(numberInput);
-      console.log(tempNum);
       const limit = directory.children.length;
       if(tempNum < 0){
         setNumberInput('0');
@@ -358,7 +354,8 @@ export default function App() {
       else if(tempNum >= limit){
         setNumberInput('' + limit-1);
       }
-      else if(numberInput == null || ''){
+      else if(numberInput == null || numberInput == ''){
+        console.log("null");
         tempNum = child.order;
       }
     }
