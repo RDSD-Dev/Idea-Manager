@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import {TextInput, Button, StyleSheet, Text, View, ScrollView , Pressable, Image} from 'react-native';
+import {TextInput, Button, StyleSheet, Text, View, ScrollView , Pressable, Image, Modal} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { Dropdown } from 'react-native-element-dropdown';
@@ -9,7 +9,7 @@ import { jsx } from 'react/jsx-runtime';
 import {} from './Child';
 
 export default function App() {
-  const [directory, setDirectory] = useState(null); // name, order#, parentKey, color, key, children[]
+  const [directories, setDirectories] = useState(null); // name, order#, parentKey, color, key, children[]
   const [addItem, setAddItem] = useState(null);
   const [updateItem, setUpdateItem] = useState(null); // Stores [name, order]
   const [deleteItem, setDeleteItem] = useState(null); // Stores [name, order]
@@ -29,10 +29,10 @@ export default function App() {
 
   useEffect(() => {
     if(updateItem !== null && updateItem.length == 3){
-      const index = directory.children.findIndex((e) => e.name == updateItem[0] && e.order == updateItem[1]);
-      let tempDirectory = directory;
-      tempDirectory.children[index].text = textInput;
-      saveDirectory(tempDirectory);
+      const index = directories.children.findIndex((e) => e.name == updateItem[0] && e.order == updateItem[1]);
+      let tempDirectories = directories;
+      tempDirectories.children[index].text = textInput;
+      saveDirectories(tempDirectories);
     }
     if(errorMessage == 'Refresh'){
       setErrorMessage('');
@@ -40,18 +40,18 @@ export default function App() {
     if(imageInput !== null){
       console.log("Effect Image: ", imageInput);
     }
-  }, [directory, errorMessage, addItem, updateItem, deleteItem, numberInput, textInput, imageInput]);
+  }, [directories, errorMessage, addItem, updateItem, deleteItem, numberInput, textInput, imageInput]);
 
-  if(directory == null){
+  if(directories == null){
     AsyncStorage.getItem("root").then((value) => {
       if(value !== null){
         let valObj = JSON.parse(value);
-        setDirectory(valObj);
+        setDirectories([valObj]);
       }
       else{
         console.log("Making Root");
         let temp = {name: 'root', order: 0, parentKey: '', color: 'Grey', key: 'root', children: []};
-        saveDirectory(temp);
+        saveDirectories(temp);
       }
     });
   }
@@ -69,7 +69,7 @@ export default function App() {
     setImageInput(null);
     setDropdownInput(null);
   }
-  function addChildCheck(name, order, type, color, image){ // Checks if the child is valid
+  function addChildCheck(parentKey, name, order, type, color, image){ // Checks if the child is valid
     console.log("Image: ", image);
     if(name == "" || name.length == 0){ // Name cannot be blank
       setErrorMessage('Name cannot be blank.');
@@ -79,8 +79,8 @@ export default function App() {
       setErrorMessage('Please define a type.');
       return;
     }
-    else if(type == 'Directory' && directory.children.findIndex((e) => e.name == name) == -1){ // Dose not allow 2 directories of the same name to exist in the same directory
-      setErrorMessage('Directory Name is Taken.');
+    else if(type == 'directories' && directories.children.findIndex((e) => e.name == name) == -1){ // Dose not allow 2 directories of the same name to exist in the same directories
+      setErrorMessage('directories Name is Taken.');
       return;
     }
     else if(type == 'Image' && image == null){
@@ -88,7 +88,7 @@ export default function App() {
       return;
     }
     else{
-      addChild(name, order, type, color, image);
+      addChild(parentKey, name, order, type, color, image);
       return;
     }
   }
@@ -100,16 +100,19 @@ export default function App() {
         updateColor = child.color;
       }
 
-      if(child.type == 'Directory' && updateName !== child.name && directory.children.findIndex((e) => e.name == name) == -1){
-        setErrorMessage('Directory Name is Taken.');
+      if(child.type == 'directories' && updateName !== child.name && directories.children.findIndex((e) => e.name == name) == -1){
+        setErrorMessage('directories Name is Taken.');
       }
       else{
         updateChild(child, updateName, updateOrder, updateColor, updateImage);
       }
   }
-  function saveDirectory(directory){
-    setDirectory(directory);
-    AsyncStorage.setItem(directory.key, JSON.stringify(directory));
+  function saveDirectories(saveDirectories){
+    let tempDirectories = directories;
+    let index = directories.findIndex((e) => e.key == saveDirectories.key);
+    tempDirectories[index] = saveDirectories;
+    setDirectories(tempDirectories);
+    AsyncStorage.setItem(saveDirectories.key, JSON.stringify(saveDirectories));
   }
 
   function sortChildren(children){
@@ -121,10 +124,10 @@ export default function App() {
     return tempChildren;
   }
   
-  function addChild(name, order, type, color, image){ // Makes child object and makes sure it is saved
+  function addChild(parentKey, name, order, type, color, image){ // Makes child object and makes sure it is saved
     console.log("add: ", name, " : ", image);
-    let tempDirectory = directory;
-    let newChild = {name: name, order: order, parentKey: directory.key, color: color, type: type};
+    let tempDirectory = directories.find((e) => e.key == parentKey);
+    let newChild = {name: name, order: order, parentKey: parentKey, color: color, type: type};
     switch(type){
       case "Task":
         newChild.style = styles.Task;
@@ -141,15 +144,15 @@ export default function App() {
     }
 
     tempDirectory.children.push(newChild);
-    saveDirectory(tempDirectory);
+    saveDirectories(tempDirectory);
     clearInputs();
   }
   function updateChild(child, updateName, updateOrder, updateColor, updateImage){
     const oldOrder = child.order;
     console.log("Update: ", child.name, updateOrder, child.order);
-    let tempDirectory = directory;
+    let tempdirectories = directories;
     let updateChild = child;
-    const index = directory.children.findIndex((e) => e.name == child.name && e.order == child.order);
+    const index = directories.children.findIndex((e) => e.name == child.name && e.order == child.order);
 
     updateChild.name = updateName;
     updateChild.order = updateOrder;
@@ -157,42 +160,42 @@ export default function App() {
     if(updateImage !== null){
       updateChild.image = updateImage; 
     }
-    tempDirectory.children[index] = updateChild;
+    tempdirectories.children[index] = updateChild;
 
     if(oldOrder > updateOrder){
       console.log("New is less");
       for(let i=updateOrder; i<oldOrder;i++){
-        tempDirectory.children[i].order++;
+        tempdirectories.children[i].order++;
       }
-      tempDirectory.children = sortChildren(tempDirectory.children);
+      tempdirectories.children = sortChildren(tempdirectories.children);
     }
     else if(oldOrder < updateOrder){
       console.log("New is more");
       for(let i=oldOrder+1; i<=updateOrder; i++){
-        tempDirectory.children[i].order--;
+        tempdirectories.children[i].order--;
       }
-      tempDirectory.children = sortChildren(tempDirectory.children);
+      tempdirectories.children = sortChildren(tempdirectories.children);
     }
 
-    saveDirectory(tempDirectory);
+    saveDirectories(tempdirectories);
     clearInputs();
   }
-  function deleteChild(name, order){ // Deletes Child
-    let tempDirectory = directory;
+  function deleteChild(name, order, directoryKey){ // Deletes Child
+    let tempDirectory = directories.find((e) => e.key == directoryKey);
     const index = tempDirectory.children.findIndex((e) => e.name == name && e.order == order );
     tempDirectory.children.splice(index, 1);
     for(let i=tempDirectory.children.length-1; i>=index; i--){
       tempDirectory.children[i].order--;
     }
     tempDirectory.children = sortChildren(tempDirectory.children);
-    saveDirectory(tempDirectory);
+    saveDirectories(tempDirectory);
     clearInputs();
   }
   function toggleTask(child){
-    let tempDirectory = directory;
-    const index = directory.children.findIndex((e) => e == child);
-    tempDirectory.children[index].isComplete = !tempDirectory.children[index].isComplete;
-    saveDirectory(tempDirectory);
+    let tempdirectories = directories;
+    const index = directories.children.findIndex((e) => e == child);
+    tempdirectories.children[index].isComplete = !tempdirectories.children[index].isComplete;
+    saveDirectories(tempdirectories);
   }
   const pickImage = async () => {
     // No permissions request is necessary for launching the image library
@@ -206,18 +209,21 @@ export default function App() {
     }
   }
 
-  function displayDirectory(){ // Displays Directory at top
+  function displayDirectory(index){ // Displays directories at top
+    const directory = directories[index];
     return(
       <View style={styles.header}>
         <Text style={ styles.headerLeft}>Settings</Text>
-        <Text style={styles.headerMiddle}>Idea Manager</Text>
+        <Text style={styles.headerMiddle}>{directory.name}</Text>
         <Button title="Add" style={styles.headerRight} onPress={() => {setDropdownInput({type: 'Task'}); setAddItem(directory.name)}} />
       </View>
     );
   }
-  // Directory Forms
+  // directories Forms
   function displayAddForm(){ // Displays add child form
-    if(addItem == directory.name){
+    if(addItem !== null){
+      let directory = directories.find((e) => e.name == addItem);
+      console.log(addItem);
       return(
         <View>
           <Text>{errorMessage}</Text>
@@ -227,7 +233,7 @@ export default function App() {
             <TextInput style={styles.textInput} onChangeText={setColorInput} value={colorInput} placeholder='Enter Color'/>
             <Dropdown data={childTypes} labelField='type' valueField='type' value={dropdownInput} onChange={setDropdownInput}/>
             {dropdownInput !== null && dropdownInput.type == 'Image' && displayImageForm()}
-            <Button title="Submit" onPress={() => {addChildCheck(nameInput, directory.children.length, dropdownInput.type, colorInput, imageInput)}} />
+            <Button title="Submit" onPress={() => {addChildCheck(directory.key, nameInput, directory.children.length, dropdownInput.type, colorInput, imageInput)}} />
             <Button title="Cancel" onPress={() => {clearInputs(); setAddItem(null)}} />
         </View>
     );
@@ -241,8 +247,8 @@ export default function App() {
     );
   }
 // Display Children
-  function displayChildren(){ // Displays children of directory
-    return directory.children.map((child) => {
+  function displayChildren(index){ // Displays children of directories
+    return directories[index].children.map((child) => {
       switch(child.type){
         case 'Task':
           return displayTask(child);
@@ -259,8 +265,8 @@ export default function App() {
         <Text>{child.name}</Text>
         <Text>{JSON.stringify(child.isComplete)}</Text>
         <Button title='Complete' onPress={() => {setErrorMessage('Refresh'); toggleTask(child)}}/>
-        <Button title='Update' onPress={() => {setUpdateItem([child.name, child.order])}}/>
-        <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order])}}/>
+        <Button title='Update' onPress={() => {setUpdateItem([child.name, child.order, child.parentKey])}}/>
+        <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
 
           {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
           {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && displayUpdateChildForm(child)}
@@ -271,12 +277,12 @@ export default function App() {
     if(updateItem == null || updateItem[0] !== child.name && updateItem[1] !== child.order){
       return (
         <View key={child.name+child.order} style={child.style}>  
-          <Pressable onPress={() => {clearInputs(); setTextInput(child.text); setUpdateItem([child.name, child.order, child.type])}}>
+          <Pressable onPress={() => {clearInputs(); setTextInput(child.text); setUpdateItem([child.name, child.order, child.parentKey, child.type])}}>
             <Text>{child.name}</Text>
             <Text>{child.type}</Text>
             <Text multiline={false} style={styles.NoteTextPrev}>{child.text}</Text>
           </Pressable>
-          <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order])}}/>
+          <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
   
             {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
         </View>
@@ -294,8 +300,8 @@ export default function App() {
           <Text>{JSON.stringify(child.isComplete)}</Text>
           <Image style={styles.miniPic} source={child.image.assets}/>
         </Pressable>
-        <Button title='Update' onPress={() => {setUpdateItem([child.name, child.order])}}/>
-        <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order])}}/>
+        <Button title='Update' onPress={() => {setUpdateItem([child.name, child.order, child.parentKey])}}/>
+        <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
 
           {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
           {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && displayUpdateImageForm(child)}
@@ -309,7 +315,7 @@ export default function App() {
         <Button title='Back' onPress={() => clearInputs()}/>
         <Text>{child.name}</Text>
         <TextInput value={nameInput} onChangeText={setNameInput} placeholder={child.name}/>
-        <Button title='Update' onPress={() => {updateChildCheck(child, nameInput); setTextInput(child.text); setUpdateItem([child.name, child.order, child.type])}}/>
+        <Button title='Update' onPress={() => {updateChildCheck(child, nameInput); setTextInput(child.text); setUpdateItem([child.name, child.order, child.parentKey, child.type])}}/>
         <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order])}}/>
         {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
         <TextInput value={textInput} onChangeText={setTextInput} multiline={true} placeholder='Enter Note Here'/>
@@ -320,7 +326,7 @@ export default function App() {
     let tempNum;
     if(updateItem !== null){
       tempNum = parseInt(numberInput);
-      const limit = directory.children.length;
+      const limit = directories.children.length;
       if(tempNum < 0){
         setNumberInput('0');
       }
@@ -347,7 +353,7 @@ export default function App() {
     let tempNum;
     if(updateItem !== null){
       tempNum = parseInt(numberInput);
-      const limit = directory.children.length;
+      const limit = directories.children.length;
       if(tempNum < 0){
         setNumberInput('0');
       }
@@ -375,19 +381,19 @@ export default function App() {
     return(
       <View>
           <Text>Delete {child.name}?</Text>
-                <Button title='Yes' onPress={() => deleteChild(child.name, child.order)}/>
+                <Button title='Yes' onPress={() => deleteChild(child.name, child.order, child.parentKey)}/>
                 <Button title='No' onPress={() => {if(updateItem[0] == child.name && updateItem[1] == child.order){setDeleteItem(null)}else{clearInputs()}}}/>
       </View>
     );
   }
 
-  if(directory !== null){ // Displays directory if not null
+  if(directories !== null){ // Displays directories if not null
     return (
       <View style={styles.container}>
-        {displayDirectory()}
-        {displayAddForm()}
+        {displayDirectory(0)}
+        {displayAddForm(0)}
         <ScrollView>
-        {displayChildren()}
+        {displayChildren(0)}
         </ScrollView>
       </View>
     );
@@ -435,7 +441,7 @@ const styles = StyleSheet.create({
     borderColor: 'black',
     marginBottom: 4,
   },
-  childDirectory:{
+  childdirectories:{
     borderWidth: 2,
     borderStyle: 'dotted',
     borderColor: 'black',
