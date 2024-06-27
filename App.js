@@ -13,6 +13,7 @@ export default function App() {
   const [addItem, setAddItem] = useState(null);
   const [updateItem, setUpdateItem] = useState(null); // Stores [name, order]
   const [deleteItem, setDeleteItem] = useState(null); // Stores [name, order]
+  const [expandItems, setExpandedItems] = useState([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [nameInput, setNameInput] = useState('');
   const [colorInput, setColorInput] = useState('');
@@ -28,9 +29,11 @@ export default function App() {
   ]
 
   useEffect(() => {
-    if(updateItem !== null && updateItem.length == 3){
-      const index = directories.children.findIndex((e) => e.name == updateItem[0] && e.order == updateItem[1]);
-      let tempDirectories = directories;
+    console.log(expandItems);
+    if(expandItems !== null && expandItems.findIndex((e) => e.type == 'Note') !== -1){
+      const note = expandItems.find((e) => e.type == 'Note');
+      const index = directories[directories.length-1].children.findIndex((e) => e.name == note.name && e.order == note.order);
+      let tempDirectories = directories[directories.length-1];
       tempDirectories.children[index].text = textInput;
       saveDirectories(tempDirectories);
     }
@@ -40,7 +43,7 @@ export default function App() {
     if(imageInput !== null){
       console.log("Effect Image: ", imageInput);
     }
-  }, [directories, errorMessage, addItem, updateItem, deleteItem, numberInput, textInput, imageInput]);
+  }, [directories, errorMessage, addItem, updateItem, deleteItem, numberInput, textInput, imageInput, expandItems]);
 
   if(directories == null){
     AsyncStorage.getItem("root").then((value) => {
@@ -107,12 +110,12 @@ export default function App() {
         updateChild(child, updateName, updateOrder, updateColor, updateImage);
       }
   }
-  function saveDirectories(saveDirectories){
+  function saveDirectories(saveDirectory){
     let tempDirectories = directories;
-    let index = directories.findIndex((e) => e.key == saveDirectories.key);
-    tempDirectories[index] = saveDirectories;
+    let index = directories.findIndex((e) => e.key == saveDirectory.key);
+    tempDirectories[index] = saveDirectory;
     setDirectories(tempDirectories);
-    AsyncStorage.setItem(saveDirectories.key, JSON.stringify(saveDirectories));
+    AsyncStorage.setItem(saveDirectory.key, JSON.stringify(saveDirectory));
   }
 
   function sortChildren(children){
@@ -122,6 +125,12 @@ export default function App() {
       tempChildren.push(children[children.findIndex((e) => e.order == i)]);
     }
     return tempChildren;
+  }
+  function expandChild(child){
+    if(child.type == 'Note' && expandItems.findIndex((e) => e.type == 'Note') > -1){
+      setExpandedItems(expandItems.filter((e) => e.type !== 'Note'));
+    }
+    setExpandedItems(expandItems => [...expandItems, {name: child.name, order: child.order, type: child.type}])
   }
   
   function addChild(parentKey, name, order, type, color, image){ // Makes child object and makes sure it is saved
@@ -274,10 +283,10 @@ export default function App() {
     );
   }
   function displayNote(child){
-    if(updateItem == null || updateItem[0] !== child.name && updateItem[1] !== child.order){
+    if(expandItems.length == 0 || expandItems.findIndex((e) => e.name == child.name && e.order == child.order) == -1){
       return (
         <View key={child.name+child.order} style={child.style}>  
-          <Pressable onPress={() => {clearInputs(); setTextInput(child.text); setUpdateItem([child.name, child.order, child.parentKey, child.type])}}>
+          <Pressable onPress={() => {setTextInput(child.text); expandChild(child)}}>
             <Text>{child.name}</Text>
             <Text>{child.type}</Text>
             <Text multiline={false} style={styles.NoteTextPrev}>{child.text}</Text>
@@ -298,7 +307,7 @@ export default function App() {
         <Pressable>
           <Text>{child.name}</Text>
           <Text>{JSON.stringify(child.isComplete)}</Text>
-          <Image style={styles.miniPic} source={child.image.assets}/>
+          <Image style={styles.miniPic} source={child.image.assets} alt='The image was either moved or deleted from your device.'/>
         </Pressable>
         <Button title='Update' onPress={() => {setUpdateItem([child.name, child.order, child.parentKey])}}/>
         <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
@@ -312,7 +321,7 @@ export default function App() {
   function displayNoteForm(child){
     return(
       <View key={child.name+child.order} style={child.style}>  
-        <Button title='Back' onPress={() => clearInputs()}/>
+        <Button title='Back' onPress={() => {clearInputs(); setExpandedItems(expandItems.filter((e) => e.name !== child.name && e.order !== child.order))}}/>
         <Text>{child.name}</Text>
         <TextInput value={nameInput} onChangeText={setNameInput} placeholder={child.name}/>
         <Button title='Update' onPress={() => {updateChildCheck(child, nameInput); setTextInput(child.text); setUpdateItem([child.name, child.order, child.parentKey, child.type])}}/>
@@ -353,7 +362,7 @@ export default function App() {
     let tempNum;
     if(updateItem !== null){
       tempNum = parseInt(numberInput);
-      const limit = directories.children.length;
+      const limit = directories[directories.length-1].children.length;
       if(tempNum < 0){
         setNumberInput('0');
       }
