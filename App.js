@@ -132,6 +132,10 @@ export default function App() {
     }
     setExpandedItems(expandItems => [...expandItems, {name: child.name, order: child.order, type: child.type}])
   }
+  function contractChild(child){
+    console.log("Contract: ",expandItems.filter((e) => e.order !== child.order || e.name !== child.name));
+
+  }
   
   function addChild(parentKey, name, order, type, color, image){ // Makes child object and makes sure it is saved
     console.log("add: ", name, " : ", image);
@@ -304,10 +308,14 @@ export default function App() {
   function displayImage(child){
     return (
       <View key={child.name+child.order} style={child.style}>
-        <Pressable>
+        <Pressable onPress={() => expandChild(child)}>
           <Text>{child.name}</Text>
-          <Text>{JSON.stringify(child.isComplete)}</Text>
-          <Image style={styles.miniPic} source={child.image.assets} alt='The image was either moved or deleted from your device.'/>
+          {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 &&
+            <Button title='Back' onPress={() => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))}/>}
+          {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) == -1 && 
+            <Image style={styles.miniPic} source={child.image.assets} alt='The image was either moved or deleted from your device.'/>}
+          {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 && 
+            <Image style={styles.fullPic} source={child.image.assets} alt='The image was either moved or deleted from your device.'/>}
         </Pressable>
         <Button title='Update' onPress={() => {setUpdateItem([child.name, child.order, child.parentKey])}}/>
         <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
@@ -321,7 +329,7 @@ export default function App() {
   function displayNoteForm(child){
     return(
       <View key={child.name+child.order} style={child.style}>  
-        <Button title='Back' onPress={() => {clearInputs(); setExpandedItems(expandItems.filter((e) => e.name !== child.name && e.order !== child.order))}}/>
+        <Button title='Back' onPress={() => {clearInputs(); setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))}}/>
         <Text>{child.name}</Text>
         <TextInput value={nameInput} onChangeText={setNameInput} placeholder={child.name}/>
         <Button title='Update' onPress={() => {updateChildCheck(child, nameInput); setTextInput(child.text); setUpdateItem([child.name, child.order, child.parentKey, child.type])}}/>
