@@ -130,7 +130,6 @@ export default function App() {
   
   function addChild(parentKey, name, order, type, color, image){ // Makes child object and makes sure it is saved
     console.log("add: ", name, " : ", image);
-    let tempDirectory = directories.find((e) => e.key == parentKey);
     let newChild = {name: name, order: order, parentKey: parentKey, color: color, type: type, isNested: false};
     switch(type){
       case "Task":
@@ -152,16 +151,23 @@ export default function App() {
         break;
     }
 
-    tempDirectory.children.push(newChild);
+    let tempDirectory
+    if(parentKey.constructor === Array){ // Adding to a nested item
+      tempDirectory = directories[directories.length-1];
+      const index = tempDirectory.children.findIndex((e) => e.name == parentKey[0] && e.order == parentKey[1]);
+      tempDirectory.children[index].children.push(newChild);
+    }
+    else{ // Adding to a directory
+      tempDirectory = directories.find((e) => e.key == parentKey);
+      tempDirectory.children.push(newChild);
+    }
     saveDirectory(tempDirectory);
     clearInputs();
   }
   function updateChild(child, updateName, updateOrder, updateColor, updateImage){
     const oldOrder = child.order;
     console.log("Update: ", child.name, updateOrder, child.order);
-    let tempDirectory = directories[directories.length-1];
     let updateChild = child;
-    const index = tempDirectory.children.findIndex((e) => e.name == child.name && e.order == child.order);
 
     updateChild.name = updateName;
     updateChild.order = updateOrder;
@@ -169,21 +175,33 @@ export default function App() {
     if(updateImage !== null){
       updateChild.image = updateImage; 
     }
-    tempDirectory.children[index] = updateChild;
 
-    if(oldOrder > updateOrder){
-      console.log("New is less");
-      for(let i=updateOrder; i<oldOrder;i++){
-        tempDirectory.children[i].order++;
-      }
-      tempDirectory.children = sortChildren(tempDirectory.children);
+    let tempDirectory = directories[directories.length-1];
+    if(parentKey.constructor === Array){ // Is updating a nested item
+      const nestIndex = tempDirectory.children.findIndex((e) => e.name == parentKey[0] && e.order == parentKey[1]);
+      const childIndex = tempDirectory.children[nestIndex].children.findIndex((e) => e.name == child.name && e.order == child.order);
+      tempDirectory.children[nestIndex].children[childIndex] = updateChild;
+
+      // Is Not finished
     }
-    else if(oldOrder < updateOrder){
-      console.log("New is more");
-      for(let i=oldOrder+1; i<=updateOrder; i++){
-        tempDirectory.children[i].order--;
+    else{
+      const index = tempDirectory.children.findIndex((e) => e.name == child.name && e.order == child.order);
+      tempDirectory.children[index] = updateChild;
+  
+      if(oldOrder > updateOrder){
+        console.log("New is less");
+        for(let i=updateOrder; i<oldOrder;i++){
+          tempDirectory.children[i].order++;
+        }
+        tempDirectory.children = sortChildren(tempDirectory.children);
       }
-      tempDirectory.children = sortChildren(tempDirectory.children);
+      else if(oldOrder < updateOrder){
+        console.log("New is more");
+        for(let i=oldOrder+1; i<=updateOrder; i++){
+          tempDirectory.children[i].order--;
+        }
+        tempDirectory.children = sortChildren(tempDirectory.children);
+      }
     }
 
     saveDirectory(tempDirectory);
@@ -284,8 +302,15 @@ export default function App() {
       }
     });
   }
-  function displayNestedChildren(children){
-
+  function displayNestedChildren(child){
+    return child.children.map((child) => {
+      switch(child.type){
+        case 'Task':
+          return displayTask(child);
+        case 'Image':
+          return displayImage(child);
+      }
+    });
   }
   function displayTask(child){
     return (
@@ -351,14 +376,14 @@ export default function App() {
             <Text>{child.type}</Text>
             <Text>{JSON.stringify(child.isComplete)}</Text>
           </Pressable>
-          <Button title='Add' onPress={() => {clearInputs(); setAddItem([child.name, child.order, child.children.length]); setDropdownInput({type: 'Task'})}}/>
           {addItem !== null && addItem.constructor === Array && addItem[0] == child.name && addItem[1] == child.order && displayAddForm(false)}
           {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 && 
             <View>
               <Button title='Back' onPress={() => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))}/>
+              <Button title='Add' onPress={() => {clearInputs(); setAddItem([child.name, child.order, child.children.length]); setDropdownInput({type: 'Task'})}}/>
               <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
               {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
-              {displayNestedChildren(child.children)}
+              {displayNestedChildren(child)}
             </View>}
       </View>
     );
