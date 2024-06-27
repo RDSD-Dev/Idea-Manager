@@ -4,9 +4,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { Dropdown } from 'react-native-element-dropdown';
 import * as ImagePicker from 'expo-image-picker';
-import { jsx } from 'react/jsx-runtime';
-
-import {} from './Child';
 
 export default function App() {
   const [directories, setDirectories] = useState(null); // name, order#, parentKey, color, key, children[]
@@ -29,7 +26,6 @@ export default function App() {
   ]
 
   useEffect(() => {
-    console.log(expandItems);
     if(expandItems !== null && expandItems.findIndex((e) => e.type == 'Note') !== -1){
       const note = expandItems.find((e) => e.type == 'Note');
       const index = directories[directories.length-1].children.findIndex((e) => e.name == note.name && e.order == note.order);
@@ -38,10 +34,7 @@ export default function App() {
       saveDirectories(tempDirectories);
     }
     if(errorMessage == 'Refresh'){
-      setErrorMessage('');
-    }
-    if(imageInput !== null){
-      console.log("Effect Image: ", imageInput);
+      setErrorMessage(errorMessage + '');
     }
   }, [directories, errorMessage, addItem, updateItem, deleteItem, numberInput, textInput, imageInput, expandItems]);
 
@@ -132,10 +125,6 @@ export default function App() {
     }
     setExpandedItems(expandItems => [...expandItems, {name: child.name, order: child.order, type: child.type}])
   }
-  function contractChild(child){
-    console.log("Contract: ",expandItems.filter((e) => e.order !== child.order || e.name !== child.name));
-
-  }
   
   function addChild(parentKey, name, order, type, color, image){ // Makes child object and makes sure it is saved
     console.log("add: ", name, " : ", image);
@@ -205,10 +194,10 @@ export default function App() {
     clearInputs();
   }
   function toggleTask(child){
-    let tempdirectories = directories;
-    const index = directories.children.findIndex((e) => e == child);
-    tempdirectories.children[index].isComplete = !tempdirectories.children[index].isComplete;
-    saveDirectories(tempdirectories);
+    let tempDirectory = directories[directories.length-1];
+    const index = tempDirectory.children.findIndex((e) => e == child);
+    tempDirectory.children[index].isComplete = !child.isComplete;
+    saveDirectories(tempDirectory);
   }
   const pickImage = async () => {
     // No permissions request is necessary for launching the image library
