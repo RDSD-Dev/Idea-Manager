@@ -221,17 +221,31 @@ export default function App() {
   function displayDirectory(index){ // Displays directories at top
     const directory = directories[index];
     return(
-      <View style={styles.header}>
-        <Text style={ styles.headerLeft}>Settings</Text>
-        <Text style={styles.headerMiddle}>{directory.name}</Text>
-        <Button title="Add" style={styles.headerRight} onPress={() => {setDropdownInput({type: 'Task'}); setAddItem(directory.name)}} />
+      <View>
+        <View style={styles.header}>
+          <Text style={ styles.headerLeft}>Settings</Text>
+          <Text style={styles.headerMiddle}>{directory.name}</Text>
+          <Button title="Add" style={styles.headerRight} onPress={() => {setDropdownInput({type: 'Task'}); setAddItem(directory.name)}} />
+        </View>
+        {addItem !== null && addItem.constructor !== Array && displayAddForm(true)}
       </View>
     );
   }
   // directories Forms
-  function displayAddForm(){ // Displays add child form
+  function displayAddForm(isDirectory){ // Displays add child form
     if(addItem !== null){
-      let directory = directories.find((e) => e.name == addItem);
+      let key;
+      let order;
+      if(!isDirectory){ // Checks if you are adding to a Nested item or directory
+        console.log("Arr");
+        key = addItem;
+        order = addItem[2];
+      }
+      else{
+        const directory = directories.find((e) => e.name == addItem);
+        key = directory.key;
+        order = directory.children.length;
+      }
       console.log(addItem);
       return(
         <View>
@@ -240,9 +254,9 @@ export default function App() {
             <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Name'/>
             <Text>Add Color: </Text>
             <TextInput style={styles.textInput} onChangeText={setColorInput} value={colorInput} placeholder='Enter Color'/>
-            <Dropdown data={childTypes} labelField='type' valueField='type' value={dropdownInput} onChange={setDropdownInput}/>
+            {isDirectory == true && <Dropdown data={childTypes} labelField='type' valueField='type' value={dropdownInput} onChange={setDropdownInput}/>}
             {dropdownInput !== null && dropdownInput.type == 'Image' && displayImageForm()}
-            <Button title="Submit" onPress={() => {addChildCheck(directory.key, nameInput, directory.children.length, dropdownInput.type, colorInput, imageInput)}} />
+            <Button title="Submit" onPress={() => {addChildCheck(key, nameInput, order, dropdownInput.type, colorInput, imageInput)}} />
             <Button title="Cancel" onPress={() => {clearInputs(); setAddItem(null)}} />
         </View>
     );
@@ -327,6 +341,9 @@ export default function App() {
     );
   }
   function displayNestedTasks(child){
+    if(child.children.length > 0 && child.children.findIndex((e) => e.isComplete == false) == -1){
+      toggleTask(child);
+    }
     return(
       <View key={child.name + child.order} style={child.style}>
         <Pressable onPress={() => {expandChild(child)}}>
@@ -334,12 +351,13 @@ export default function App() {
             <Text>{child.type}</Text>
             <Text>{JSON.stringify(child.isComplete)}</Text>
           </Pressable>
+          <Button title='Add' onPress={() => {clearInputs(); setAddItem([child.name, child.order, child.children.length]); setDropdownInput({type: 'Task'})}}/>
+          {addItem !== null && addItem.constructor === Array && addItem[0] == child.name && addItem[1] == child.order && displayAddForm(false)}
           {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 && 
             <View>
               <Button title='Back' onPress={() => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))}/>
               <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
               {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
-
               {displayNestedChildren(child.children)}
             </View>}
       </View>
@@ -428,7 +446,6 @@ export default function App() {
     return (
       <View style={styles.container}>
         {displayDirectory(0)}
-        {displayAddForm(0)}
         <ScrollView>
         {displayChildren(0)}
         </ScrollView>
