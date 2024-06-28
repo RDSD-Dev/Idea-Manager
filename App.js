@@ -30,6 +30,7 @@ export default function App() {
   ]
 
   useEffect(() => {
+    console.log("Directories: ", directories);
     if(expandItems !== null && expandItems.findIndex((e) => e.type == 'Note') !== -1){
       const note = expandItems.find((e) => e.type == 'Note');
       const index = directories[directories.length-1].children.findIndex((e) => e.name == note.name && e.order == note.order);
@@ -109,6 +110,7 @@ export default function App() {
       }
   }
   function saveDirectory(saveDirectory){
+    console.log("Save: ", saveDirectory.name);
     let tempDirectories = directories;
     let index = directories.findIndex((e) => e.key == saveDirectory.key);
     tempDirectories[index] = saveDirectory;
@@ -132,7 +134,7 @@ export default function App() {
   }
   
   function addChild(parentKey, name, order, type, color, image){ // Makes child object and makes sure it is saved
-    console.log("add: ", name, " : ", type);
+    console.log("add: ", name, " : ", type, " To : ", parentKey);
     let newChild = {name: name, order: order, parentKey: parentKey, color: color, type: type, isNested: false};
     switch(type){
       case "Task":
@@ -160,18 +162,20 @@ export default function App() {
         newChild.style = styles.childDirectory;
         newChild.children = [];
         newChild.key = parentKey + "/" +  name;
+        saveDirectory(newChild);
         break;
     }
 
-    let tempDirectory
+    let tempDirectory;
     if(parentKey.constructor === Array){ // Adding to a nested item
-      tempDirectory = directories[directories.length-1];
+      tempDirectory = directories.find((e) => e.key == parentKey[3]);
       const index = tempDirectory.children.findIndex((e) => e.name == parentKey[0] && e.order == parentKey[1]);
       tempDirectory.children[index].children.push(newChild);
     }
     else{ // Adding to a directory
       tempDirectory = directories.find((e) => e.key == parentKey);
       tempDirectory.children.push(newChild);
+      console.log("Temp: ", tempDirectory.children);
     }
     saveDirectory(tempDirectory);
     clearInputs();
@@ -188,14 +192,16 @@ export default function App() {
       updateChild.image = updateImage; 
     }
 
-    let tempDirectory = directories[directories.length-1];
+    let tempDirectory;;
     let tempChildren;
     let nestIndex = -1;
     if(updateChild.parentKey.constructor === Array){ // Is updating a nested item
+      tempDirectory = directories.find((e) => e.key == updateChild.parentKey[3]);
       nestIndex = tempDirectory.children.findIndex((e) => e.name == updateChild.parentKey[0] && e.order == updateChild.parentKey[1]);
       tempChildren = tempDirectory.children[nestIndex].children;
     }
     else{
+      tempDirectory = directories.find((e) => e.key == updateChild.parentKey);
       tempChildren = tempDirectory.children;
     }
 
@@ -230,7 +236,7 @@ export default function App() {
     let tempChildren;
     let nestIndex = -1;
     if(parentKey.constructor === Array){
-      tempDirectory = directories[directories.length-1];
+      tempDirectory = directories.find((e) => e.key == parentKey[3]);
       nestIndex = tempDirectory.children.findIndex((e) => e.name == parentKey[0] && e.order == parentKey[1]);
       tempChildren = tempDirectory.children[nestIndex].children;
     }
@@ -281,15 +287,19 @@ export default function App() {
   }
 
   function displayDirectory(directory){ // Displays directories at top
+    console.log("Display: ", directory.name, " : ", directory.children);
     return(
       <View>
         <View style={styles.header}>
           {directory.parentKey == '' && <Button title='Settings' onPress={() => setModalView('Settings')} />}
           {directory.parentKey !== ''  && <Button title='Back' onPress={() => setModalView(null)}/>}
           <Text style={styles.headerMiddle}>{directory.name}</Text>
-          <Button title="Add" style={styles.headerRight} onPress={() => {setDropdownInput({type: 'Task'}); setAddItem(directory.name)}} />
+          <Button title="Add" style={styles.headerRight} onPress={() => {setDropdownInput({type: 'Task'}); setAddItem(directory.key)}} />
         </View>
         {addItem !== null && addItem.constructor !== Array && displayAddForm(true)}
+        <ScrollView>
+          {displayChildren(directory.children)}
+        </ScrollView>
       </View>
     );
   }
@@ -302,8 +312,17 @@ export default function App() {
     );
   }
   function openDirectory(child){
+    setDirectories([...directories, child]);
     console.log("Open: ", child.name);
-    setModalView(child);
+    const value = AsyncStorage.getItem(child.key).then((value) => {
+      if(value !== null){
+        let tempDirectories = directories;
+        const index = tempDirectories.findIndex((e) => e.key == child.key);
+        tempDirectories[index] = JSON.parse(value);
+        setDirectories(tempDirectories);
+      }
+      setModalView(directories.findIndex((e) => e.key == child.key));
+    });
   }
   // directories Forms
   function displayAddForm(isDirectory){ // Displays add child form
@@ -315,9 +334,9 @@ export default function App() {
         order = addItem[2];
       }
       else{
-        const directory = directories.find((e) => e.name == addItem);
-        key = directory.key;
-        order = directory.children.length;
+        key = addItem;
+        console.log("Add: ", addItem, " : ", directories.length);
+        order = directories.find((e) => e.key == addItem).children.length;
       }
       return(
         <View>
@@ -342,8 +361,8 @@ export default function App() {
     );
   }
 // Display Children
-  function displayChildren(index){ // Displays children of directories
-    return directories[index].children.map((child) => {
+  function displayChildren(children){ // Displays children of directories
+    return children.map((child) => {
       switch(child.type){
         case 'Task':
           return displayTask(child);
@@ -357,16 +376,6 @@ export default function App() {
           return displayNestedImages(child);
         case 'Directory':
           return displayChildDirectory(child);
-      }
-    });
-  }
-  function displayNestedChildren(child){
-    return child.children.map((child) => {
-      switch(child.type){
-        case 'Task':
-          return displayTask(child);
-        case 'Image':
-          return displayImage(child);
       }
     });
   }
@@ -441,10 +450,10 @@ export default function App() {
           {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 && 
             <View>
               <Button title='Back' onPress={() => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))}/>
-              <Button title='Add' onPress={() => {clearInputs(); setAddItem([child.name, child.order, child.children.length]); setDropdownInput({type: 'Task'})}}/>
+              <Button title='Add' onPress={() => {clearInputs(); setAddItem([child.name, child.order, child.children.length, child.parentKey]); setDropdownInput({type: 'Task'})}}/>
               <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
               {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
-              {displayNestedChildren(child)}
+              {displayChildren(child.children)}
             </View>}
       </View>
     );
@@ -460,10 +469,10 @@ export default function App() {
           {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 && 
             <View>
               <Button title='Back' onPress={() => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))}/>
-              <Button title='Add' onPress={() => {clearInputs(); setAddItem([child.name, child.order, child.children.length]); setDropdownInput({type: 'Image'})}}/>
+              <Button title='Add' onPress={() => {clearInputs(); setAddItem([child.name, child.order, child.children.length, child.parentKey]); setDropdownInput({type: 'Image'})}}/>
               <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
               {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
-              {displayNestedChildren(child)}
+              {displayChildren(child.children)}
             </View>}
       </View>
     );
@@ -560,10 +569,7 @@ export default function App() {
     return (
       <View style={styles.container}>
         {displayDirectory(directories[0])}
-        <ScrollView>
-        {displayChildren(0)}
-        </ScrollView>
-        
+
         <Modal
           animationType='slide'
           transparent={true}
@@ -574,7 +580,7 @@ export default function App() {
           }}>
             <View style={styles.modalView}>
               {modalView !== null && modalView == 'Settings' && displaySettings()}
-              {modalView !== null && modalView !== 'Settings' && displayDirectory(modalView)}
+              {modalView !== null && modalView !== 'Settings' && directories[modalView] !== null && displayDirectory(directories[modalView])}
             </View>
 
         </Modal>
