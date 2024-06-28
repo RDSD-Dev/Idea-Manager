@@ -35,7 +35,7 @@ export default function App() {
       saveDirectory(tempDirectories);
     }
     if(errorMessage == 'Refresh'){
-      setErrorMessage(errorMessage + '');
+      setErrorMessage(errorMessage + ' ');
     }
   }, [directories, errorMessage, addItem, updateItem, deleteItem, numberInput, textInput, imageInput, expandItems]);
 
@@ -220,21 +220,47 @@ export default function App() {
     saveDirectory(tempDirectory);
     clearInputs();
   }
-  function deleteChild(name, order, directoryKey){ // Deletes Child
-    let tempDirectory = directories.find((e) => e.key == directoryKey);
-    const index = tempDirectory.children.findIndex((e) => e.name == name && e.order == order );
-    tempDirectory.children.splice(index, 1);
-    for(let i=tempDirectory.children.length-1; i>=index; i--){
-      tempDirectory.children[i].order--;
+  function deleteChild(name, order, parentKey){ // Deletes Child
+    let tempDirectory;
+    let tempChildren;
+    let nestIndex = -1;
+    if(parentKey.constructor === Array){
+      tempDirectory = directories[directories.length-1];
+      nestIndex = tempDirectory.children.findIndex((e) => e.name == parentKey[0] && e.order == parentKey[1]);
+      tempChildren = tempDirectory.children[nestIndex].children;
     }
-    tempDirectory.children = sortChildren(tempDirectory.children);
+    else{
+      tempDirectory = directories.find((e) => e.key == parentKey);
+      tempChildren = tempDirectory.children;
+    }
+
+    const index = tempChildren.findIndex((e) => e.name == name && e.order == order );
+    tempChildren.splice(index, 1);
+    for(let i=tempChildren.length-1; i>=index; i--){
+      tempChildren[i].order--;
+    }
+    tempChildren = sortChildren(tempChildren);
+    if(nestIndex > -1){
+      tempDirectory.children[nestIndex].children = tempChildren;
+    }
+    else{
+      tempDirectory.children = tempChildren;
+    }
     saveDirectory(tempDirectory);
     clearInputs();
   }
   function toggleTask(child){
+    console.log("Toggle: ", child.name);
     let tempDirectory = directories[directories.length-1];
-    const index = tempDirectory.children.findIndex((e) => e == child);
-    tempDirectory.children[index].isComplete = !child.isComplete;
+    if(child.parentKey.constructor === Array){ // Checks if is a nested item
+      const nestIndex = tempDirectory.children.findIndex((e) => e.name == child.parentKey[0] && e.order == child.parentKey[1]);
+      const childIndex = tempDirectory.children[nestIndex].children.findIndex((e) => e == child);
+      tempDirectory.children[nestIndex].children[childIndex].isComplete = !child.isComplete;
+    }
+    else{
+      const index = tempDirectory.children.findIndex((e) => e == child);
+      tempDirectory.children[index].isComplete = !child.isComplete;
+    }
     saveDirectory(tempDirectory);
   }
   const pickImage = async () => {
@@ -330,7 +356,7 @@ export default function App() {
       <View key={child.name+child.order} style={child.style}>
         <Text>{child.name}</Text>
         <Text>{JSON.stringify(child.isComplete)}</Text>
-        <Button title='Complete' onPress={() => {setErrorMessage('Refresh'); toggleTask(child)}}/>
+        <Button title='Complete' onPress={() => {toggleTask(child); setErrorMessage('Refresh');}}/>
         <Button title='Update' onPress={() => {setUpdateItem([child.name, child.order, child.parentKey])}}/>
         <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
 
@@ -379,7 +405,10 @@ export default function App() {
     );
   }
   function displayNestedTasks(child){
-    if(child.children.length > 0 && child.children.findIndex((e) => e.isComplete == false) == -1){
+    if(child.children.length > 0 && !child.isComplete && child.children.findIndex((e) => e.isComplete == false) == -1){
+      toggleTask(child);
+    }
+    else if(child.children.length == 0 && child.isComplete  || child.children.length > 0 && child.isComplete && child.children.findIndex((e) => e.isComplete == false) > -1){
       toggleTask(child);
     }
     return(
