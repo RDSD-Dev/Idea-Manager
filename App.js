@@ -262,16 +262,21 @@ export default function App() {
   }
   function toggleTask(child){
     console.log("Toggle: ", child.name);
-    let tempDirectory = directories[directories.length-1];
+    let tempDirectory;
     if(child.parentKey.constructor === Array){ // Checks if is a nested item
+      let tempDirectory = directories.find((e) => e.key == child.parentKey[3]);
+      console.log(tempDirectory.name);
+
       const nestIndex = tempDirectory.children.findIndex((e) => e.name == child.parentKey[0] && e.order == child.parentKey[1]);
       const childIndex = tempDirectory.children[nestIndex].children.findIndex((e) => e == child);
       tempDirectory.children[nestIndex].children[childIndex].isComplete = !child.isComplete;
     }
     else{
+      tempDirectory = directories.find((e) => e.key == child.parentKey);
       const index = tempDirectory.children.findIndex((e) => e == child);
       tempDirectory.children[index].isComplete = !child.isComplete;
     }
+    console.log(tempDirectory.name);
     saveDirectory(tempDirectory);
   }
   const pickImage = async () => {
@@ -312,11 +317,13 @@ export default function App() {
     );
   }
   function openDirectory(child){
-    setDirectories([...directories, child]);
+    let tempDirectories = directories;
+    tempDirectories.push(child);
+    setDirectories(tempDirectories);
     console.log("Open: ", child.name);
     const value = AsyncStorage.getItem(child.key).then((value) => {
       if(value !== null){
-        let tempDirectories = directories;
+        tempDirectories = directories;
         const index = tempDirectories.findIndex((e) => e.key == child.key);
         tempDirectories[index] = JSON.parse(value);
         setDirectories(tempDirectories);
