@@ -6,6 +6,7 @@ import { Dropdown } from 'react-native-element-dropdown';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function App() {
+  const [modalView, setModalView] = useState(null);
   const [directories, setDirectories] = useState(null); // name, order#, parentKey, color, key, children[]
   const [addItem, setAddItem] = useState(null);
   const [updateItem, setUpdateItem] = useState(null); // Stores [name, order]
@@ -24,7 +25,8 @@ export default function App() {
     {type: 'Note'},
     {type: 'Image'},
     {type: 'Nested Tasks'},
-    {type: 'Nested Images'}
+    {type: 'Nested Images'},
+    {type: 'Directory'}
   ]
 
   useEffect(() => {
@@ -41,14 +43,14 @@ export default function App() {
   }, [directories, errorMessage, addItem, updateItem, deleteItem, numberInput, textInput, imageInput, expandItems]);
 
   if(directories == null){
-    AsyncStorage.getItem("root").then((value) => {
+    AsyncStorage.getItem("Idea Manager").then((value) => {
       if(value !== null){
         let valObj = JSON.parse(value);
         setDirectories([valObj]);
       }
       else{
         console.log("Making Root");
-        let temp = {name: 'root', order: 0, parentKey: '', color: 'Grey', key: 'root', children: []};
+        let temp = {name: 'Idea Manager', order: 0, parentKey: '', color: 'Grey', key: 'Idea Manager', children: []};
         setDirectories([temp]);
         AsyncStorage.setItem(temp.key, JSON.stringify(temp));
       }
@@ -77,8 +79,9 @@ export default function App() {
       setErrorMessage('Please define a type.');
       return;
     }
-    else if(type == 'directories' && directories.children.findIndex((e) => e.name == name) == -1){ // Dose not allow 2 directories of the same name to exist in the same directories
-      setErrorMessage('directories Name is Taken.');
+    else if(type == 'Directory' && name == 'Idea Manager' || type == 'Directory' && directories.find((e) => e.key == parentKey).children.findIndex((e) => e.type == 'Directory' && e.name == name) !== -1 ){ // Dose not allow 2 directories of the same name to exist in the same directories
+      const directory = directories.find((e) => e.key == parentKey);
+      setErrorMessage('Directory Name is Taken.');
       return;
     }
     else if(type == 'Image' && image == null){
@@ -129,7 +132,7 @@ export default function App() {
   }
   
   function addChild(parentKey, name, order, type, color, image){ // Makes child object and makes sure it is saved
-    console.log("add: ", name);
+    console.log("add: ", name, " : ", type);
     let newChild = {name: name, order: order, parentKey: parentKey, color: color, type: type, isNested: false};
     switch(type){
       case "Task":
@@ -152,6 +155,11 @@ export default function App() {
       case 'Nested Images':
         newChild.style = styles.nestedImages;
         newChild.children = [];
+        break;
+      case 'Directory':
+        newChild.style = styles.childDirectory;
+        newChild.children = [];
+        newChild.key = parentKey + "/" +  name;
         break;
     }
 
@@ -195,14 +203,12 @@ export default function App() {
     tempChildren[index] = updateChild;
 
     if(oldOrder > updateOrder){
-      console.log("New is less");
       for(let i=updateOrder; i<oldOrder;i++){
         tempChildren[i].order++;
       }
       tempChildren = sortChildren(tempChildren);
     }
     else if(oldOrder < updateOrder){
-      console.log("New is more");
       for(let i=oldOrder+1; i<=updateOrder; i++){
         tempChildren[i].order--;
       }
@@ -274,12 +280,12 @@ export default function App() {
     }
   }
 
-  function displayDirectory(index){ // Displays directories at top
-    const directory = directories[index];
+  function displayDirectory(directory){ // Displays directories at top
     return(
       <View>
         <View style={styles.header}>
-          <Text style={ styles.headerLeft}>Settings</Text>
+          {directory.parentKey == '' && <Button title='Settings' onPress={() => setModalView('Settings')} />}
+          {directory.parentKey !== ''  && <Button title='Back' onPress={() => setModalView(null)}/>}
           <Text style={styles.headerMiddle}>{directory.name}</Text>
           <Button title="Add" style={styles.headerRight} onPress={() => {setDropdownInput({type: 'Task'}); setAddItem(directory.name)}} />
         </View>
@@ -287,13 +293,24 @@ export default function App() {
       </View>
     );
   }
+  function displaySettings(){
+    return (
+      <ScrollView>
+        <Button title='Back' onPress={() => setModalView(null)}/>
+        <Text>Settings</Text>
+      </ScrollView>
+    );
+  }
+  function openDirectory(child){
+    console.log("Open: ", child.name);
+    setModalView(child);
+  }
   // directories Forms
   function displayAddForm(isDirectory){ // Displays add child form
     if(addItem !== null){
       let key;
       let order;
       if(!isDirectory){ // Checks if you are adding to a Nested item or directory
-        console.log("Arr");
         key = addItem;
         order = addItem[2];
       }
@@ -302,7 +319,6 @@ export default function App() {
         key = directory.key;
         order = directory.children.length;
       }
-      console.log(addItem);
       return(
         <View>
           <Text>{errorMessage}</Text>
@@ -339,6 +355,8 @@ export default function App() {
           return displayNestedTasks(child);
         case 'Nested Images':
           return displayNestedImages(child);
+        case 'Directory':
+          return displayChildDirectory(child);
       }
     });
   }
@@ -450,6 +468,16 @@ export default function App() {
       </View>
     );
   }
+  function displayChildDirectory(child){
+    return (
+      <View key={child.name+child.order} style={child.style}>
+        <Pressable onPress={() => openDirectory(child)}>
+          <Text>{child.name}</Text>
+          <Text>{child.type}</Text>
+        </Pressable>
+      </View>
+    );
+  }
   // Child Forms
   function displayNoteForm(child){
     return(
@@ -503,7 +531,6 @@ export default function App() {
         setNumberInput('' + limit-1);
       }
       else if(numberInput == null || numberInput == ''){
-        console.log("null");
         tempNum = child.order;
       }
     }
@@ -532,10 +559,25 @@ export default function App() {
   if(directories !== null){ // Displays directories if not null
     return (
       <View style={styles.container}>
-        {displayDirectory(0)}
+        {displayDirectory(directories[0])}
         <ScrollView>
         {displayChildren(0)}
         </ScrollView>
+        
+        <Modal
+          animationType='slide'
+          transparent={true}
+          visible={modalView !== null}
+          onRequestClose={() => {
+            console.log("Modal Closed");
+            setModalView(null);
+          }}>
+            <View style={styles.modalView}>
+              {modalView !== null && modalView == 'Settings' && displaySettings()}
+              {modalView !== null && modalView !== 'Settings' && displayDirectory(modalView)}
+            </View>
+
+        </Modal>
       </View>
     );
   }
@@ -546,6 +588,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   header: {
     display: 'flex', 
@@ -582,7 +639,7 @@ const styles = StyleSheet.create({
     borderColor: 'black',
     marginBottom: 4,
   },
-  childDirectories:{
+  childDirectory:{
     borderWidth: 2,
     borderStyle: 'dotted',
     borderColor: 'black',
