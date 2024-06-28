@@ -177,12 +177,25 @@ export default function App() {
     }
 
     let tempDirectory = directories[directories.length-1];
-    if(parentKey.constructor === Array){ // Is updating a nested item
-      const nestIndex = tempDirectory.children.findIndex((e) => e.name == parentKey[0] && e.order == parentKey[1]);
+    if(updateChild.parentKey.constructor === Array){ // Is updating a nested item
+      const nestIndex = tempDirectory.children.findIndex((e) => e.name == updateChild.parentKey[0] && e.order == updateChild.parentKey[1]);
       const childIndex = tempDirectory.children[nestIndex].children.findIndex((e) => e.name == child.name && e.order == child.order);
       tempDirectory.children[nestIndex].children[childIndex] = updateChild;
 
-      // Is Not finished
+      if(oldOrder > updateOrder){
+        console.log("New is less");
+        for(let i=updateOrder; i<oldOrder;i++){
+          tempDirectory.children[nestIndex].children[i].order++;
+        }
+        tempDirectory.children[nestIndex].children = sortChildren(tempDirectory.children[nestIndex].children);
+      }
+      else if(oldOrder < updateOrder){
+        console.log("New is more");
+        for(let i=oldOrder+1; i<=updateOrder; i++){
+          tempDirectory.children[nestIndex].children[i].order--;
+        }
+        tempDirectory.children[nestIndex].children = sortChildren(tempDirectory.children[nestIndex].children);
+      }
     }
     else{
       const index = tempDirectory.children.findIndex((e) => e.name == child.name && e.order == child.order);
