@@ -391,13 +391,13 @@ export default function App() {
         <Button title='Update' onPress={() => {setUpdateItem([child.name, child.order, child.parentKey])}}/>
         <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
 
-          {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
-          {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && displayUpdateChildForm(child)}
+          {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
+          {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child)}
       </View>
     );
   }
   function displayNote(child){
-    if(expandItems.length == 0 || expandItems.findIndex((e) => e.name == child.name && e.order == child.order) == -1){
+    if(expandItems.length == 0 || expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) == -1){
       return (
         <View key={child.name+child.order} style={child.style}>  
           <Pressable onPress={() => {setTextInput(child.text); expandChild(child)}}>
@@ -407,7 +407,7 @@ export default function App() {
           </Pressable>
           <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
   
-            {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
+            {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
         </View>
       );
     }
@@ -420,7 +420,7 @@ export default function App() {
       <View key={child.name+child.order} style={child.style}>
         <Pressable onPress={() => expandChild(child)}>
           <Text>{child.name}</Text>
-          {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 &&
+          {expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) !== -1 &&
             <Button title='Back' onPress={() => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))}/>}
           {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) == -1 && 
             <Image style={styles.miniPic} source={child.image.assets} alt='The image was either moved or deleted from your device.'/>}
@@ -430,8 +430,8 @@ export default function App() {
         <Button title='Update' onPress={() => {setUpdateItem([child.name, child.order, child.parentKey])}}/>
         <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
 
-          {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
-          {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && displayUpdateImageForm(child)}
+          {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
+          {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateImageForm(child)}
       </View>
     );
   }
@@ -449,13 +449,14 @@ export default function App() {
             <Text>{child.type}</Text>
             <Text>{JSON.stringify(child.isComplete)}</Text>
           </Pressable>
-          {addItem !== null && addItem.constructor === Array && addItem[0] == child.name && addItem[1] == child.order && displayAddForm(false)}
-          {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 && 
+          {addItem !== null && addItem.constructor === Array && addItem[0] == child.name && addItem[1] == child.order && addItem[3] == child.parentKey && displayAddForm(false)}
+          {expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) !== -1 && 
             <View>
-              <Button title='Back' onPress={() => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))}/>
+              <Text>{child.parentKey}</Text>
+              <Button title='Back' onPress={() => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name || e.parentKey !== child.parentKey))}/>
               <Button title='Add' onPress={() => {clearInputs(); setAddItem([child.name, child.order, child.children.length, child.parentKey]); setDropdownInput({type: 'Task'})}}/>
               <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
-              {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
+              {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
               {displayChildren(child.children)}
             </View>}
       </View>
@@ -468,8 +469,8 @@ export default function App() {
             <Text>{child.name}</Text>
             <Text>{child.type}</Text>
           </Pressable>
-          {addItem !== null && addItem.constructor === Array && addItem[0] == child.name && addItem[1] == child.order && displayAddForm(false)}
-          {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 && 
+          {addItem !== null && addItem.constructor === Array && addItem[0] == child.name && addItem[1] == child.order && addItem[3] == child.parentKey && displayAddForm(false)}
+          {expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) !== -1 && 
             <View>
               <Button title='Back' onPress={() => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))}/>
               <Button title='Add' onPress={() => {clearInputs(); setAddItem([child.name, child.order, child.children.length, child.parentKey]); setDropdownInput({type: 'Image'})}}/>
