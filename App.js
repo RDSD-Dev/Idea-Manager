@@ -23,7 +23,8 @@ export default function App() {
     {type: 'Task'},
     {type: 'Note'},
     {type: 'Image'},
-    {type: 'Nested Tasks'}
+    {type: 'Nested Tasks'},
+    {type: 'Nested Images'}
   ]
 
   useEffect(() => {
@@ -68,7 +69,6 @@ export default function App() {
     setDropdownInput(null);
   }
   function addChildCheck(parentKey, name, order, type, color, image){ // Checks if the child is valid
-    console.log("Image: ", image);
     if(name == "" || name.length == 0){ // Name cannot be blank
       setErrorMessage('Name cannot be blank.');
       return;
@@ -129,7 +129,7 @@ export default function App() {
   }
   
   function addChild(parentKey, name, order, type, color, image){ // Makes child object and makes sure it is saved
-    console.log("add: ", name, " : ", image);
+    console.log("add: ", name);
     let newChild = {name: name, order: order, parentKey: parentKey, color: color, type: type, isNested: false};
     switch(type){
       case "Task":
@@ -147,6 +147,10 @@ export default function App() {
       case 'Nested Tasks':
         newChild.style = styles.nestedTasks;
         newChild.isComplete = false;
+        newChild.children = [];
+        break;
+      case 'Nested Images':
+        newChild.style = styles.nestedImages;
         newChild.children = [];
         break;
     }
@@ -333,6 +337,8 @@ export default function App() {
           return displayImage(child);
         case 'Nested Tasks':
           return displayNestedTasks(child);
+        case 'Nested Images':
+          return displayNestedImages(child);
       }
     });
   }
@@ -418,6 +424,25 @@ export default function App() {
             <View>
               <Button title='Back' onPress={() => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))}/>
               <Button title='Add' onPress={() => {clearInputs(); setAddItem([child.name, child.order, child.children.length]); setDropdownInput({type: 'Task'})}}/>
+              <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
+              {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
+              {displayNestedChildren(child)}
+            </View>}
+      </View>
+    );
+  }
+  function displayNestedImages(child){
+    return(
+      <View key={child.name + child.order} style={child.style}>
+        <Pressable onPress={() => {expandChild(child)}}>
+            <Text>{child.name}</Text>
+            <Text>{child.type}</Text>
+          </Pressable>
+          {addItem !== null && addItem.constructor === Array && addItem[0] == child.name && addItem[1] == child.order && displayAddForm(false)}
+          {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 && 
+            <View>
+              <Button title='Back' onPress={() => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))}/>
+              <Button title='Add' onPress={() => {clearInputs(); setAddItem([child.name, child.order, child.children.length]); setDropdownInput({type: 'Image'})}}/>
               <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
               {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
               {displayNestedChildren(child)}
@@ -557,7 +582,7 @@ const styles = StyleSheet.create({
     borderColor: 'black',
     marginBottom: 4,
   },
-  childdirectories:{
+  childDirectories:{
     borderWidth: 2,
     borderStyle: 'dotted',
     borderColor: 'black',
@@ -597,7 +622,13 @@ const styles = StyleSheet.create({
     borderColor: 'pink',
     marginBottom: 4,
     width: '80vw',
-  }
-
+  },
+  nestedImages: {
+    borderWidth: 2,
+    borderStyle: 'dotted',
+    borderColor: 'yellow',
+    marginBottom: 4,
+    width: '80vw',
+  },
 
 });
