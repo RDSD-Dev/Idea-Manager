@@ -293,8 +293,11 @@ export default function App() {
       <View>
         <View style={styles.header}>
           {directory.parentKey == '' && <Button title='Settings' onPress={() => setModalView('Settings')} />}
-          {directory.parentKey !== ''  && <Button title='Back' onPress={() => setModalView(null)}/>}
-          <Text style={styles.headerMiddle}>{directory.name}</Text>
+          {directory.parentKey !== directories[0].key && directory.parentKey !== '' && <Button title='Exit' onPress={() => setModalView(null)}/>}
+          {directory.parentKey !== ''  && <Button title='Back' onPress={() => closeDirectory(directory)}/>}
+            <Pressable onPress={() => console.log("Update Directory: ", directory.name, " : ", directory.key)}>
+              <Text style={styles.headerMiddle}>{directory.name}</Text>
+            </Pressable>
           <Button title="Add" style={styles.headerRight} onPress={() => {setDropdownInput({type: 'Task'}); setAddItem(directory.key)}} />
         </View>
         {addItem !== null && addItem.constructor !== Array && displayAddForm(true)}
@@ -326,6 +329,9 @@ export default function App() {
       }
       setModalView(directories.findIndex((e) => e.key == child.key));
     });
+  }
+  function closeDirectory(child){
+    setModalView(directories.findIndex((e) => e.key == child.parentKey));
   }
   // directories Forms
   function displayAddForm(isDirectory){ // Displays add child form
