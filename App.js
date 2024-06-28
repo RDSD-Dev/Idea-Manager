@@ -30,11 +30,11 @@ export default function App() {
   ]
 
   useEffect(() => {
-    console.log("Directories: ", directories);
     if(expandItems !== null && expandItems.findIndex((e) => e.type == 'Note') !== -1){
       const note = expandItems.find((e) => e.type == 'Note');
-      const index = directories[directories.length-1].children.findIndex((e) => e.name == note.name && e.order == note.order);
-      let tempDirectories = directories[directories.length-1];
+      const directoryIndex = directories.findIndex((e) => e.key == note.parentKey);
+      const index = directories[directoryIndex].children.findIndex((e) => e.name == note.name && e.order == note.order);
+      let tempDirectories = directories[directoryIndex];
       tempDirectories.children[index].text = textInput;
       saveDirectory(tempDirectories);
     }
@@ -110,7 +110,6 @@ export default function App() {
       }
   }
   function saveDirectory(saveDirectory){
-    console.log("Save: ", saveDirectory.name);
     let tempDirectories = directories;
     let index = directories.findIndex((e) => e.key == saveDirectory.key);
     tempDirectories[index] = saveDirectory;
@@ -130,7 +129,7 @@ export default function App() {
     if(child.type == 'Note' && expandItems.findIndex((e) => e.type == 'Note') > -1){
       setExpandedItems(expandItems.filter((e) => e.type !== 'Note'));
     }
-    setExpandedItems(expandItems => [...expandItems, {name: child.name, order: child.order, type: child.type}])
+    setExpandedItems(expandItems => [...expandItems, {name: child.name, order: child.order, type: child.type, parentKey: child.parentKey}])
   }
   
   function addChild(parentKey, name, order, type, color, image){ // Makes child object and makes sure it is saved
@@ -261,11 +260,10 @@ export default function App() {
     clearInputs();
   }
   function toggleTask(child){
-    console.log("Toggle: ", child.name);
+    console.log("Toggle: ", child.name, " : ", child.isComplete);
     let tempDirectory;
     if(child.parentKey.constructor === Array){ // Checks if is a nested item
-      let tempDirectory = directories.find((e) => e.key == child.parentKey[3]);
-      console.log(tempDirectory.name);
+      tempDirectory = directories.find((e) => e.key == child.parentKey[3]);
 
       const nestIndex = tempDirectory.children.findIndex((e) => e.name == child.parentKey[0] && e.order == child.parentKey[1]);
       const childIndex = tempDirectory.children[nestIndex].children.findIndex((e) => e == child);
@@ -276,7 +274,6 @@ export default function App() {
       const index = tempDirectory.children.findIndex((e) => e == child);
       tempDirectory.children[index].isComplete = !child.isComplete;
     }
-    console.log(tempDirectory.name);
     saveDirectory(tempDirectory);
   }
   const pickImage = async () => {
@@ -292,7 +289,6 @@ export default function App() {
   }
 
   function displayDirectory(directory){ // Displays directories at top
-    console.log("Display: ", directory.name, " : ", directory.children);
     return(
       <View>
         <View style={styles.header}>
