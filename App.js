@@ -177,44 +177,39 @@ export default function App() {
     }
 
     let tempDirectory = directories[directories.length-1];
+    let tempChildren;
+    let nestIndex = -1;
     if(updateChild.parentKey.constructor === Array){ // Is updating a nested item
-      const nestIndex = tempDirectory.children.findIndex((e) => e.name == updateChild.parentKey[0] && e.order == updateChild.parentKey[1]);
-      const childIndex = tempDirectory.children[nestIndex].children.findIndex((e) => e.name == child.name && e.order == child.order);
-      tempDirectory.children[nestIndex].children[childIndex] = updateChild;
-
-      if(oldOrder > updateOrder){
-        console.log("New is less");
-        for(let i=updateOrder; i<oldOrder;i++){
-          tempDirectory.children[nestIndex].children[i].order++;
-        }
-        tempDirectory.children[nestIndex].children = sortChildren(tempDirectory.children[nestIndex].children);
-      }
-      else if(oldOrder < updateOrder){
-        console.log("New is more");
-        for(let i=oldOrder+1; i<=updateOrder; i++){
-          tempDirectory.children[nestIndex].children[i].order--;
-        }
-        tempDirectory.children[nestIndex].children = sortChildren(tempDirectory.children[nestIndex].children);
-      }
+      nestIndex = tempDirectory.children.findIndex((e) => e.name == updateChild.parentKey[0] && e.order == updateChild.parentKey[1]);
+      tempChildren = tempDirectory.children[nestIndex].children;
     }
     else{
-      const index = tempDirectory.children.findIndex((e) => e.name == child.name && e.order == child.order);
-      tempDirectory.children[index] = updateChild;
-  
-      if(oldOrder > updateOrder){
-        console.log("New is less");
-        for(let i=updateOrder; i<oldOrder;i++){
-          tempDirectory.children[i].order++;
-        }
-        tempDirectory.children = sortChildren(tempDirectory.children);
+      tempChildren = tempDirectory.children;
+    }
+
+    const index = tempChildren.findIndex((e) => e.name == child.name && e.order == child.order);
+    tempChildren[index] = updateChild;
+
+    if(oldOrder > updateOrder){
+      console.log("New is less");
+      for(let i=updateOrder; i<oldOrder;i++){
+        tempChildren[i].order++;
       }
-      else if(oldOrder < updateOrder){
-        console.log("New is more");
-        for(let i=oldOrder+1; i<=updateOrder; i++){
-          tempDirectory.children[i].order--;
-        }
-        tempDirectory.children = sortChildren(tempDirectory.children);
+      tempChildren = sortChildren(tempChildren);
+    }
+    else if(oldOrder < updateOrder){
+      console.log("New is more");
+      for(let i=oldOrder+1; i<=updateOrder; i++){
+        tempChildren[i].order--;
       }
+      tempChildren = sortChildren(tempChildren);
+    }
+
+    if(nestIndex > -1){
+      tempDirectory.children[nestIndex].children = tempChildren;
+    }
+    else{
+      tempDirectory.children = tempChildren;
     }
 
     saveDirectory(tempDirectory);
