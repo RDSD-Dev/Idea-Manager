@@ -47,7 +47,7 @@ export default function App() {
 
   if(directories == null){
     AsyncStorage.getItem("Idea Manager").then((value) => {
-      if(false){
+      if(value !== null){
         let valObj = JSON.parse(value);
         setDirectories([valObj]);
       }
@@ -231,10 +231,7 @@ export default function App() {
 
     const index = tempChildren.findIndex((e) => e.name == oldName && e.order == oldOrder);
     tempChildren[index] = updateChild;
-    console.log(tempChildren[index].name);
     tempChildren[index].name = updateName;
-
-
 
     if(oldOrder > updateOrder){
       for(let i=updateOrder; i<oldOrder;i++){
@@ -260,8 +257,6 @@ export default function App() {
       tempDirectory.children = tempChildren;
       console.log(tempDirectory.children[0].name);
     }
-    console.log("C1: ",tempDirectory.children[0].name);
-
 
     if(child.type == 'Directory'){
       closeDirectory(child);
@@ -270,6 +265,9 @@ export default function App() {
       const directoryIndex = tempDirectories.findIndex((e) => e.key == child.key);
       updateChild.children = tempDirChildren;
       if(oldName.name !== updateName){
+        for(let i=0; i< updateChild.children.length; i++){
+          updateChild.children[i].parentKey = updateChild.key;
+        }
         AsyncStorage.removeItem(child.key);
         updateChild.key = child.parentKey + '/' + updateName;
       }
@@ -278,7 +276,6 @@ export default function App() {
       setDirectories(tempDirectories);
     }
 
-    console.log("C2: ", tempDirectory.children[0].name);
     saveDirectory(tempDirectory);
     clearInputs();
     setUpdateItem(null);
@@ -309,7 +306,7 @@ export default function App() {
     else{
       tempDirectory.children = tempChildren;
     }
-    if(key !== null){
+    if(key !== null && key !== undefined){
       AsyncStorage.removeItem(key);
       tempDirectories = directories;
       const directoryIndex = tempDirectories.findIndex((e) => e.key == key);
@@ -361,7 +358,6 @@ export default function App() {
             </Pressable>
           <Button title="Add" style={styles.headerRight} onPress={() => {setDropdownInput({type: 'Task'}); setAddItem(directory.key)}} />
         </View>
-        {directory.parentKey !== ''  && <Text>{directory.order}</Text>}
         {addItem !== null && addItem.constructor !== Array && displayAddForm(true)}
         {updateItem !== null && updateItem[0] == directory.name && updateItem[1] == directory.order &&  updateItem[2] == directory.parentKey && displayUpdateDirectory(directory)}
         <ScrollView>
@@ -482,7 +478,6 @@ export default function App() {
           <Text>{JSON.stringify(child.isComplete)}</Text>
           <Button title='Complete' onPress={() => {toggleTask(child); setErrorMessage('Refresh');}}/>
           <Button title='Update' onPress={() => {setUpdateItem([child.name, child.order, child.parentKey])}}/>
-          <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
   
             {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
             {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child)}
@@ -499,9 +494,6 @@ export default function App() {
             <Text>{child.type}</Text>
             <Text multiline={false} style={styles.NoteTextPrev}>{child.text}</Text>
           </Pressable>
-          <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
-  
-            {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
         </View>
       );
     }
@@ -522,7 +514,6 @@ export default function App() {
             <Image style={styles.fullPic} source={child.image.assets} alt='The image was either moved or deleted from your device.'/>}
         </Pressable>
         <Button title='Update' onPress={() => {setUpdateItem([child.name, child.order, child.parentKey])}}/>
-        <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
 
           {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
           {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateImageForm(child)}
@@ -580,7 +571,6 @@ export default function App() {
         <Pressable onPress={() => openDirectory(child)}>
           <Text>{child.name}</Text>
           <Text>{child.type}</Text>
-          <Text>{child.key}</Text>
         </Pressable>
       </View>
     );
@@ -623,6 +613,7 @@ export default function App() {
         
         <Button title='Submit' onPress={() => updateChildCheck(child, nameInput, tempNum, colorInput)}/>
         <Button title='Cancel' onPress={() => clearInputs()}/>
+        <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
       </View>
     );
   }
@@ -650,6 +641,8 @@ export default function App() {
         {displayImageForm()}
         <Button title='Submit' onPress={() => updateChildCheck(child, nameInput, tempNum, colorInput, imageInput)}/>
         <Button title='Cancel' onPress={() => clearInputs()}/>
+        <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
+
       </View>
     );
   }
@@ -658,7 +651,7 @@ export default function App() {
       <View>
           <Text>Delete {child.name}?</Text>
                 <Button title='Yes' onPress={() => deleteChild(child.name, child.order, child.parentKey, key)}/>
-                <Button title='No' onPress={() => {if(updateItem[0] == child.name && updateItem[1] == child.order){setDeleteItem(null)}else{clearInputs()}}}/>
+                <Button title='No' onPress={() => {if(updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order){setDeleteItem(null)}else{clearInputs()}}}/>
       </View>
     );
   }
