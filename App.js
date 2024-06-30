@@ -22,7 +22,7 @@ export default function App() {
   const [imageInput, setImageInput] = useState(null);
   const [booleanInput, setBooleanInput] = useState(true);
   const [settings, setSettings] = useState({
-    theme: 'Dark', backgroundColor: "#0D1B2A", itemBackgroundColor: '#415A77', borderColor: '#000000', modalBackgroundColor: '#1B263B', inputBackgroundColor: '#778DA9', textColor: '#E0E1DD', inputTextColor: '#E0E1DD', borderWidth: 2, borderStyle: 'solid', fontSize: 16, headerFontSize: 20
+    theme: 'Dark', backgroundColor: "#0D1B2A", childrenBackgroundColor: '#415A77', itemBackgroundColor: '#415A77', borderColor: '#000000', modalBackgroundColor: '#1B263B', inputBackgroundColor: '#778DA9', textColor: '#E0E1DD', inputTextColor: '#E0E1DD', borderWidth: 2, borderStyle: 'solid', fontSize: 16, headerFontSize: 20
   });
 
   const childTypes = [
@@ -731,6 +731,7 @@ export default function App() {
       paddingTop: 40,
       width: '88%',
       alignItems: 'center',
+      paddingBottom: 4,
     },
     headerLeft: {
         position: 'relative',
@@ -752,7 +753,12 @@ export default function App() {
     },
 
     children: {
-      width: '100%',
+      backgroundColor: settings.childrenBackgroundColor,
+      borderRadius: borderRadius,
+      paddingTop: 8,
+      padding: 4,
+      width: '88%',
+      height: '88%'
     },
     child: {
       padding: 4,
