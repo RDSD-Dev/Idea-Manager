@@ -21,6 +21,9 @@ export default function App() {
   const [dropdownInput, setDropdownInput] = useState(null);
   const [imageInput, setImageInput] = useState(null);
   const [booleanInput, setBooleanInput] = useState(true);
+  const [settings, setSettings] = useState({
+    theme: 'Dark', backgroundColor: "#0D1B2A", itemBackgroundColor: '#415A77', borderColor: '#000000', modalBackgroundColor: '#1B263B', inputBackgroundColor: '#778DA9', textColor: '#E0E1DD', inputTextColor: '#E0E1DD', borderWidth: 2, borderStyle: 'solid', fontSize: 16, headerFontSize: 20
+  });
 
   const childTypes = [
     {type: 'Task'},
@@ -29,7 +32,7 @@ export default function App() {
     {type: 'Nested Tasks'},
     {type: 'Nested Images'},
     {type: 'Directory'}
-  ]
+  ];
 
   useEffect(() => {
     if(expandItems !== null && expandItems.findIndex((e) => e.type == 'Note') !== -1){
@@ -346,21 +349,34 @@ export default function App() {
     }
   }
 
+  function displayButton(title, onPress, isHeader){
+    let textStyle = styles.text;
+    if(isHeader){
+      textStyle = styles.headerText
+    }
+    return(
+      <Pressable style={styles.button} onPress={() => onPress()}>
+        <Text style={textStyle}>{title}</Text>
+      </Pressable>
+    );
+  }
+
+  // Display Directory
   function displayDirectory(directory){ // Displays directories at top
     return(
-      <View>
+      <View style={styles.directory}>
         <View style={styles.header}>
-          {directory.parentKey == '' && <Button title='Settings' onPress={() => setModalView('Settings')} />}
-          {directory.parentKey !== directories[0].key && directory.parentKey !== '' && <Button title='Exit' onPress={() => setModalView(null)}/>}
-          {directory.parentKey !== ''  && <Button title='Back' onPress={() => closeDirectory(directory)}/>}
-            <Pressable onPress={() => {setBooleanInput(directory.showCompleted); setUpdateItem([directory.name, directory.order, directory.parentKey, directory.type])}}>
-              <Text style={styles.headerMiddle}>{directory.name}</Text>
+          {directory.parentKey == '' && displayButton('Settings', () => setModalView('Settings'), true)}
+          {directory.parentKey !== directories[0].key && directory.parentKey !== '' && displayButton('Exit', () => setModalView(null))}
+          {directory.parentKey !== ''  && displayButton('Back', () => closeDirectory(directory), true)}
+            <Pressable style={styles.headerMiddle} onPress={() => {setBooleanInput(directory.showCompleted); setUpdateItem([directory.name, directory.order, directory.parentKey, directory.type])}}>
+              <Text style={styles.headerText}>{directory.name}</Text>
             </Pressable>
-          <Button title="Add" style={styles.headerRight} onPress={() => {setDropdownInput({type: 'Task'}); setAddItem(directory.key)}} />
+          {displayButton('Add', () => {setDropdownInput({type: 'Task'}); setAddItem(directory.key)}, true)}
         </View>
         {addItem !== null && addItem.constructor !== Array && displayAddForm(true)}
         {updateItem !== null && updateItem[0] == directory.name && updateItem[1] == directory.order &&  updateItem[2] == directory.parentKey && displayUpdateDirectory(directory)}
-        <ScrollView>
+        <ScrollView style={styles.children}>
           {displayChildren(directory.children, directory.showCompleted)}
         </ScrollView>
       </View>
@@ -369,23 +385,22 @@ export default function App() {
   function displayUpdateDirectory(directory){
     return(
       <View>
-        <Button title='Back' onPress={() => clearInputs()}/>
+        {displayButton('Back', () => clearInputs())}
         {directory.parentKey !== '' && 
-        <TextInput value={nameInput} onChangeText={setNameInput} placeholder='Enter Name to Update'/>}
-        <Text>Display completed tasks?</Text>
+        <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Name to Update'/>}
+        <Text style={styles.text}>Display completed tasks?</Text>
         <Checkbox value={booleanInput} onValueChange={setBooleanInput}/>
-        <Button title='Update' onPress={() => {updateChildCheck(directory, nameInput, numberInput, colorInput, imageInput, booleanInput)}}/>
-          {directory.parentKey !== '' && <Button title='Delete' onPress={() => {setDeleteItem([directory.name, directory.order, directory.parentKey])}}/>}
+        {displayButton('Update', () => updateChildCheck(directory, nameInput, numberInput, colorInput, imageInput, booleanInput))}
+          {directory.parentKey !== '' &&  displayButton('Delete', () => setDeleteItem([directory.name, directory.order, directory.parentKey]))}
           {deleteItem !== null && deleteItem[0] == directory.name && deleteItem[1] == directory.order && deleteItem[2] == directory.parentKey && displayDeleteChildForm(directory, directory.key)}
-
       </View>
     );
   }
   function displaySettings(){
     return (
       <ScrollView>
-        <Button title='Back' onPress={() => setModalView(null)}/>
-        <Text>Settings</Text>
+        {displayButton('Back', () => setModalView(null))}
+        <Text style={styles.text}>Settings</Text>
       </ScrollView>
     );
   }
@@ -431,25 +446,18 @@ export default function App() {
       }
       return(
         <View>
-          <Text>{errorMessage}</Text>
-            <Text>Add Name: </Text>
+          <Text style={styles.text}>{errorMessage}</Text>
+            <Text style={styles.text}>Add Name: </Text>
             <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Name'/>
-            <Text>Add Color: </Text>
+            <Text style={styles.text}>Add Color: </Text>
             <TextInput style={styles.textInput} onChangeText={setColorInput} value={colorInput} placeholder='Enter Color'/>
-            {isDirectory == true && <Dropdown data={childTypes} labelField='type' valueField='type' value={dropdownInput} onChange={setDropdownInput}/>}
-            {dropdownInput !== null && dropdownInput.type == 'Image' && displayImageForm()}
-            <Button title="Submit" onPress={() => {addChildCheck(key, nameInput, order, dropdownInput.type, colorInput, imageInput)}} />
-            <Button title="Cancel" onPress={() => {clearInputs(); setAddItem(null)}} />
+            {isDirectory == true && <Dropdown style={styles.dropdown} data={childTypes} labelField='type' valueField='type' value={dropdownInput} onChange={setDropdownInput}/>}
+            {dropdownInput !== null && dropdownInput.type == 'Image' && displayButton('Pick an image from gallery', () => pickImage())}
+            {displayButton('Submit', () => addChildCheck(key, nameInput, order, dropdownInput.type, colorInput, imageInput))}
+            {displayButton('Cancel', () => {clearInputs(); setAddItem(null)})}
         </View>
     );
     }
-  }
-  function displayImageForm(){
-    return(
-      <View>
-        <Button title="Pick an image from camera roll" onPress={pickImage} />
-    </View>
-    );
   }
 // Display Children
   function displayChildren(children, showCompleted){ // Displays children of directories
@@ -473,14 +481,13 @@ export default function App() {
   function displayTask(child, showCompleted){
     if(child.isComplete == false || child.isComplete == true && showCompleted){
       return (
-        <View key={child.name+child.order} style={child.style}>
-          <Text>{child.name}</Text>
-          <Text>{JSON.stringify(child.isComplete)}</Text>
-          <Button title='Complete' onPress={() => {toggleTask(child); setErrorMessage('Refresh');}}/>
-          <Button title='Update' onPress={() => {setUpdateItem([child.name, child.order, child.parentKey])}}/>
-  
-            {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
-            {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child)}
+        <View key={child.name+child.order} style={styles.child}>
+          <Text style={styles.text}>{child.name}</Text>
+          <Text style={styles.text}>{JSON.stringify(child.isComplete)}</Text>
+          {displayButton('Complete', () => {toggleTask(child); setErrorMessage('Refresh');})}
+          {displayButton('Update', () => setUpdateItem([child.name, child.order, child.parentKey]))}  
+          {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
+          {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child)}
         </View>
       );
     }
@@ -488,11 +495,11 @@ export default function App() {
   function displayNote(child){
     if(expandItems.length == 0 || expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) == -1){
       return (
-        <View key={child.name+child.order} style={child.style}>  
+        <View key={child.name+child.order} style={styles.child}>  
           <Pressable onPress={() => {setTextInput(child.text); expandChild(child)}}>
-            <Text>{child.name}</Text>
-            <Text>{child.type}</Text>
-            <Text multiline={false} style={styles.NoteTextPrev}>{child.text}</Text>
+            <Text style={styles.text}>{child.name}</Text>
+            <Text style={styles.text}>{child.type}</Text>
+            <Text multiline={false} style={styles.text}>{child.text}</Text>
           </Pressable>
         </View>
       );
@@ -503,20 +510,20 @@ export default function App() {
   }
   function displayImage(child){
     return (
-      <View key={child.name+child.order} style={child.style}>
+      <View key={child.name+child.order} style={styles.child}>
         <Pressable onPress={() => expandChild(child)}>
-          <Text>{child.name}</Text>
+          <Text style={styles.text}>{child.name}</Text>
           {expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) !== -1 &&
-            <Button title='Back' onPress={() => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))}/>}
+          displayButton('Back', () => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name)))}
           {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) == -1 && 
             <Image style={styles.miniPic} source={child.image.assets} alt='The image was either moved or deleted from your device.'/>}
+          {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 &&
+          displayButton('Update', onPress=() => setUpdateItem([child.name, child.order, child.parentKey]))}
           {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 && 
             <Image style={styles.fullPic} source={child.image.assets} alt='The image was either moved or deleted from your device.'/>}
         </Pressable>
-        <Button title='Update' onPress={() => {setUpdateItem([child.name, child.order, child.parentKey])}}/>
-
-          {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
-          {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateImageForm(child)}
+        {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
+        {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateImageForm(child)}
       </View>
     );
   }
@@ -528,49 +535,46 @@ export default function App() {
       toggleTask(child);
     }
     return(
-      <View key={child.name + child.order} style={child.style}>
+      <View key={child.name + child.order} style={styles.child}>
         <Pressable onPress={() => {expandChild(child)}}>
-            <Text>{child.name}</Text>
-            <Text>{child.type}</Text>
-            <Text>{JSON.stringify(child.isComplete)}</Text>
+            <Text style={styles.text}>{child.name}</Text>
+            <Text style={styles.text}>{child.type}</Text>
+            <Text style={styles.text}>{JSON.stringify(child.isComplete)}</Text>
           </Pressable>
           {addItem !== null && addItem.constructor === Array && addItem[0] == child.name && addItem[1] == child.order && addItem[3] == child.parentKey && displayAddForm(false)}
-          {expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) !== -1 && 
-            <View>
-              <Button title='Back' onPress={() => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name || e.parentKey !== child.parentKey))}/>
-              <Button title='Add' onPress={() => {clearInputs(); setAddItem([child.name, child.order, child.children.length, child.parentKey]); setDropdownInput({type: 'Task'})}}/>
-              <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
-              {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
-              {displayChildren(child.children)}
-            </View>}
+          {expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) !== -1 && displayExpandedNest(child)}
       </View>
     );
   }
   function displayNestedImages(child){
     return(
-      <View key={child.name + child.order} style={child.style}>
+      <View key={child.name + child.order} style={styles.child}>
         <Pressable onPress={() => {expandChild(child)}}>
-            <Text>{child.name}</Text>
-            <Text>{child.type}</Text>
+            <Text style={styles.text}>{child.name}</Text>
+            <Text style={styles.text}>{child.type}</Text>
           </Pressable>
           {addItem !== null && addItem.constructor === Array && addItem[0] == child.name && addItem[1] == child.order && addItem[3] == child.parentKey && displayAddForm(false)}
-          {expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) !== -1 && 
-            <View>
-              <Button title='Back' onPress={() => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))}/>
-              <Button title='Add' onPress={() => {clearInputs(); setAddItem([child.name, child.order, child.children.length, child.parentKey]); setDropdownInput({type: 'Image'})}}/>
-              <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
-              {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
-              {displayChildren(child.children)}
-            </View>}
+          {expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) !== -1 && displayExpandedNest(child)}
       </View>
+    );
+  }
+  function displayExpandedNest(child){
+    return(
+      <View>
+        {displayButton('Back', () => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name || e.parentKey !== child.parentKey)))}
+        {displayButton('Add', () => {clearInputs(); setAddItem([child.name, child.order, child.children.length, child.parentKey]); setDropdownInput({type: 'Task'})})}
+        {displayButton('Delete', () => setDeleteItem([child.name, child.order, child.parentKey]))}
+        {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
+        {displayChildren(child.children)}
+    </View>
     );
   }
   function displayChildDirectory(child){
     return (
-      <View key={child.name+child.order} style={child.style}>
+      <View key={child.name+child.order} style={styles.child}>
         <Pressable onPress={() => openDirectory(child)}>
-          <Text>{child.name}</Text>
-          <Text>{child.type}</Text>
+          <Text style={styles.text}>{child.name}</Text>
+          <Text style={styles.text}>{child.type}</Text>
         </Pressable>
       </View>
     );
@@ -578,14 +582,14 @@ export default function App() {
   // Child Forms
   function displayNoteForm(child){
     return(
-      <View key={child.name+child.order} style={child.style}>  
-        <Button title='Back' onPress={() => {clearInputs(); setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))}}/>
-        <Text>{child.name}</Text>
-        <TextInput value={nameInput} onChangeText={setNameInput} placeholder={child.name}/>
-        <Button title='Update' onPress={() => {updateChildCheck(child, nameInput); setTextInput(child.text); setUpdateItem([child.name, child.order, child.parentKey, child.type])}}/>
-        <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order])}}/>
+      <View key={child.name+child.order} style={styles.child}>  
+      {displayButton('Back', () => {clearInputs(); setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))})}
+        <Text style={styles.text}>{child.name}</Text>
+        <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder={child.name}/>
+        {displayButton('Update', () => {updateChildCheck(child, nameInput); setTextInput(child.text); setUpdateItem([child.name, child.order, child.parentKey, child.type])})}
+        {displayButton('Delete', () => setDeleteItem([child.name, child.order]))}
         {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
-        <TextInput value={textInput} onChangeText={setTextInput} multiline={true} placeholder='Enter Note Here'/>
+        <TextInput style={styles.textInput} value={textInput} onChangeText={setTextInput} multiline={true} placeholder='Enter Note Here'/>
       </View>
     );
   }
@@ -606,14 +610,12 @@ export default function App() {
     }
     return(
       <View>
-        <TextInput value={nameInput} onChangeText={setNameInput} placeholder='Enter Updated Name'/>
-        <TextInput value={numberInput} onChangeText={setNumberInput} keyboardType='numeric'placeholder='Enter Updated Order #'/>
-
-        <TextInput value={colorInput} onChangeText={setColorInput} placeholder='Enter Updated Color'/>
-        
-        <Button title='Submit' onPress={() => updateChildCheck(child, nameInput, tempNum, colorInput)}/>
-        <Button title='Cancel' onPress={() => clearInputs()}/>
-        <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
+        <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Updated Name'/>
+        <TextInput style={styles.textInput} value={numberInput} onChangeText={setNumberInput} keyboardType='numeric'placeholder='Enter Updated Order #'/>
+        <TextInput style={styles.textInput} value={colorInput} onChangeText={setColorInput} placeholder='Enter Updated Color'/>
+        {displayButton('Submit', () => updateChildCheck(child, nameInput, tempNum, colorInput))}
+        {displayButton('Cancel', () => clearInputs())}
+        {displayButton('Delete', () => setDeleteItem([child.name, child.order, child.parentKey]))}
       </View>
     );
   }
@@ -634,27 +636,148 @@ export default function App() {
     }
     return(
       <View>
-        <TextInput value={nameInput} onChangeText={setNameInput} placeholder='Enter Updated Name'/>
-        <TextInput value={numberInput} onChangeText={setNumberInput} keyboardType='numeric'placeholder='Enter Updated Order #'/>
-
-        <TextInput value={colorInput} onChangeText={setColorInput} placeholder='Enter Updated Color'/>
-        {displayImageForm()}
-        <Button title='Submit' onPress={() => updateChildCheck(child, nameInput, tempNum, colorInput, imageInput)}/>
-        <Button title='Cancel' onPress={() => clearInputs()}/>
-        <Button title='Delete' onPress={() => {setDeleteItem([child.name, child.order, child.parentKey])}}/>
-
+        <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Updated Name'/>
+        <TextInput style={styles.textInput} value={numberInput} onChangeText={setNumberInput} keyboardType='numeric'placeholder='Enter Updated Order #'/>
+        <TextInput style={styles.textInput} value={colorInput} onChangeText={setColorInput} placeholder='Enter Updated Color'/>
+        {displayButton('Pick an image from gallery', () => pickImage())}
+        {displayButton('Update', onPress=() => updateChildCheck(child, nameInput, tempNum, colorInput, imageInput))}
+        {displayButton('Cancel', () => clearInputs())}
+        {displayButton('Delete', () => setDeleteItem([child.name, child.order, child.parentKey]))}
       </View>
     );
   }
   function displayDeleteChildForm(child, key){ // Displays item delete form
     return(
       <View>
-          <Text>Delete {child.name}?</Text>
-                <Button title='Yes' onPress={() => deleteChild(child.name, child.order, child.parentKey, key)}/>
-                <Button title='No' onPress={() => {if(updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order){setDeleteItem(null)}else{clearInputs()}}}/>
+        <Text style={styles.text}>Delete {child.name}?</Text>
+        {displayButton('Confirm', () => deleteChild(child.name, child.order, child.parentKey, key))}
+        {displayButton('Cancel', () => {if(updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order){setDeleteItem(null)}else{clearInputs()}})}
       </View>
     );
   }
+
+  const borderRadius = 20;
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: settings.backgroundColor,
+      alignItems: 'center',
+      width: '100%',
+      alignSelf: 'stretch',
+    },
+    modalView: {
+      width: '88%',
+      height: '92%',
+      margin: 20,
+      backgroundColor: settings.modalBackgroundColor,
+      borderRadius: 20,
+      padding: 35,
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+      elevation: 5,
+    },
+    directory: {
+      alignItems: 'center',
+      width: '88%',
+    },
+
+    text: {
+      color: settings.textColor,
+      fontSize: settings.fontSize,
+    },
+    headerText: {
+      color: settings.inputTextColor,
+      fontSize: settings.headerFontSize,
+    },
+    textInput: {
+      fontSize: settings.fontSize,
+      color: settings.inputTextColor,
+      borderWidth: 2,
+      borderStyle: settings.borderStyle,
+      borderColor: settings.borderColor,
+      backgroundColor: settings.inputBackgroundColor,
+    },
+    button: {
+      fontSize: settings.fontSize,
+      color: settings.inputTextColor,
+      borderWidth: 2,
+      borderStyle: settings.borderStyle,
+      borderColor: settings.borderColor,
+      borderRadius: borderRadius,
+      padding: 4,
+      backgroundColor: settings.inputBackgroundColor,
+    },
+    dropdown: {
+      fontSize: settings.fontSize,
+      color: settings.inputTextColor,
+      borderWidth: 2,
+      borderStyle: settings.borderStyle,
+      borderColor: settings.borderColor,
+      borderRadius: borderRadius,
+      padding: 4,
+      backgroundColor: settings.inputBackgroundColor,
+    },
+
+    header: {
+      display: 'flex', 
+      flexDirection: 'row',
+      backgroundColor: this.color,
+      paddingTop: 40,
+      width: '88%',
+      alignItems: 'center',
+    },
+    headerLeft: {
+        position: 'relative',
+        left: 0,
+        alignItems: 'flex-start',
+        justifySelf: 'flex-start', 
+        paddingRight: 10,
+    },
+    headerMiddle: {
+        flexDirection: 'column',
+        marginLeft: 4,
+        marginRight: 4,
+    },
+    headerRight: {
+        justifySelf: 'right',
+        alignItems: 'right',
+        right: 0,
+        paddingLeft: 10,
+    },
+
+    children: {
+      width: '100%',
+    },
+    child: {
+      padding: 4,
+      borderWidth: 2,
+      borderStyle: settings.borderStyle,
+      borderColor: settings.borderColor,
+      borderRadius: borderRadius,
+      backgroundColor: settings.inputBackgroundColor,
+      marginBottom: 4,
+      marginHorizontal: 4,
+    },
+    NoteTextPrev: {
+      height: 16,
+    },
+    miniPic: {
+      height: 100,
+      borderRadius: borderRadius,
+    },
+    fullPic: { 
+      height: 260,
+      borderRadius: 0,
+
+    },
+  
+  });
 
   if(directories !== null){ // Displays directories if not null
     return (
@@ -679,110 +802,3 @@ export default function App() {
     );
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 35,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  header: {
-    display: 'flex', 
-    flexDirection: 'row',
-    backgroundColor: this.color,
-    alignItems: 'center',
-    paddingTop: 40,
-  },
-  headerLeft: {
-      position: 'relative',
-      left: 0,
-      alignItems: 'flex-start',
-      justifySelf: 'flex-start', 
-      paddingRight: 10,
-  },
-  headerMiddle: {
-      flexDirection: 'column'
-  },
-  headerRight: {
-      justifySelf: 'right',
-      alignItems: 'right',
-      right: 0,
-      paddingLeft: 10,
-  },
-  textInput: {
-    borderWidth: 2,
-    borderStyle: 'solid',
-    borderColor: 'black',
-  },
-
-  child: {
-    borderWidth: 2,
-    borderStyle: 'dotted',
-    borderColor: 'black',
-    marginBottom: 4,
-  },
-  childDirectory:{
-    borderWidth: 2,
-    borderStyle: 'dotted',
-    borderColor: 'black',
-    marginBottom: 4,
-  },
-  Task: {
-    borderWidth: 2,
-    borderStyle: 'dotted',
-    borderColor: 'red',
-    marginBottom: 4,
-  },
-  Note: {
-    borderWidth: 2,
-    borderStyle: 'dotted',
-    borderColor: 'blue',
-    marginBottom: 4,
-    width: '80vw',
-  },
-  NoteTextPrev: {
-    height: 16,
-  },
-  Picture:{
-    borderWidth: 2,
-    borderStyle: 'dotted',
-    borderColor: 'grey',
-    marginBottom: 4,
-  },
-  miniPic: {
-    height: 100,
-  },
-  fullPic: { 
-    height: 260,
-  },
-  nestedTasks: {
-    borderWidth: 2,
-    borderStyle: 'dotted',
-    borderColor: 'pink',
-    marginBottom: 4,
-    width: '80vw',
-  },
-  nestedImages: {
-    borderWidth: 2,
-    borderStyle: 'dotted',
-    borderColor: 'yellow',
-    marginBottom: 4,
-    width: '80vw',
-  },
-
-});
