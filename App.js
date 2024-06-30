@@ -22,7 +22,10 @@ export default function App() {
   const [imageInput, setImageInput] = useState(null);
   const [booleanInput, setBooleanInput] = useState(true);
   const [settings, setSettings] = useState({
-    theme: 'Dark', backgroundColor: "#0D1B2A", childrenBackgroundColor: '#415A77', itemBackgroundColor: '#415A77', borderColor: '#000000', modalBackgroundColor: '#1B263B', inputBackgroundColor: '#778DA9', textColor: '#E0E1DD', inputTextColor: '#E0E1DD', borderWidth: 2, borderStyle: 'solid', fontSize: 16, headerFontSize: 20
+    theme: 'Dark', backgroundColor: "#0D1B2A", modalBackgroundColor: '#14273E', 
+    childrenBackgroundColor: '#18324E', itemBackgroundColor: '#26507D', nestBackgroundColor: '#285585',
+    inputBackgroundColor: '#2F649D', textColor: '#E0E1DD', inputTextColor: '#E0E1DD', 
+    borderColor: '#000000',borderWidth: 2, borderStyle: 'solid', fontSize: 16, headerFontSize: 20
   });
 
   const childTypes = [
@@ -485,7 +488,7 @@ export default function App() {
           <Text style={styles.text}>{child.name}</Text>
           <Text style={styles.text}>{JSON.stringify(child.isComplete)}</Text>
           {displayButton('Complete', () => {toggleTask(child); setErrorMessage('Refresh');})}
-          {displayButton('Update', () => setUpdateItem([child.name, child.order, child.parentKey]))}  
+          {(updateItem == null || updateItem[0] !== child.name || updateItem[1] !== child.order || updateItem[2] !== child.parentKey) &&  displayButton('Update', () => setUpdateItem([child.name, child.order, child.parentKey]))}  
           {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
           {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child)}
         </View>
@@ -514,16 +517,17 @@ export default function App() {
         <Pressable onPress={() => expandChild(child)}>
           <Text style={styles.text}>{child.name}</Text>
           {expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) !== -1 &&
-          displayButton('Back', () => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name)))}
+          displayButton('Back', () => {setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name));
+           if(updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey){setUpdateItem(null)}})}
           {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) == -1 && 
             <Image style={styles.miniPic} source={child.image.assets} alt='The image was either moved or deleted from your device.'/>}
-          {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 &&
-          displayButton('Update', onPress=() => setUpdateItem([child.name, child.order, child.parentKey]))}
           {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 && 
             <Image style={styles.fullPic} source={child.image.assets} alt='The image was either moved or deleted from your device.'/>}
+          {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 &&(updateItem == null || updateItem[0] !== child.name || updateItem[1] !== child.order || updateItem[2] !== child.parentKey) &&  displayButton('Update', () => setUpdateItem([child.name, child.order, child.parentKey]))}  
+
         </Pressable>
         {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
-        {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateImageForm(child)}
+        {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child)}
       </View>
     );
   }
@@ -560,9 +564,12 @@ export default function App() {
   }
   function displayExpandedNest(child){
     return(
-      <View>
+      <View style={styles.nested}>
         {displayButton('Back', () => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name || e.parentKey !== child.parentKey)))}
         {displayButton('Add', () => {clearInputs(); setAddItem([child.name, child.order, child.children.length, child.parentKey]); setDropdownInput({type: 'Task'})})}
+
+        {(updateItem == null || updateItem[0] !== child.name || updateItem[1] !== child.order || updateItem[2] !== child.parentKey) &&  displayButton('Update', () => setUpdateItem([child.name, child.order, child.parentKey]))}
+        {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child)}
         {displayButton('Delete', () => setDeleteItem([child.name, child.order, child.parentKey]))}
         {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
         {displayChildren(child.children)}
@@ -583,7 +590,7 @@ export default function App() {
   function displayNoteForm(child){
     return(
       <View key={child.name+child.order} style={styles.child}>  
-      {displayButton('Back', () => {clearInputs(); setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))})}
+        {displayButton('Back', () => {clearInputs(); setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))})}
         <Text style={styles.text}>{child.name}</Text>
         <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder={child.name}/>
         {displayButton('Update', () => {updateChildCheck(child, nameInput); setTextInput(child.text); setUpdateItem([child.name, child.order, child.parentKey, child.type])})}
@@ -609,38 +616,13 @@ export default function App() {
       }
     }
     return(
-      <View>
+      <View style={styles.form}>
+        <Text style={styles.text}>Update {child.name}</Text>
         <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Updated Name'/>
         <TextInput style={styles.textInput} value={numberInput} onChangeText={setNumberInput} keyboardType='numeric'placeholder='Enter Updated Order #'/>
         <TextInput style={styles.textInput} value={colorInput} onChangeText={setColorInput} placeholder='Enter Updated Color'/>
-        {displayButton('Submit', () => updateChildCheck(child, nameInput, tempNum, colorInput))}
-        {displayButton('Cancel', () => clearInputs())}
-        {displayButton('Delete', () => setDeleteItem([child.name, child.order, child.parentKey]))}
-      </View>
-    );
-  }
-  function displayUpdateImageForm(child){
-    let tempNum;
-    if(updateItem !== null){
-      tempNum = parseInt(numberInput);
-      const limit = directories[directories.length-1].children.length;
-      if(tempNum < 0){
-        setNumberInput('0');
-      }
-      else if(tempNum >= limit){
-        setNumberInput('' + limit-1);
-      }
-      else if(numberInput == null || numberInput == ''){
-        tempNum = child.order;
-      }
-    }
-    return(
-      <View>
-        <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Updated Name'/>
-        <TextInput style={styles.textInput} value={numberInput} onChangeText={setNumberInput} keyboardType='numeric'placeholder='Enter Updated Order #'/>
-        <TextInput style={styles.textInput} value={colorInput} onChangeText={setColorInput} placeholder='Enter Updated Color'/>
-        {displayButton('Pick an image from gallery', () => pickImage())}
-        {displayButton('Update', onPress=() => updateChildCheck(child, nameInput, tempNum, colorInput, imageInput))}
+        {displayButton('Submit', () => updateChildCheck(child, nameInput, tempNum, colorInput, imageInput))}
+        {child.type == 'Image' && displayButton('Pick an image from gallery', () => pickImage())}
         {displayButton('Cancel', () => clearInputs())}
         {displayButton('Delete', () => setDeleteItem([child.name, child.order, child.parentKey]))}
       </View>
@@ -686,6 +668,15 @@ export default function App() {
       alignItems: 'center',
       width: '88%',
     },
+    form: {
+      borderWidth: 2,
+      borderStyle: settings.borderStyle,
+      borderColor: settings.borderColor,
+      borderRadius: borderRadius,
+      paddingHorizontal: 6,
+      paddingVertical: 4,
+      marginVertical: 2,
+    },
 
     text: {
       color: settings.textColor,
@@ -702,6 +693,10 @@ export default function App() {
       borderStyle: settings.borderStyle,
       borderColor: settings.borderColor,
       backgroundColor: settings.inputBackgroundColor,
+      borderRadius: borderRadius,
+      padding: 2,
+      paddingHorizontal: 6,
+      margin: 2,
     },
     button: {
       fontSize: settings.fontSize,
@@ -712,6 +707,7 @@ export default function App() {
       borderRadius: borderRadius,
       padding: 4,
       backgroundColor: settings.inputBackgroundColor,
+      margin: 2,
     },
     dropdown: {
       fontSize: settings.fontSize,
@@ -761,12 +757,20 @@ export default function App() {
       height: '88%'
     },
     child: {
-      padding: 4,
+      padding: 8,
       borderWidth: 2,
       borderStyle: settings.borderStyle,
       borderColor: settings.borderColor,
       borderRadius: borderRadius,
-      backgroundColor: settings.inputBackgroundColor,
+      backgroundColor: settings.itemBackgroundColor,
+      marginVertical: 4,
+      marginHorizontal: 4,
+    },
+    nested: {
+      borderStyle: settings.borderStyle,
+      borderColor: settings.borderColor,
+      borderRadius: borderRadius,
+      backgroundColor: settings.nestBackgroundColor,
       marginBottom: 4,
       marginHorizontal: 4,
     },
