@@ -25,7 +25,7 @@ export default function App() {
     theme: 'Dark', backgroundColor: "#0D1B2A", modalBackgroundColor: '#14273E', 
     childrenBackgroundColor: '#18324E', itemBackgroundColor: '#26507D', nestBackgroundColor: '#285585',
     inputBackgroundColor: '#2F649D', textColor: '#E0E1DD', inputTextColor: '#E0E1DD', 
-    borderColor: '#000000',borderWidth: 2, borderStyle: 'solid', fontSize: 16, headerFontSize: 20
+    borderColor: '#000000',borderWidth: 2, borderStyle: 'solid', fontSize: 16, headerFontSize: 20, inputFontSize: 18,
   });
 
   const childTypes = [
@@ -203,8 +203,6 @@ export default function App() {
       updateChild.key = child.parentKey + '/'+updateName;
     }
     console.log("Update: ", child.name, " : ", updateName, child.order, ' From: ', child.parentKey);
-
-
     updateChild.name = updateName;
     updateChild.order = updateOrder;
     updateChild.color = updateColor;
@@ -251,9 +249,7 @@ export default function App() {
       }
       tempChildren = sortChildren(tempChildren);
     }
-
     tempChildren[index].name = updateName;
-
     if(nestIndex > -1){
       tempDirectory.children[nestIndex].children = tempChildren;
     }
@@ -263,7 +259,6 @@ export default function App() {
       tempDirectory.children = tempChildren;
       console.log(tempDirectory.children[0].name);
     }
-
     if(child.type == 'Directory'){
       closeDirectory(child);
 
@@ -352,14 +347,10 @@ export default function App() {
     }
   }
 
-  function displayButton(title, onPress, isHeader){
-    let textStyle = styles.text;
-    if(isHeader){
-      textStyle = styles.headerText
-    }
+  function displayButton(title, onPress){
     return(
       <Pressable style={styles.button} onPress={() => onPress()}>
-        <Text style={textStyle}>{title}</Text>
+        <Text style={styles.inputText}>{title}</Text>
       </Pressable>
     );
   }
@@ -369,13 +360,13 @@ export default function App() {
     return(
       <View style={styles.directory}>
         <View style={styles.header}>
-          {directory.parentKey == '' && displayButton('Settings', () => setModalView('Settings'), true)}
+          {directory.parentKey == '' && displayButton('Settings', () => setModalView('Settings'))}
           {directory.parentKey !== directories[0].key && directory.parentKey !== '' && displayButton('Exit', () => setModalView(null))}
-          {directory.parentKey !== ''  && displayButton('Back', () => closeDirectory(directory), true)}
+          {directory.parentKey !== ''  && displayButton('Back', () => closeDirectory(directory))}
             <Pressable style={styles.headerMiddle} onPress={() => {setBooleanInput(directory.showCompleted); setUpdateItem([directory.name, directory.order, directory.parentKey, directory.type])}}>
               <Text style={styles.headerText}>{directory.name}</Text>
             </Pressable>
-          {displayButton('Add', () => {setDropdownInput({type: 'Task'}); setAddItem(directory.key)}, true)}
+          {displayButton('Add', () => {setDropdownInput({type: 'Task'}); setAddItem(directory.key)})}
         </View>
         {addItem !== null && addItem.constructor !== Array && displayAddForm(true)}
         {updateItem !== null && updateItem[0] == directory.name && updateItem[1] == directory.order &&  updateItem[2] == directory.parentKey && displayUpdateDirectory(directory)}
@@ -649,11 +640,11 @@ export default function App() {
     },
     modalView: {
       width: '88%',
-      height: '92%',
-      margin: 20,
+      height: '96%',
+      margin: 12,
+      alignSelf: 'center',
       backgroundColor: settings.modalBackgroundColor,
-      borderRadius: 20,
-      padding: 35,
+      borderRadius: borderRadius,
       alignItems: 'center',
       shadowColor: '#000',
       shadowOffset: {
@@ -665,8 +656,9 @@ export default function App() {
       elevation: 5,
     },
     directory: {
+      borderRadius: borderRadius,
       alignItems: 'center',
-      width: '88%',
+      width: '96%',
     },
     form: {
       borderWidth: 2,
@@ -685,6 +677,10 @@ export default function App() {
     headerText: {
       color: settings.inputTextColor,
       fontSize: settings.headerFontSize,
+    },
+    inputText: {
+      color: settings.inputTextColor,
+      fontSize: settings.inputFontSize
     },
     textInput: {
       fontSize: settings.fontSize,
@@ -705,7 +701,7 @@ export default function App() {
       borderStyle: settings.borderStyle,
       borderColor: settings.borderColor,
       borderRadius: borderRadius,
-      padding: 4,
+      padding: 8,
       backgroundColor: settings.inputBackgroundColor,
       margin: 2,
     },
@@ -754,7 +750,7 @@ export default function App() {
       paddingTop: 8,
       padding: 4,
       width: '88%',
-      height: '88%'
+      height: '84%'
     },
     child: {
       padding: 8,
