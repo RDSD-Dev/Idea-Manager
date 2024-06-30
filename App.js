@@ -21,6 +21,7 @@ export default function App() {
   const [dropdownInput, setDropdownInput] = useState(null);
   const [imageInput, setImageInput] = useState(null);
   const [booleanInput, setBooleanInput] = useState(true);
+  
   const [settings, setSettings] = useState({
     theme: 'Dark', backgroundColor: "#0D1B2A", modalBackgroundColor: '#14273E', 
     childrenBackgroundColor: '#18324E', itemBackgroundColor: '#26507D', nestBackgroundColor: '#285585',
