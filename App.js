@@ -22,12 +22,14 @@ export default function App() {
   const [imageInput, setImageInput] = useState(null);
   const [booleanInput, setBooleanInput] = useState(true);
   
-  const [settings, setSettings] = useState({
-    theme: 'Dark', backgroundColor: "#0D1B2A", modalBackgroundColor: '#14273E', 
-    childrenBackgroundColor: '#18324E', itemBackgroundColor: '#26507D', nestBackgroundColor: '#285585',
-    inputBackgroundColor: '#2F649D', textColor: '#E0E1DD', inputTextColor: '#E0E1DD', 
-    borderColor: '#000000',borderWidth: 2, borderStyle: 'solid', fontSize: 16, headerFontSize: 20, inputFontSize: 18,
-  });
+  const [themes, setThemes] = useState([
+    {
+      theme: 'Dark', backgroundColor: "#0D1B2A", modalBackgroundColor: '#14273E', 
+      childrenBackgroundColor: '#18324E', itemBackgroundColor: '#26507D', nestBackgroundColor: '#285585',
+      inputBackgroundColor: '#2F649D', textColor: '#E0E1DD', inputTextColor: '#E0E1DD', 
+      borderColor: '#000000',borderWidth: 2, borderStyle: 'solid', fontSize: 16, headerFontSize: 20, inputFontSize: 18, borderRadius: 20}
+  ]);
+  const [settings, setSettings] = useState({theme: 'Dark'});
 
   const childTypes = [
     {type: 'Task'},
@@ -396,7 +398,10 @@ export default function App() {
       <ScrollView>
         {displayButton('Back', () => setModalView(null))}
         <Text style={styles.text}>Settings</Text>
-      </ScrollView>
+        <Text style={styles.text}>{errorMessage}</Text>
+        <Text style={styles.text}>Theme:      </Text>
+        <Dropdown style={styles.dropdown} data={themes} labelField='theme' valueField='theme' value={dropdownInput} onChange={setDropdownInput}/>
+        </ScrollView>
     );
   }
   function openDirectory(child){
@@ -630,11 +635,11 @@ export default function App() {
     );
   }
 
-  const borderRadius = 20;
+  const theme = themes.find((e) => e.theme == settings.theme);
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: settings.backgroundColor,
+      backgroundColor: theme.backgroundColor,
       alignItems: 'center',
       width: '100%',
       alignSelf: 'stretch',
@@ -644,8 +649,8 @@ export default function App() {
       height: '96%',
       margin: 12,
       alignSelf: 'center',
-      backgroundColor: settings.modalBackgroundColor,
-      borderRadius: borderRadius,
+      backgroundColor: theme.modalBackgroundColor,
+      borderRadius: theme.borderRadius,
       alignItems: 'center',
       shadowColor: '#000',
       shadowOffset: {
@@ -657,64 +662,64 @@ export default function App() {
       elevation: 5,
     },
     directory: {
-      borderRadius: borderRadius,
+      borderRadius: theme.borderRadius,
       alignItems: 'center',
       width: '96%',
     },
     form: {
       borderWidth: 2,
-      borderStyle: settings.borderStyle,
-      borderColor: settings.borderColor,
-      borderRadius: borderRadius,
+      borderStyle: theme.borderStyle,
+      borderColor: theme.borderColor,
+      borderRadius: theme.borderRadius,
       paddingHorizontal: 6,
       paddingVertical: 4,
       marginVertical: 2,
     },
 
     text: {
-      color: settings.textColor,
-      fontSize: settings.fontSize,
+      color: theme.textColor,
+      fontSize: theme.fontSize,
     },
     headerText: {
-      color: settings.inputTextColor,
-      fontSize: settings.headerFontSize,
+      color: theme.inputTextColor,
+      fontSize: theme.headerFontSize,
     },
     inputText: {
-      color: settings.inputTextColor,
-      fontSize: settings.inputFontSize
+      color: theme.inputTextColor,
+      fontSize: theme.inputFontSize
     },
     textInput: {
-      fontSize: settings.fontSize,
-      color: settings.inputTextColor,
+      fontSize: theme.fontSize,
+      color: theme.inputTextColor,
       borderWidth: 2,
-      borderStyle: settings.borderStyle,
-      borderColor: settings.borderColor,
-      backgroundColor: settings.inputBackgroundColor,
-      borderRadius: borderRadius,
+      borderStyle: theme.borderStyle,
+      borderColor: theme.borderColor,
+      backgroundColor: theme.inputBackgroundColor,
+      borderRadius: theme.borderRadius,
       padding: 2,
       paddingHorizontal: 6,
       margin: 2,
     },
     button: {
-      fontSize: settings.fontSize,
-      color: settings.inputTextColor,
+      fontSize: theme.fontSize,
+      color: theme.inputTextColor,
       borderWidth: 2,
-      borderStyle: settings.borderStyle,
-      borderColor: settings.borderColor,
-      borderRadius: borderRadius,
+      borderStyle: theme.borderStyle,
+      borderColor: theme.borderColor,
+      borderRadius: theme.borderRadius,
       padding: 8,
-      backgroundColor: settings.inputBackgroundColor,
+      backgroundColor: theme.inputBackgroundColor,
       margin: 2,
     },
     dropdown: {
-      fontSize: settings.fontSize,
-      color: settings.inputTextColor,
+      fontSize: theme.fontSize,
+      color: theme.inputTextColor,
       borderWidth: 2,
-      borderStyle: settings.borderStyle,
-      borderColor: settings.borderColor,
-      borderRadius: borderRadius,
+      borderStyle: theme.borderStyle,
+      borderColor: theme.borderColor,
+      borderRadius: theme.borderRadius,
       padding: 4,
-      backgroundColor: settings.inputBackgroundColor,
+      backgroundColor: theme.inputBackgroundColor,
     },
 
     header: {
@@ -746,8 +751,8 @@ export default function App() {
     },
 
     children: {
-      backgroundColor: settings.childrenBackgroundColor,
-      borderRadius: borderRadius,
+      backgroundColor: theme.childrenBackgroundColor,
+      borderRadius: theme.borderRadius,
       paddingTop: 8,
       padding: 4,
       width: '88%',
@@ -756,18 +761,18 @@ export default function App() {
     child: {
       padding: 8,
       borderWidth: 2,
-      borderStyle: settings.borderStyle,
-      borderColor: settings.borderColor,
-      borderRadius: borderRadius,
-      backgroundColor: settings.itemBackgroundColor,
+      borderStyle: theme.borderStyle,
+      borderColor: theme.borderColor,
+      borderRadius: theme.borderRadius,
+      backgroundColor: theme.itemBackgroundColor,
       marginVertical: 4,
       marginHorizontal: 4,
     },
     nested: {
-      borderStyle: settings.borderStyle,
-      borderColor: settings.borderColor,
-      borderRadius: borderRadius,
-      backgroundColor: settings.nestBackgroundColor,
+      borderStyle: theme.borderStyle,
+      borderColor: theme.borderColor,
+      borderRadius: theme.borderRadius,
+      backgroundColor: theme.nestBackgroundColor,
       marginBottom: 4,
       marginHorizontal: 4,
     },
@@ -776,7 +781,7 @@ export default function App() {
     },
     miniPic: {
       height: 100,
-      borderRadius: borderRadius,
+      borderRadius: theme.borderRadius,
     },
     fullPic: { 
       height: 260,
