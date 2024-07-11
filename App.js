@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Dropdown } from 'react-native-element-dropdown';
 import * as ImagePicker from 'expo-image-picker';
 import Checkbox from 'expo-checkbox';
+import {decodeEntity} from 'html-entities';
 
 export default function App() {
   const [modalView, setModalView] = useState(null);
@@ -363,13 +364,15 @@ export default function App() {
     return(
       <View style={styles.directory}>
         <View style={styles.header}>
-          {directory.parentKey == '' && displayButton('Settings', () => setModalView('Settings'))}
-          {directory.parentKey !== directories[0].key && directory.parentKey !== '' && displayButton('Exit', () => setModalView(null))}
-          {directory.parentKey !== ''  && displayButton('Back', () => closeDirectory(directory))}
+          {directory.parentKey == '' && displayButton(decodeEntity('&#9881;'), () => setModalView('Settings'))/* Settings Btn */}
+
+          {directory.parentKey !== directories[0].key && directory.parentKey !== '' && <View style={styles.headerBack}>{displayButton(decodeEntity('&#8606;'), () => setModalView(null))}{displayButton(decodeEntity('&#8592;'), () => closeDirectory(directory))}</View> /* Exit Btn */}
+
+          {directory.parentKey !== ''  && directory.parentKey == directories[0].key &&  displayButton(decodeEntity('&#8592;'), () => closeDirectory(directory))/* Back Btn */}
             <Pressable style={styles.headerMiddle} onPress={() => {setBooleanInput(directory.showCompleted); setUpdateItem([directory.name, directory.order, directory.parentKey, directory.type])}}>
               <Text style={styles.headerText}>{directory.name}</Text>
             </Pressable>
-          {displayButton('Add', () => {setDropdownInput({type: 'Task'}); setAddItem(directory.key)})}
+          {displayButton(decodeEntity('&#43;'), () => {setDropdownInput({type: 'Task'}); setAddItem(directory.key)}) /* Add Btn */}
         </View>
         {addItem !== null && addItem.constructor !== Array && displayAddForm(true)}
         {updateItem !== null && updateItem[0] == directory.name && updateItem[1] == directory.order &&  updateItem[2] == directory.parentKey && displayUpdateDirectory(directory)}
@@ -382,13 +385,13 @@ export default function App() {
   function displayUpdateDirectory(directory){
     return(
       <View>
-        {displayButton('Back', () => clearInputs())}
+        {displayButton(decodeEntity('&#8592;'), () => clearInputs()) /* Back Btn */}
         {directory.parentKey !== '' && 
         <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Name to Update'/>}
         <Text style={styles.text}>Display completed tasks?</Text>
         <Checkbox value={booleanInput} onValueChange={setBooleanInput}/>
         {displayButton('Update', () => updateChildCheck(directory, nameInput, numberInput, colorInput, imageInput, booleanInput))}
-          {directory.parentKey !== '' &&  displayButton('Delete', () => setDeleteItem([directory.name, directory.order, directory.parentKey]))}
+          {directory.parentKey !== '' &&  displayButton(decodeEntity('&#x1F5D1;'), () => setDeleteItem([directory.name, directory.order, directory.parentKey])) /* Delete Btn */}
           {deleteItem !== null && deleteItem[0] == directory.name && deleteItem[1] == directory.order && deleteItem[2] == directory.parentKey && displayDeleteChildForm(directory, directory.key)}
       </View>
     );
@@ -445,7 +448,7 @@ export default function App() {
         order = directories.find((e) => e.key == addItem).children.length;
       }
       return(
-        <View>
+      <View style={styles.form} >
           <Text style={styles.text}>{errorMessage}</Text>
             <Text style={styles.text}>Add Name: </Text>
             <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Name'/>
@@ -513,18 +516,20 @@ export default function App() {
       <View key={child.name+child.order} style={styles.child}>
         <Pressable onPress={() => expandChild(child)}>
           <Text style={styles.text}>{child.name}</Text>
-          {expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) !== -1 &&
-          displayButton('Back', () => {setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name));
-           if(updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey){setUpdateItem(null)}})}
+          <View style={styles.formBtns}>
+            {expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) !== -1 &&
+            displayButton(decodeEntity('&#8592;'), () => {setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name)); clearInputs();}) /* Back Btn */}
+            {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 &&(updateItem == null || updateItem[0] !== child.name || updateItem[1] !== child.order || updateItem[2] !== child.parentKey) &&  displayButton('Update', () => setUpdateItem([child.name, child.order, child.parentKey]))}  
+          </View>
+          {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
+          {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child)}
+
           {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) == -1 && 
             <Image style={styles.miniPic} source={child.image.assets} alt='The image was either moved or deleted from your device.'/>}
           {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 && 
             <Image style={styles.fullPic} source={child.image.assets} alt='The image was either moved or deleted from your device.'/>}
-          {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 &&(updateItem == null || updateItem[0] !== child.name || updateItem[1] !== child.order || updateItem[2] !== child.parentKey) &&  displayButton('Update', () => setUpdateItem([child.name, child.order, child.parentKey]))}  
 
         </Pressable>
-        {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
-        {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child)}
       </View>
     );
   }
@@ -562,12 +567,12 @@ export default function App() {
   function displayExpandedNest(child){
     return(
       <View style={styles.nested}>
-        {displayButton('Back', () => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name || e.parentKey !== child.parentKey)))}
-        {displayButton('Add', () => {clearInputs(); setAddItem([child.name, child.order, child.children.length, child.parentKey]); setDropdownInput({type: 'Task'})})}
-
-        {(updateItem == null || updateItem[0] !== child.name || updateItem[1] !== child.order || updateItem[2] !== child.parentKey) &&  displayButton('Update', () => setUpdateItem([child.name, child.order, child.parentKey]))}
+        <View style={styles.formBtns}>
+          {displayButton(decodeEntity('&#8592;'), () => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name || e.parentKey !== child.parentKey))) /* Back Btn */}
+          {displayButton(decodeEntity('&#43;'), () => {clearInputs(); setAddItem([child.name, child.order, child.children.length, child.parentKey]); setDropdownInput({type: 'Task'})}) /* Add Btn */}
+          {(updateItem == null || updateItem[0] !== child.name || updateItem[1] !== child.order || updateItem[2] !== child.parentKey) &&  displayButton('Update', () => setUpdateItem([child.name, child.order, child.parentKey]))}
+        </View>
         {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child)}
-        {displayButton('Delete', () => setDeleteItem([child.name, child.order, child.parentKey]))}
         {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
         {displayChildren(child.children)}
     </View>
@@ -587,11 +592,11 @@ export default function App() {
   function displayNoteForm(child){
     return(
       <View key={child.name+child.order} style={styles.child}>  
-        {displayButton('Back', () => {clearInputs(); setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))})}
+        {displayButton(decodeEntity('&#8592;'), () => {clearInputs(); setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))}) /* Back Btn */}
         <Text style={styles.text}>{child.name}</Text>
         <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder={child.name}/>
         {displayButton('Update', () => {updateChildCheck(child, nameInput); setTextInput(child.text); setUpdateItem([child.name, child.order, child.parentKey, child.type])})}
-        {displayButton('Delete', () => setDeleteItem([child.name, child.order]))}
+        {displayButton(decodeEntity('&#x1F5D1;'), () => setDeleteItem([child.name, child.order])) /* Delete btn */ }
         {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
         <TextInput style={styles.textInput} value={textInput} onChangeText={setTextInput} multiline={true} placeholder='Enter Note Here'/>
       </View>
@@ -621,7 +626,7 @@ export default function App() {
         {displayButton('Submit', () => updateChildCheck(child, nameInput, tempNum, colorInput, imageInput))}
         {child.type == 'Image' && displayButton('Pick an image from gallery', () => pickImage())}
         {displayButton('Cancel', () => clearInputs())}
-        {displayButton('Delete', () => setDeleteItem([child.name, child.order, child.parentKey]))}
+        {displayButton(decodeEntity('&#x1F5D1;'), () => setDeleteItem([child.name, child.order, child.parentKey])) /* Delete Btn */}
       </View>
     );
   }
@@ -662,11 +667,13 @@ export default function App() {
       elevation: 5,
     },
     directory: {
+      width: '96%',
       borderRadius: theme.borderRadius,
       alignItems: 'center',
-      width: '96%',
+      justifyContent: 'center',
     },
     form: {
+      width: '100%',
       borderWidth: 2,
       borderStyle: theme.borderStyle,
       borderColor: theme.borderColor,
@@ -674,6 +681,9 @@ export default function App() {
       paddingHorizontal: 6,
       paddingVertical: 4,
       marginVertical: 2,
+    },
+    formBtns: {
+      flexDirection: 'row',
     },
 
     text: {
@@ -721,6 +731,9 @@ export default function App() {
       padding: 4,
       backgroundColor: theme.inputBackgroundColor,
     },
+    symbol: {
+      fontSize: 24,
+    },
 
     header: {
       display: 'flex', 
@@ -728,6 +741,7 @@ export default function App() {
       backgroundColor: this.color,
       paddingTop: 40,
       width: '88%',
+      justifyContent: 'space-between',
       alignItems: 'center',
       paddingBottom: 4,
     },
@@ -748,6 +762,9 @@ export default function App() {
         alignItems: 'right',
         right: 0,
         paddingLeft: 10,
+    },
+    headerBack: {
+      flexDirection: 'row',
     },
 
     children: {
@@ -787,8 +804,7 @@ export default function App() {
       height: 260,
       borderRadius: 0,
 
-    },
-  
+    },  
   });
 
   if(directories !== null){ // Displays directories if not null
