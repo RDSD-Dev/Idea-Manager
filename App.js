@@ -74,6 +74,7 @@ export default function App() {
     console.log("Clear");
     setAddItem(null);
     setUpdateItem(null);
+    setUpdateItem(null);
     setDeleteItem(null);
     setErrorMessage('');
     setNameInput('');
@@ -518,8 +519,8 @@ export default function App() {
           <Text style={styles.text}>{child.name}</Text>
           <View style={styles.formBtns}>
             {expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) !== -1 &&
-            displayButton(decodeEntity('&#8592;'), () => {setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name)); clearInputs();}) /* Back Btn */}
-            {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 &&(updateItem == null || updateItem[0] !== child.name || updateItem[1] !== child.order || updateItem[2] !== child.parentKey) &&  displayButton('Update', () => setUpdateItem([child.name, child.order, child.parentKey]))}  
+            displayButton(decodeEntity('&#8592;'), () => {clearInputs(); setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name)); clearInputs();}) /* Back Btn */}
+            {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 &&(updateItem == null || updateItem[0] !== child.name || updateItem[1] !== child.order || updateItem[2] !== child.parentKey) &&  displayButton('Update', () => {clearInputs();  setUpdateItem([child.name, child.order, child.parentKey])})}  
           </View>
           {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
           {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child)}
@@ -547,7 +548,6 @@ export default function App() {
             <Text style={styles.text}>{child.type}</Text>
             <Text style={styles.text}>{JSON.stringify(child.isComplete)}</Text>
           </Pressable>
-          {addItem !== null && addItem.constructor === Array && addItem[0] == child.name && addItem[1] == child.order && addItem[3] == child.parentKey && displayAddForm(false)}
           {expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) !== -1 && displayExpandedNest(child)}
       </View>
     );
@@ -559,7 +559,6 @@ export default function App() {
             <Text style={styles.text}>{child.name}</Text>
             <Text style={styles.text}>{child.type}</Text>
           </Pressable>
-          {addItem !== null && addItem.constructor === Array && addItem[0] == child.name && addItem[1] == child.order && addItem[3] == child.parentKey && displayAddForm(false)}
           {expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) !== -1 && displayExpandedNest(child)}
       </View>
     );
@@ -568,10 +567,11 @@ export default function App() {
     return(
       <View style={styles.nested}>
         <View style={styles.formBtns}>
-          {displayButton(decodeEntity('&#8592;'), () => setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name || e.parentKey !== child.parentKey))) /* Back Btn */}
+          {displayButton(decodeEntity('&#8592;'), () => {setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name || e.parentKey !== child.parentKey)); clearInputs(); }) /* Back Btn */}
           {displayButton(decodeEntity('&#43;'), () => {clearInputs(); setAddItem([child.name, child.order, child.children.length, child.parentKey]); setDropdownInput({type: 'Task'})}) /* Add Btn */}
-          {(updateItem == null || updateItem[0] !== child.name || updateItem[1] !== child.order || updateItem[2] !== child.parentKey) &&  displayButton('Update', () => setUpdateItem([child.name, child.order, child.parentKey]))}
+          {(updateItem == null || updateItem[0] !== child.name || updateItem[1] !== child.order || updateItem[2] !== child.parentKey) &&  displayButton('Update', () => {clearInputs(); setUpdateItem([child.name, child.order, child.parentKey])})}
         </View>
+        {addItem !== null && addItem.constructor === Array && addItem[0] == child.name && addItem[1] == child.order && addItem[3] == child.parentKey && displayAddForm(false)}
         {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child)}
         {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
         {displayChildren(child.children)}
