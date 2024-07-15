@@ -28,7 +28,7 @@ export default function App() {
       theme: 'Dark', backgroundColor: "#0D1B2A", modalBackgroundColor: '#14273E', 
       childrenBackgroundColor: '#18324E', itemBackgroundColor: '#26507D', nestBackgroundColor: '#285585',
       inputBackgroundColor: '#2F649D', textColor: '#E0E1DD', inputTextColor: '#E0E1DD', 
-      borderColor: '#000000',borderWidth: 2, borderStyle: 'solid', fontSize: 16, symbolSize: 28, headerFontSize: 20, inputFontSize: 18, borderRadius: 20}
+      borderColor: '#000000',borderWidth: 2, borderStyle: 'solid', fontSize: 16, symbolSize: 32, headerFontSize: 20, inputFontSize: 18, borderRadius: 20}
   ]);
   const [settings, setSettings] = useState({theme: 'Dark'});
 
@@ -103,7 +103,7 @@ export default function App() {
     setDropdownInput(null);
     setBooleanInput(true);
   }
-  function addChildCheck(parentKey, name, order, type, color, image){ // Checks if the child is valid
+  function addChildCheck(parentKey, name, order, type, color, image, text){ // Checks if the child is valid
     if(name == "" || name.length == 0){ // Name cannot be blank
       setErrorMessage('Name cannot be blank.');
       return;
@@ -122,7 +122,7 @@ export default function App() {
       return;
     }
     else{
-      addChild(parentKey, name, order, type, color, image);
+      addChild(parentKey, name, order, type, color, image, text);
       return;
     }
   }
@@ -167,7 +167,7 @@ export default function App() {
     setExpandedItems(expandItems => [...expandItems, {name: child.name, order: child.order, type: child.type, parentKey: child.parentKey}])
   }
   
-  function addChild(parentKey, name, order, type, color, image){ // Makes child object and makes sure it is saved
+  function addChild(parentKey, name, order, type, color, image, text){ // Makes child object and makes sure it is saved
     console.log("add: ", name, " : ", type, " To : ", parentKey);
     let newChild = {name: name, order: order, parentKey: parentKey, color: color, type: type, isNested: false};
     switch(type){
@@ -177,7 +177,7 @@ export default function App() {
         break;
       case "Note":
         newChild.style = styles.Note;
-        newChild.text = '';
+        newChild.text = text;
         break;
       case 'Image':
         newChild.style = styles.Picture;
@@ -481,10 +481,10 @@ export default function App() {
             <Text style={styles.text}>Add Color: </Text>
             <TextInput style={styles.textInput} onChangeText={setColorInput} value={colorInput} placeholder='Enter Color'/>
             {isDirectory == true && <Dropdown style={styles.dropdown} data={childTypes} labelField='type' valueField='type' value={dropdownInput} onChange={setDropdownInput}/>}
+            {dropdownInput !== null && dropdownInput.type == 'Note' && <TextInput multiline={true} style={styles.textInput} placeholder='Enter Note Here' value={textInput} onChangeText={setTextInput}/>}
             <View style={styles.formBtns}>
-              {displayButton('Submit', () => addChildCheck(key, nameInput, order, dropdownInput.type, colorInput, imageInput))}
+              {displayButton('Submit', () => addChildCheck(key, nameInput, order, dropdownInput.type, colorInput, imageInput, textInput))}
               {dropdownInput !== null && dropdownInput.type == 'Image' && displayButton(icons.Image, () => pickImage())}
-
               {displayButton('Cancel', () => {clearInputs(); setAddItem(null)})}
             </View>
         </View>
