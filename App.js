@@ -16,7 +16,7 @@ export default function App() {
   const [expandItems, setExpandedItems] = useState([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [nameInput, setNameInput] = useState('');
-  const [colorInput, setColorInput] = useState('');
+  const [colorInput, setColorInput] = useState(null);
   const [textInput, setTextInput] = useState('');
   const [numberInput, setNumberInput] = useState('');
   const [dropdownInput, setDropdownInput] = useState(null);
@@ -40,7 +40,6 @@ export default function App() {
     {type: 'Nested Images'},
     {type: 'Directory'}
   ];
-
   const icons = {
     Gear: decodeEntity('&#9881;'),
     Pencil: decodeEntity('&#9998;'),
@@ -58,6 +57,10 @@ export default function App() {
     Trash: decodeEntity('&#x1F5D1;'),
     Image: decodeEntity('&#9783;'),
   };
+  const colors = [
+    {label: 'Light Blue',value: '#04A6E5'}, {label: 'Forest Green', value: '#045C34'}, {label: 'Grey', value: '#7C7C7C'},
+    {label: 'Red', value: '#EC161D'}
+  ];
 
   useEffect(() => {
     if(expandItems !== null && expandItems.findIndex((e) => e.type == 'Note') !== -1){
@@ -391,7 +394,7 @@ export default function App() {
             <Pressable style={styles.headerMiddle} onPress={() => {setBooleanInput(directory.showCompleted); setUpdateItem([directory.name, directory.order, directory.parentKey, directory.type])}}>
               <Text style={styles.headerText}>{directory.name}</Text>
             </Pressable>
-          {displayButton(decodeEntity('&#43;'), () => {setDropdownInput({type: 'Task'}); setAddItem(directory.key)}) /* Add Btn */}
+          {displayButton(decodeEntity('&#43;'), () => {setDropdownInput({type: 'Task'}); setColorInput(colors[0]); setAddItem(directory.key)}) /* Add Btn */}
         </View>
         {addItem !== null && addItem.constructor !== Array && displayAddForm(true)}
         {updateItem !== null && updateItem[0] == directory.name && updateItem[1] == directory.order &&  updateItem[2] == directory.parentKey && displayUpdateDirectory(directory)}
@@ -478,10 +481,14 @@ export default function App() {
           <Text style={styles.text}>{errorMessage}</Text>
             <Text style={styles.text}>Add Name: </Text>
             <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Name'/>
-            <Text style={styles.text}>Add Color: </Text>
-            <TextInput style={styles.textInput} onChangeText={setColorInput} value={colorInput} placeholder='Enter Color'/>
+
+            <Text style={styles.text}>Select Color</Text>
+            <Dropdown style={styles.dropdown} data={colors} labelField='label' valueField='value' value={colorInput} onChange={setColorInput}/>
+            {isDirectory == true && <Text style={styles.text}>Select Type</Text>}
             {isDirectory == true && <Dropdown style={styles.dropdown} data={childTypes} labelField='type' valueField='type' value={dropdownInput} onChange={setDropdownInput}/>}
+
             {dropdownInput !== null && dropdownInput.type == 'Note' && <TextInput multiline={true} style={styles.textInput} placeholder='Enter Note Here' value={textInput} onChangeText={setTextInput}/>}
+
             <View style={styles.formBtns}>
               {displayButton('Submit', () => addChildCheck(key, nameInput, order, dropdownInput.type, colorInput, imageInput, textInput))}
               {dropdownInput !== null && dropdownInput.type == 'Image' && displayButton(icons.Image, () => pickImage())}
@@ -512,12 +519,13 @@ export default function App() {
   }
   function displayTask(child, showCompleted){
     if(child.isComplete == false || child.isComplete == true && showCompleted){
+      const color = child.color.value;
       return (
         <View key={child.name+child.order} style={styles.child}>
           <View style={styles.task}>
-            {!child.isComplete && <Pressable onPress={() => {toggleTask(child); setErrorMessage('Refresh');}}><Text style={[styles.symbol, {color: 'red'}]}>{icons.Circle}</Text></Pressable>}
-            {child.isComplete && <Pressable onPress={() => {toggleTask(child); setErrorMessage('Refresh');}}><Text style={[styles.symbol, {color: 'red'}]}>{icons.FilledCircle}</Text></Pressable>}
-            <Pressable onPress={() => setUpdateItem([child.name, child.order, child.parentKey])}>
+            {!child.isComplete && <Pressable onPress={() => {toggleTask(child); setErrorMessage('Refresh');}}><Text style={[styles.symbol, {color: color}]}>{icons.Circle}</Text></Pressable>}
+            {child.isComplete && <Pressable onPress={() => {toggleTask(child); setErrorMessage('Refresh');}}><Text style={[styles.symbol, {color: color}]}>{icons.FilledCircle}</Text></Pressable>}
+            <Pressable onPress={() => {setColorInput(child.color); setUpdateItem([child.name, child.order, child.parentKey])}}>
               <Text numberOfLines={1} ellipsizeMode='tail' style={styles.text}>{child.name}</Text>
             </Pressable>
           </View>
@@ -531,7 +539,7 @@ export default function App() {
     if(expandItems.length == 0 || expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) == -1){
       return (
         <View key={child.name+child.order} style={styles.child}>  
-          <Pressable onPress={() => {setNameInput(child.name); setTextInput(child.text); expandChild(child)}}>
+          <Pressable onPress={() => {setNameInput(child.name); setTextInput(child.text); setColorInput(child.color); expandChild(child)}}>
             <Text style={styles.text}>{child.name}</Text>
             <Text numberOfLines={2} ellipsizeMode='tail' style={[styles.text, styles.NotePreview]}>{child.text}</Text>
           </Pressable>
@@ -549,7 +557,7 @@ export default function App() {
           <Text style={styles.text}>{child.name}</Text>
           <View style={styles.formBtns}>
             {expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) !== -1 &&
-            displayButton(decodeEntity('&#8592;'), () => {clearInputs(); setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name)); clearInputs();}) /* Back Btn */}
+            displayButton(icons.Left, () => {clearInputs(); setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name)); clearInputs();}) /* Back Btn */}
             {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 &&(updateItem == null || updateItem[0] !== child.name || updateItem[1] !== child.order || updateItem[2] !== child.parentKey) &&  displayButton('Update', () => {clearInputs();  setUpdateItem([child.name, child.order, child.parentKey])})}  
           </View>
           {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
@@ -597,9 +605,9 @@ export default function App() {
     return(
       <View style={styles.nested}>
         <View style={styles.formBtns}>
-          {displayButton(decodeEntity('&#8592;'), () => {setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name || e.parentKey !== child.parentKey)); clearInputs(); }) /* Back Btn */}
+          {displayButton(icons.Left, () => {setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name || e.parentKey !== child.parentKey)); clearInputs(); }) /* Back Btn */}
           {displayButton(decodeEntity('&#43;'), () => {clearInputs(); setAddItem([child.name, child.order, child.children.length, child.parentKey]); setDropdownInput({type: 'Task'})}) /* Add Btn */}
-          {(updateItem == null || updateItem[0] !== child.name || updateItem[1] !== child.order || updateItem[2] !== child.parentKey) &&  displayButton('Update', () => {clearInputs(); setUpdateItem([child.name, child.order, child.parentKey])})}
+          {(updateItem == null || updateItem[0] !== child.name || updateItem[1] !== child.order || updateItem[2] !== child.parentKey) &&  displayButton('Update', () => {clearInputs(); setColorInput(child.color); setUpdateItem([child.name, child.order, child.parentKey])})}
         </View>
         {addItem !== null && addItem.constructor === Array && addItem[0] == child.name && addItem[1] == child.order && addItem[3] == child.parentKey && displayAddForm(false)}
         {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child)}
@@ -651,7 +659,8 @@ export default function App() {
       <View style={styles.form}>
         <Text style={styles.text}>Update {child.name}</Text>
         <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Updated Name'/>
-        <TextInput style={styles.textInput} value={colorInput} onChangeText={setColorInput} placeholder='Enter Updated Color'/>
+        <Text style={styles.text}>Select Color</Text>
+        <Dropdown style={styles.dropdown} data={colors} labelField='label' valueField='value' value={colorInput} onChange={setColorInput}/>
         <View style={styles.formBtns}>
           {displayButton('Submit', () => updateChildCheck(child, nameInput, tempNum, colorInput, imageInput))}
           {child.type == 'Image' && displayButton(icons.Image, () => pickImage())}
