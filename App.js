@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Dropdown } from 'react-native-element-dropdown';
 import * as ImagePicker from 'expo-image-picker';
 import Checkbox from 'expo-checkbox';
-import {decodeEntity} from 'html-entities';
+import {decodeEntity, decode} from 'html-entities';
 
 export default function App() {
   const [modalView, setModalView] = useState(null);
@@ -40,6 +40,24 @@ export default function App() {
     {type: 'Nested Images'},
     {type: 'Directory'}
   ];
+
+  const icons = {
+    Gear: decodeEntity('&#9881;'),
+    Pencil: decodeEntity('&#9998;'),
+    Circle: decode('&#9675;'),
+    FilledCircle: decode('&#9673;'),
+    Diamond: decode('&#9671;'),
+    FilledDiamond: decode('&#9672;'),
+    Triangle: decode('&#9651;'),
+    FilledTriangle: decode('&#9650;'),
+    DashedSquare: decode('&#9636;'),
+    Enter: decodeEntity('&#8619;'),
+    Left: decodeEntity('&#8592;'),
+    DoubleLeft: decodeEntity('&#8606;'),
+    UpDown: decodeEntity('&#8597;'),
+    Trash: decodeEntity('&#x1F5D1;'),
+    Image: decodeEntity('&#9783;'),
+  };
 
   useEffect(() => {
     if(expandItems !== null && expandItems.findIndex((e) => e.type == 'Note') !== -1){
@@ -365,7 +383,7 @@ export default function App() {
     return(
       <View style={styles.directory}>
         <View style={styles.header}>
-          {directory.parentKey == '' && displayButton(decodeEntity('&#9881;'), () => setModalView('Settings'))/* Settings Btn */}
+          {directory.parentKey == '' && displayButton(icons.Gear, () => setModalView('Settings'))/* Settings Btn */}
 
           {directory.parentKey !== directories[0].key && directory.parentKey !== '' && <View style={styles.headerBack}>{displayButton(decodeEntity('&#8606;'), () => setModalView(null))}{displayButton(decodeEntity('&#8592;'), () => closeDirectory(directory))}</View> /* Exit Btn */}
 
@@ -385,23 +403,30 @@ export default function App() {
   }
   function displayUpdateDirectory(directory){
     return(
-      <View>
+      <View style={styles.form}>
+        <View style={styles.formBtns}>
         {displayButton(decodeEntity('&#8592;'), () => clearInputs()) /* Back Btn */}
-        {directory.parentKey !== '' && 
-        <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Name to Update'/>}
         <Text style={styles.text}>Display completed tasks?</Text>
         <Checkbox value={booleanInput} onValueChange={setBooleanInput}/>
-        {displayButton('Update', () => updateChildCheck(directory, nameInput, numberInput, colorInput, imageInput, booleanInput))}
-          {directory.parentKey !== '' &&  displayButton(decodeEntity('&#x1F5D1;'), () => setDeleteItem([directory.name, directory.order, directory.parentKey])) /* Delete Btn */}
+        {directory.parentKey !== '' &&  displayButton(decodeEntity('&#x1F5D1;'), () => setDeleteItem([directory.name, directory.order, directory.parentKey])) /* Delete Btn */}
+
+
+        </View>
+        {directory.parentKey !== '' && 
+        <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Name to Update'/>}
+        {displayButton('Submit', () => updateChildCheck(directory, nameInput, numberInput, colorInput, imageInput, booleanInput))}
           {deleteItem !== null && deleteItem[0] == directory.name && deleteItem[1] == directory.order && deleteItem[2] == directory.parentKey && displayDeleteChildForm(directory, directory.key)}
       </View>
     );
   }
   function displaySettings(){
     return (
-      <ScrollView>
-        {displayButton('Back', () => setModalView(null))}
-        <Text style={styles.text}>Settings</Text>
+      <ScrollView contentContainerStyle={styles.settings}>
+        <View style={styles.header}>
+          {displayButton('Back', () => setModalView(null))}
+          <Text style={styles.text}>Settings</Text>
+          {displayButton(decodeEntity('&#x1F5D1;'), () => setModalView(null))}
+        </View>
         <Text style={styles.text}>{errorMessage}</Text>
         <Text style={styles.text}>Theme:      </Text>
         <Dropdown style={styles.dropdown} data={themes} labelField='theme' valueField='theme' value={dropdownInput} onChange={setDropdownInput}/>
@@ -456,9 +481,12 @@ export default function App() {
             <Text style={styles.text}>Add Color: </Text>
             <TextInput style={styles.textInput} onChangeText={setColorInput} value={colorInput} placeholder='Enter Color'/>
             {isDirectory == true && <Dropdown style={styles.dropdown} data={childTypes} labelField='type' valueField='type' value={dropdownInput} onChange={setDropdownInput}/>}
-            {dropdownInput !== null && dropdownInput.type == 'Image' && displayButton('Pick an image from gallery', () => pickImage())}
-            {displayButton('Submit', () => addChildCheck(key, nameInput, order, dropdownInput.type, colorInput, imageInput))}
-            {displayButton('Cancel', () => {clearInputs(); setAddItem(null)})}
+            <View style={styles.formBtns}>
+              {displayButton('Submit', () => addChildCheck(key, nameInput, order, dropdownInput.type, colorInput, imageInput))}
+              {dropdownInput !== null && dropdownInput.type == 'Image' && displayButton(icons.Image, () => pickImage())}
+
+              {displayButton('Cancel', () => {clearInputs(); setAddItem(null)})}
+            </View>
         </View>
     );
     }
@@ -486,10 +514,11 @@ export default function App() {
     if(child.isComplete == false || child.isComplete == true && showCompleted){
       return (
         <View key={child.name+child.order} style={styles.child}>
-          <Text style={styles.text}>{child.name}</Text>
-          <Text style={styles.text}>{JSON.stringify(child.isComplete)}</Text>
+          <Pressable onPress={() => setUpdateItem([child.name, child.order, child.parentKey])}>
+            <Text style={styles.text}>{child.name} {icons.OpenCircle}</Text>
+            <Text style={styles.text}>{JSON.stringify(child.isComplete)}</Text>
+          </Pressable>
           {displayButton('Complete', () => {toggleTask(child); setErrorMessage('Refresh');})}
-          {(updateItem == null || updateItem[0] !== child.name || updateItem[1] !== child.order || updateItem[2] !== child.parentKey) &&  displayButton('Update', () => setUpdateItem([child.name, child.order, child.parentKey]))}  
           {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
           {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child)}
         </View>
@@ -580,10 +609,9 @@ export default function App() {
   }
   function displayChildDirectory(child){
     return (
-      <View key={child.name+child.order} style={styles.child}>
+      <View key={child.name+child.order} style={[styles.child]}>
         <Pressable onPress={() => openDirectory(child)}>
           <Text style={styles.text}>{child.name}</Text>
-          <Text style={styles.text}>{child.type}</Text>
         </Pressable>
       </View>
     );
@@ -621,12 +649,14 @@ export default function App() {
       <View style={styles.form}>
         <Text style={styles.text}>Update {child.name}</Text>
         <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Updated Name'/>
-        <TextInput style={styles.textInput} value={numberInput} onChangeText={setNumberInput} keyboardType='numeric'placeholder='Enter Updated Order #'/>
         <TextInput style={styles.textInput} value={colorInput} onChangeText={setColorInput} placeholder='Enter Updated Color'/>
-        {displayButton('Submit', () => updateChildCheck(child, nameInput, tempNum, colorInput, imageInput))}
-        {child.type == 'Image' && displayButton('Pick an image from gallery', () => pickImage())}
-        {displayButton('Cancel', () => clearInputs())}
-        {displayButton(decodeEntity('&#x1F5D1;'), () => setDeleteItem([child.name, child.order, child.parentKey])) /* Delete Btn */}
+        <View style={styles.formBtns}>
+          {displayButton('Submit', () => updateChildCheck(child, nameInput, tempNum, colorInput, imageInput))}
+          {child.type == 'Image' && displayButton(icons.Image, () => pickImage())}
+
+          {displayButton('Cancel', () => clearInputs())}
+          {displayButton(icons.Trash, () => setDeleteItem([child.name, child.order, child.parentKey])) /* Delete Btn */}
+        </View>
       </View>
     );
   }
@@ -672,6 +702,9 @@ export default function App() {
       alignItems: 'center',
       justifyContent: 'center',
     },
+    settings: {
+      width: '80%',
+    },
     form: {
       width: '100%',
       borderWidth: 2,
@@ -684,6 +717,9 @@ export default function App() {
     },
     formBtns: {
       flexDirection: 'row',
+      verticalAlign: 'middle',
+      textAlign: 'center',
+      justifyContent: 'space-around',
     },
 
     text: {
@@ -773,7 +809,7 @@ export default function App() {
       paddingTop: 8,
       padding: 4,
       width: '88%',
-      height: '84%'
+      height: '84%',
     },
     child: {
       padding: 8,
@@ -784,6 +820,7 @@ export default function App() {
       backgroundColor: theme.itemBackgroundColor,
       marginVertical: 4,
       marginHorizontal: 4,
+      justifyContent: 'space-between',
     },
     nested: {
       borderStyle: theme.borderStyle,
