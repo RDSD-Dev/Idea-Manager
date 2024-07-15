@@ -28,7 +28,7 @@ export default function App() {
       theme: 'Dark', backgroundColor: "#0D1B2A", modalBackgroundColor: '#14273E', 
       childrenBackgroundColor: '#18324E', itemBackgroundColor: '#26507D', nestBackgroundColor: '#285585',
       inputBackgroundColor: '#2F649D', textColor: '#E0E1DD', inputTextColor: '#E0E1DD', 
-      borderColor: '#000000',borderWidth: 2, borderStyle: 'solid', fontSize: 16, headerFontSize: 20, inputFontSize: 18, borderRadius: 20}
+      borderColor: '#000000',borderWidth: 2, borderStyle: 'solid', fontSize: 16, symbolSize: 28, headerFontSize: 20, inputFontSize: 18, borderRadius: 20}
   ]);
   const [settings, setSettings] = useState({theme: 'Dark'});
 
@@ -514,11 +514,11 @@ export default function App() {
     if(child.isComplete == false || child.isComplete == true && showCompleted){
       return (
         <View key={child.name+child.order} style={styles.child}>
+          {!child.isComplete && <Pressable onPress={() => {toggleTask(child); setErrorMessage('Refresh');}}><Text style={[styles.symbol, {color: 'red'}]}>{icons.Circle}</Text></Pressable>}
+          {child.isComplete && <Pressable onPress={() => {toggleTask(child); setErrorMessage('Refresh');}}><Text style={[styles.symbol, {color: 'red'}]}>{icons.FilledCircle}</Text></Pressable>}
           <Pressable onPress={() => setUpdateItem([child.name, child.order, child.parentKey])}>
             <Text style={styles.text}>{child.name} {icons.OpenCircle}</Text>
-            <Text style={styles.text}>{JSON.stringify(child.isComplete)}</Text>
           </Pressable>
-          {displayButton('Complete', () => {toggleTask(child); setErrorMessage('Refresh');})}
           {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
           {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child)}
         </View>
@@ -529,10 +529,9 @@ export default function App() {
     if(expandItems.length == 0 || expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) == -1){
       return (
         <View key={child.name+child.order} style={styles.child}>  
-          <Pressable onPress={() => {setTextInput(child.text); expandChild(child)}}>
+          <Pressable onPress={() => {setNameInput(child.name); setTextInput(child.text); expandChild(child)}}>
             <Text style={styles.text}>{child.name}</Text>
-            <Text style={styles.text}>{child.type}</Text>
-            <Text multiline={false} style={styles.text}>{child.text}</Text>
+            <Text numberOfLines={2} ellipsizeMode='tail' style={[styles.text, styles.NotePreview]}>{child.text}</Text>
           </Pressable>
         </View>
       );
@@ -620,11 +619,12 @@ export default function App() {
   function displayNoteForm(child){
     return(
       <View key={child.name+child.order} style={styles.child}>  
-        {displayButton(decodeEntity('&#8592;'), () => {clearInputs(); setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))}) /* Back Btn */}
-        <Text style={styles.text}>{child.name}</Text>
         <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder={child.name}/>
-        {displayButton('Update', () => {updateChildCheck(child, nameInput); setTextInput(child.text); setUpdateItem([child.name, child.order, child.parentKey, child.type])})}
-        {displayButton(decodeEntity('&#x1F5D1;'), () => setDeleteItem([child.name, child.order])) /* Delete btn */ }
+        <View style={styles.formBtns}>
+          {displayButton(icons.Left, () => {clearInputs(); setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))}) /* Back Btn */}
+          {displayButton('Update', () => {updateChildCheck(child, nameInput); setTextInput(child.text); setUpdateItem([child.name, child.order, child.parentKey, child.type])})}
+          {displayButton(icons.Trash, () => setDeleteItem([child.name, child.order])) /* Delete btn */ }
+        </View>
         {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
         <TextInput style={styles.textInput} value={textInput} onChangeText={setTextInput} multiline={true} placeholder='Enter Note Here'/>
       </View>
@@ -742,8 +742,8 @@ export default function App() {
       borderColor: theme.borderColor,
       backgroundColor: theme.inputBackgroundColor,
       borderRadius: theme.borderRadius,
-      padding: 2,
-      paddingHorizontal: 6,
+      padding: 4,
+      paddingHorizontal: 8,
       margin: 2,
     },
     button: {
@@ -768,7 +768,7 @@ export default function App() {
       backgroundColor: theme.inputBackgroundColor,
     },
     symbol: {
-      fontSize: 24,
+      fontSize: theme.symbolSize,
     },
 
     header: {
@@ -830,8 +830,8 @@ export default function App() {
       marginBottom: 4,
       marginHorizontal: 4,
     },
-    NoteTextPrev: {
-      height: 16,
+    NotePreview: {
+      paddingLeft: 4,
     },
     miniPic: {
       height: 100,
