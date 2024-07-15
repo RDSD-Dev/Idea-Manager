@@ -514,11 +514,13 @@ export default function App() {
     if(child.isComplete == false || child.isComplete == true && showCompleted){
       return (
         <View key={child.name+child.order} style={styles.child}>
-          {!child.isComplete && <Pressable onPress={() => {toggleTask(child); setErrorMessage('Refresh');}}><Text style={[styles.symbol, {color: 'red'}]}>{icons.Circle}</Text></Pressable>}
-          {child.isComplete && <Pressable onPress={() => {toggleTask(child); setErrorMessage('Refresh');}}><Text style={[styles.symbol, {color: 'red'}]}>{icons.FilledCircle}</Text></Pressable>}
-          <Pressable onPress={() => setUpdateItem([child.name, child.order, child.parentKey])}>
-            <Text style={styles.text}>{child.name} {icons.OpenCircle}</Text>
-          </Pressable>
+          <View style={styles.task}>
+            {!child.isComplete && <Pressable onPress={() => {toggleTask(child); setErrorMessage('Refresh');}}><Text style={[styles.symbol, {color: 'red'}]}>{icons.Circle}</Text></Pressable>}
+            {child.isComplete && <Pressable onPress={() => {toggleTask(child); setErrorMessage('Refresh');}}><Text style={[styles.symbol, {color: 'red'}]}>{icons.FilledCircle}</Text></Pressable>}
+            <Pressable onPress={() => setUpdateItem([child.name, child.order, child.parentKey])}>
+              <Text numberOfLines={1} ellipsizeMode='tail' style={styles.text}>{child.name}</Text>
+            </Pressable>
+          </View>
           {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
           {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child)}
         </View>
@@ -769,6 +771,7 @@ export default function App() {
     },
     symbol: {
       fontSize: theme.symbolSize,
+      verticalAlign: 'middle',
     },
 
     header: {
@@ -829,6 +832,10 @@ export default function App() {
       backgroundColor: theme.nestBackgroundColor,
       marginBottom: 4,
       marginHorizontal: 4,
+    },
+    task: {
+      alignItems: 'center',
+      flexDirection: 'row',
     },
     NotePreview: {
       paddingLeft: 4,
