@@ -389,9 +389,9 @@ export default function App() {
         <View style={styles.header}>
           {directory.parentKey == '' && displayButton(icons.Gear, () => setModalView('Settings'))/* Settings Btn */}
 
-          {directory.parentKey !== directories[0].key && directory.parentKey !== '' && <View style={styles.headerBack}>{displayButton(decodeEntity('&#8606;'), () => setModalView(null))}{displayButton(decodeEntity('&#8592;'), () => closeDirectory(directory))}</View> /* Exit Btn */}
+          {directory.parentKey !== directories[0].key && directory.parentKey !== '' && <View style={styles.headerBack}>{displayButton(icons.Left, () => closeDirectory(directory))}{displayButton(icons.DoubleLeft, () => setModalView(null))}</View> /* Exit Btn */}
 
-          {directory.parentKey !== ''  && directory.parentKey == directories[0].key &&  displayButton(decodeEntity('&#8592;'), () => closeDirectory(directory))/* Back Btn */}
+          {directory.parentKey !== ''  && directory.parentKey == directories[0].key &&  displayButton(icons.Left, () => closeDirectory(directory))/* Back Btn */}
             <Pressable style={styles.headerMiddle} onPress={() => {setBooleanInput(directory.showCompleted); setUpdateItem([directory.name, directory.order, directory.parentKey, directory.type])}}>
               <Text style={styles.headerText}>{directory.name}</Text>
             </Pressable>
@@ -406,13 +406,15 @@ export default function App() {
     );
   }
   function displayUpdateDirectory(directory){
+    const color = directory.color.value;
     return(
       <View style={styles.form}>
         <View style={styles.formBtns}>
-        {displayButton(icons.left, () => clearInputs()) /* Back Btn */}
-        <Text style={styles.text}>Display completed tasks?</Text>
-        <Checkbox value={booleanInput} onValueChange={setBooleanInput}/>
-        {directory.parentKey !== '' &&  displayButton(decodeEntity('&#x1F5D1;'), () => setDeleteItem([directory.name, directory.order, directory.parentKey])) /* Delete Btn */}
+        {displayButton(icons.Left, () => clearInputs()) /* Back Btn */}
+        {!directory.showCompleted && <Pressable onPress={() => {setBooleanInput(!booleanInput); updateChildCheck(directory, null, null, null, null, true); openDirectory(directory)}}><Text style={[styles.symbol, {color: color}]}>{icons.Circle}</Text></Pressable>}
+        {directory.showCompleted && <Pressable onPress={() => {setBooleanInput(!booleanInput); updateChildCheck(directory, null, null, null, null, false); openDirectory(directory)}}><Text style={[styles.symbol, {color: color}]}>{icons.FilledCircle}</Text></Pressable>}
+
+        {directory.parentKey !== '' &&  displayButton(icons.Trash, () => setDeleteItem([directory.name, directory.order, directory.parentKey])) /* Delete Btn */}
 
 
         </View>
