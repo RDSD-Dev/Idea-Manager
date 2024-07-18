@@ -95,7 +95,6 @@ export default function App() {
     console.log("Clear");
     setAddItem(null);
     setUpdateItem(null);
-    setUpdateItem(null);
     setDeleteItem(null);
     setErrorMessage('');
     setNameInput('');
@@ -287,8 +286,6 @@ export default function App() {
       console.log(tempDirectory.children[0].name);
     }
     if(child.type == 'Directory'){
-      closeDirectory(child);
-
       let tempDirectories = directories;
       const directoryIndex = tempDirectories.findIndex((e) => e.key == child.key);
       updateChild.children = tempDirChildren;
@@ -387,12 +384,12 @@ export default function App() {
     return(
       <View style={styles.directory}>
         <View style={styles.header}>
-          {directory.parentKey == '' && displayButton(icons.Gear, () => setModalView('Settings'))/* Settings Btn */}
+          {directory.parentKey == '' && displayButton(icons.Gear, () => {setDropdownInput(theme); setModalView('Settings')})/* Settings Btn */}
 
           {directory.parentKey !== directories[0].key && directory.parentKey !== '' && <View style={styles.headerBack}>{displayButton(icons.Left, () => closeDirectory(directory))}{displayButton(icons.DoubleLeft, () => setModalView(null))}</View> /* Exit Btn */}
 
           {directory.parentKey !== ''  && directory.parentKey == directories[0].key &&  displayButton(icons.Left, () => closeDirectory(directory))/* Back Btn */}
-            <Pressable style={styles.headerMiddle} onPress={() => {setBooleanInput(directory.showCompleted); setUpdateItem([directory.name, directory.order, directory.parentKey, directory.type])}}>
+            <Pressable style={styles.headerMiddle} onPress={() => {setBooleanInput(directory.showCompleted); setNameInput(directory.name); setColorInput(directory.color); setUpdateItem([directory.name, directory.order, directory.parentKey, directory.type])}}>
               <Text style={styles.headerText}>{directory.name}</Text>
             </Pressable>
           {displayButton(decodeEntity('&#43;'), () => {setDropdownInput({type: 'Task'}); setColorInput(colors[0]); setAddItem(directory.key)}) /* Add Btn */}
@@ -411,15 +408,14 @@ export default function App() {
       <View style={styles.form}>
         <View style={styles.formBtns}>
         {displayButton(icons.Left, () => clearInputs()) /* Back Btn */}
-        {!directory.showCompleted && <Pressable onPress={() => {setBooleanInput(!booleanInput); updateChildCheck(directory, null, null, null, null, true); openDirectory(directory)}}><Text style={[styles.symbol, {color: color}]}>{icons.Circle}</Text></Pressable>}
-        {directory.showCompleted && <Pressable onPress={() => {setBooleanInput(!booleanInput); updateChildCheck(directory, null, null, null, null, false); openDirectory(directory)}}><Text style={[styles.symbol, {color: color}]}>{icons.FilledCircle}</Text></Pressable>}
-
+        {!directory.showCompleted && <Pressable onPress={() => {setBooleanInput(!booleanInput); updateChildCheck(directory, null, null, null, null, true); setNameInput(directory.name); setColorInput(directory.color); setUpdateItem([directory.name, directory.order, directory.parentKey, directory.type])}}><Text style={[styles.symbol, {color: color}]}>{icons.Circle}</Text></Pressable>}
+        {directory.showCompleted && <Pressable onPress={() => {setBooleanInput(!booleanInput); updateChildCheck(directory, null, null, null, null, false); setNameInput(directory.name); setColorInput(directory.color); setUpdateItem([directory.name, directory.order, directory.parentKey, directory.type])}}><Text style={[styles.symbol, {color: color}]}>{icons.FilledCircle}</Text></Pressable>}
         {directory.parentKey !== '' &&  displayButton(icons.Trash, () => setDeleteItem([directory.name, directory.order, directory.parentKey])) /* Delete Btn */}
-
-
         </View>
         {directory.parentKey !== '' && 
         <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Name to Update'/>}
+          {directory.parentKey !== '' &&
+          <Dropdown style={styles.dropdown} data={colors} labelField='label' valueField='value' value={colorInput} onChange={setColorInput}/>}
         {displayButton('Submit', () => updateChildCheck(directory, nameInput, numberInput, colorInput, imageInput, booleanInput))}
           {deleteItem !== null && deleteItem[0] == directory.name && deleteItem[1] == directory.order && deleteItem[2] == directory.parentKey && displayDeleteChildForm(directory, directory.key)}
       </View>
