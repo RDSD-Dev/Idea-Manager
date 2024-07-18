@@ -189,6 +189,7 @@ export default function App() {
       case 'Nested Tasks':
         newChild.style = styles.nestedTasks;
         newChild.isComplete = false;
+        newChild.showCompleted = true;
         newChild.children = [];
         break;
       case 'Nested Images':
@@ -408,7 +409,7 @@ export default function App() {
     return(
       <View style={styles.form}>
         <View style={styles.formBtns}>
-        {displayButton(decodeEntity('&#8592;'), () => clearInputs()) /* Back Btn */}
+        {displayButton(icons.left, () => clearInputs()) /* Back Btn */}
         <Text style={styles.text}>Display completed tasks?</Text>
         <Checkbox value={booleanInput} onValueChange={setBooleanInput}/>
         {directory.parentKey !== '' &&  displayButton(decodeEntity('&#x1F5D1;'), () => setDeleteItem([directory.name, directory.order, directory.parentKey])) /* Delete Btn */}
@@ -579,12 +580,16 @@ export default function App() {
     else if(child.children.length == 0 && child.isComplete  || child.children.length > 0 && child.isComplete && child.children.findIndex((e) => e.isComplete == false) > -1){
       toggleTask(child);
     }
+    const color = child.color.value;
     return(
       <View key={child.name + child.order} style={styles.child}>
         <Pressable onPress={() => {expandChild(child)}}>
-            <Text style={styles.text}>{child.name}</Text>
-            <Text style={styles.text}>{child.type}</Text>
-            <Text style={styles.text}>{JSON.stringify(child.isComplete)}</Text>
+          <View style={styles.task}>
+              {!child.isComplete && <Text style={[styles.symbol, {color: color}]}>{icons.Diamond}</Text>}
+              {child.isComplete && <Text style={[styles.symbol, {color: color}]}>{icons.FilledDiamond}</Text>}
+
+              <Text style={styles.text}>{child.name}</Text>
+            </View>
           </Pressable>
           {expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) !== -1 && displayExpandedNest(child)}
       </View>
@@ -606,13 +611,17 @@ export default function App() {
       <View style={styles.nested}>
         <View style={styles.formBtns}>
           {displayButton(icons.Left, () => {setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name || e.parentKey !== child.parentKey)); clearInputs(); }) /* Back Btn */}
+          {child.type == 'Nested Tasks' && <View>
+              <Text style={styles.text}>Display completed tasks?</Text>
+              <Checkbox value={booleanInput} onValueChange={setBooleanInput}/>
+            </View>}
           {displayButton(decodeEntity('&#43;'), () => {clearInputs(); setAddItem([child.name, child.order, child.children.length, child.parentKey]); setDropdownInput({type: 'Task'})}) /* Add Btn */}
           {(updateItem == null || updateItem[0] !== child.name || updateItem[1] !== child.order || updateItem[2] !== child.parentKey) &&  displayButton('Update', () => {clearInputs(); setColorInput(child.color); setUpdateItem([child.name, child.order, child.parentKey])})}
         </View>
         {addItem !== null && addItem.constructor === Array && addItem[0] == child.name && addItem[1] == child.order && addItem[3] == child.parentKey && displayAddForm(false)}
         {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child)}
         {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
-        {displayChildren(child.children)}
+        {displayChildren(child.children, child.showCompleted)}
     </View>
     );
   }
