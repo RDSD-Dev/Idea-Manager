@@ -22,6 +22,7 @@ export default function App() {
   const [dropdownInput, setDropdownInput] = useState(null);
   const [imageInput, setImageInput] = useState(null);
   const [booleanInput, setBooleanInput] = useState(true);
+  const [moveInput, setMoveInput] = useState(null);
   
   const [themes, setThemes] = useState([
     {
@@ -61,6 +62,7 @@ export default function App() {
     {label: 'Light Blue',value: '#04A6E5'}, {label: 'Forest Green', value: '#045C34'}, {label: 'Grey', value: '#7C7C7C'},
     {label: 'Red', value: '#EC161D'}
   ];
+  let moveOptions = [];
 
   useEffect(() => {
     if(expandItems !== null && expandItems.findIndex((e) => e.type == 'Note') !== -1){
@@ -437,21 +439,24 @@ export default function App() {
   }
   function openDirectory(child){
     setUpdateItem(null);
-
     let tempDirectories = directories;
-    tempDirectories.push(child);
-    setDirectories(tempDirectories);
-    console.log("Open: ", child.name);
-    const value = AsyncStorage.getItem(child.key).then((value) => {
-      if(value !== null){
-        tempDirectories = directories;
-        const index = tempDirectories.findIndex((e) => e.key == child.key);
-        tempDirectories[index] = JSON.parse(value);
-        console.log(JSON.parse(value).name, ' : ', JSON.parse(value).showCompleted);
-        setDirectories(tempDirectories);
-      }
-      setModalView(directories.findIndex((e) => e.key == child.key));
-    });
+
+    if(tempDirectories.findIndex((e) => e.key == child.key) == -1){ // Directory already exists
+      tempDirectories.push(child);
+      setDirectories(tempDirectories);
+      console.log("Open: ", child.name);
+      const value = AsyncStorage.getItem(child.key).then((value) => {
+        if(value !== null){
+          tempDirectories = directories;
+          const index = tempDirectories.findIndex((e) => e.key == child.key);
+          tempDirectories[index] = JSON.parse(value);
+          console.log(JSON.parse(value).name, ' : ', JSON.parse(value).showCompleted);
+          setDirectories(tempDirectories);
+        }
+      });
+    }
+    
+    setModalView(directories.findIndex((e) => e.key == child.key));
   }
   function closeDirectory(child){
     setUpdateItem(null);
