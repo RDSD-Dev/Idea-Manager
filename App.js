@@ -12,17 +12,18 @@ export default function App() {
   const [directories, setDirectories] = useState(null); // name, order#, parentKey, color, key, children[]
   const [addItem, setAddItem] = useState(null);
   const [updateItem, setUpdateItem] = useState(null); // Stores [name, order]
+  const [moveItem, setMoveItem] = useState(null); // Stores [name, order, moveObj]
   const [deleteItem, setDeleteItem] = useState(null); // Stores [name, order]
   const [expandItems, setExpandedItems] = useState([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [nameInput, setNameInput] = useState('');
   const [colorInput, setColorInput] = useState(null);
+  const [moveInput, setMoveInput] = useState(null);
   const [textInput, setTextInput] = useState('');
   const [numberInput, setNumberInput] = useState('');
   const [dropdownInput, setDropdownInput] = useState(null);
   const [imageInput, setImageInput] = useState(null);
   const [booleanInput, setBooleanInput] = useState(true);
-  const [moveInput, setMoveInput] = useState(null);
   
   const [themes, setThemes] = useState([
     {
@@ -62,7 +63,6 @@ export default function App() {
     {label: 'Light Blue',value: '#04A6E5'}, {label: 'Forest Green', value: '#045C34'}, {label: 'Grey', value: '#7C7C7C'},
     {label: 'Red', value: '#EC161D'}
   ];
-  let moveOptions = [];
 
   useEffect(() => {
     if(expandItems !== null && expandItems.findIndex((e) => e.type == 'Note') !== -1){
@@ -80,13 +80,13 @@ export default function App() {
 
   if(directories == null){
     AsyncStorage.getItem("Idea Manager").then((value) => {
-      if(value !== null){
+      if(false){
         let valObj = JSON.parse(value);
         setDirectories([valObj]);
       }
       else{
         console.log("Making Root");
-        let temp = {name: 'Idea Manager', order: 0, parentKey: '', color: 'Grey', key: 'Idea Manager', children: [], showCompleted: true};
+        let temp = {name: 'Idea Manager', order: 0, parentKey: '', color: 'Grey', key: 'Idea Manager', children: [], showCompleted: true, moveable: [{name: 'Idea Manager', order: 0, type: 'Directory', key: 'Idea Manager'}]};
         setDirectories([temp]);
         AsyncStorage.setItem(temp.key, JSON.stringify(temp));
       }
@@ -97,6 +97,7 @@ export default function App() {
     console.log("Clear");
     setAddItem(null);
     setUpdateItem(null);
+    setMoveItem(null);
     setDeleteItem(null);
     setErrorMessage('');
     setNameInput('');
@@ -173,6 +174,7 @@ export default function App() {
   
   function addChild(parentKey, name, order, type, color, image, text){ // Makes child object and makes sure it is saved
     console.log("add: ", name, " : ", type, " To : ", parentKey);
+    let tempMoveable;
     let newChild = {name: name, order: order, parentKey: parentKey, color: color, type: type, isNested: false};
     switch(type){
       case "Task":
@@ -188,16 +190,19 @@ export default function App() {
         newChild.image = image;
         break;
       case 'Nested Tasks':
+        tempMoveable = {name: name, type: type, order: order};
         newChild.style = styles.nestedTasks;
         newChild.isComplete = false;
         newChild.showCompleted = true;
         newChild.children = [];
         break;
       case 'Nested Images':
+        tempMoveable = {name: name, type: type, order: order};
         newChild.style = styles.nestedImages;
         newChild.children = [];
         break;
       case 'Directory':
+        tempMoveable = {name: name, type: type, order: order, parentKey: parentKey};
         newChild.style = styles.childDirectory;
         newChild.children = [];
         newChild.key = parentKey + "/" +  name;
@@ -215,6 +220,9 @@ export default function App() {
     else{ // Adding to a directory
       tempDirectory = directories.find((e) => e.key == parentKey);
       tempDirectory.children.push(newChild);
+      if(tempMoveable !== undefined){
+        tempDirectory.moveable.push(tempMoveable);
+      }
     }
     saveDirectory(tempDirectory);
     clearInputs();
@@ -303,6 +311,12 @@ export default function App() {
       setDirectories(tempDirectories);
     }
 
+    if(child.type == 'Directory' || child.type == 'Nested Tasks' || child.type == 'Nested Images'){
+      const moveIndex = tempDirectory.moveable.findIndex((e) => e.name == oldName && e.order == oldOrder);
+      tempDirectory.moveable[moveIndex].name = updateName;
+      tempDirectory.moveable[moveIndex].order = updateOrder;
+    }
+
     saveDirectory(tempDirectory);
     clearInputs();
     setUpdateItem(null);
@@ -341,7 +355,16 @@ export default function App() {
       tempDirectories.splice(directoryIndex, 1);
       setDirectories(tempDirectories);
     }
+    if(child.type == 'Directory' || child.type == 'Nested Tasks' || child.type == 'Nested Images'){
+      const moveIndex = tempDirectory.moveable.findIndex((e) => e.name == name && e.order == order);
+      tempDirectory.moveable.splice(moveIndex, 1);
+    }
+
     saveDirectory(tempDirectory);
+    clearInputs();
+  }
+  function moveChild(name, order, moveTo){
+    console.log('Move ', name, ' To ', moveTo.name);
     clearInputs();
   }
   function toggleTask(child){
@@ -440,7 +463,6 @@ export default function App() {
   function openDirectory(child){
     setUpdateItem(null);
     let tempDirectories = directories;
-
     if(tempDirectories.findIndex((e) => e.key == child.key) == -1){ // Directory already exists
       tempDirectories.push(child);
       setDirectories(tempDirectories);
@@ -533,8 +555,9 @@ export default function App() {
               <Text numberOfLines={1} ellipsizeMode='tail' style={styles.text}>{child.name}</Text>
             </Pressable>
           </View>
+          {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child, true, true)}
+          {moveItem !== null && moveItem[0] == child.name && moveItem[1] == child.order && moveItem[2] == child.parentKey && displayMoveChildForm(child)}
           {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
-          {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child, true)}
         </View>
       );
     }
@@ -550,7 +573,6 @@ export default function App() {
               <Text style={styles.text}>{child.name}</Text>
             </View>
             <Text numberOfLines={2} ellipsizeMode='tail' style={[styles.text, styles.NotePreview]}>{child.text}</Text>
-
           </Pressable>
         </View>
       );
@@ -575,6 +597,7 @@ export default function App() {
             {expandItems.findIndex((e) => e.name == child.name && e.order == child.order && e.parentKey == child.parentKey) !== -1 && displayButton(icons.Trash, () => setDeleteItem([child.name, child.order, child.parentKey]))}
           </View>
           {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
+          {moveItem !== null && moveItem[0] == child.name && moveItem[1] == child.order && moveItem[2] == child.parentKey && displayMoveChildForm(child)}
           {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child)}
 
           {expandItems.findIndex((e) => e.name == child.name && e.order == child.order) !== -1 && 
@@ -641,6 +664,7 @@ export default function App() {
         </View>
         {addItem !== null && addItem.constructor === Array && addItem[0] == child.name && addItem[1] == child.order && addItem[3] == child.parentKey && displayAddForm(false)}
         {updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order && updateItem[2] == child.parentKey && displayUpdateChildForm(child)}
+        {moveItem !== null && moveItem[0] == child.name && moveItem[1] == child.order && moveItem[2] == child.parentKey && displayMoveChildForm(child)}
         {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && deleteItem[2] == child.parentKey && displayDeleteChildForm(child)}
         {displayChildren(child.children, child.showCompleted)}
     </View>
@@ -672,7 +696,7 @@ export default function App() {
       </View>
     );
   }
-  function displayUpdateChildForm(child, displayDelete){ // Displays item update form
+  function displayUpdateChildForm(child, displayDelete, displayMove){ // Displays item update form
     let tempNum;
     if(updateItem !== null){
       tempNum = parseInt(numberInput);
@@ -686,6 +710,7 @@ export default function App() {
       else if(numberInput == null || numberInput == ''){
         tempNum = child.order;
       }
+
     }
     return(
       <View style={styles.form}>
@@ -695,10 +720,43 @@ export default function App() {
         <Dropdown style={styles.dropdown} data={colors} labelField='label' valueField='value' value={colorInput} onChange={setColorInput}/>
         <View style={styles.formBtns}>
           {displayButton('Submit', () => updateChildCheck(child, nameInput, tempNum, colorInput, imageInput))}
+          {displayMove && displayButton('Move', () => {clearInputs(); setMoveItem([child.name, child.order, child.parentKey])})}
           {child.type == 'Image' && displayButton(icons.Image, () => pickImage())}
 
           {displayButton('Cancel', () => clearInputs())}
           {displayDelete &&  displayButton(icons.Trash, () => setDeleteItem([child.name, child.order, child.parentKey])) /* Delete Btn */}
+        </View>
+      </View>
+    );
+  }
+  function displayMoveChildForm(child){
+    let index;
+    let moveOptions;
+    if(child.parentKey.constructor !== Array){
+      index = directories.findIndex((e) => e.key == child.parentKey);
+      moveOptions =  directories[index].moveable.filter((e) => e.key !== child.parentKey);
+    }
+    else{
+      index = directories.findIndex((e) => e.key == child.parentKey[3]);
+      moveOptions = directories[index].moveable.filter((e) => e.parentKey !== child.parentKey[3] && e.name !== child.parentKey[0] && e.order !== child.parentKey[1]);
+    }
+
+    if(moveOptions.length > 0 && child.type !== 'Task' && child.type !== 'Image'){
+      moveOptions = moveOptions.filter((e) => e.type == 'Directory');
+    }
+    else if(moveOptions.length > 0 && child.type == 'Task'){
+      moveOptions = moveOptions.filter((e) => e.type !== 'Nested Images');
+    }
+    else if(moveOptions.length > 0 && child.type == 'Image'){
+      moveOptions = moveOptions.filter((e) => e.type !== 'Nested Tasks');
+    }
+    return(
+      <View style={styles.form}>
+        <Text style={styles.text}>Select where to move the item</Text>
+        <Dropdown style={styles.dropdown} data={moveOptions} labelField='name' valueField='name' value={moveInput} onChange={setMoveInput} />
+        <View style={styles.formBtns}>
+          {displayButton('Submit', () => moveChild(child.name, child.order, moveInput))}
+          {displayButton('Cancel', () => clearInputs())}
         </View>
       </View>
     );
