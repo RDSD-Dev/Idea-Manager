@@ -80,7 +80,7 @@ export default function App() {
 
   if(directories == null){
     AsyncStorage.getItem("Idea Manager").then((value) => {
-      if(false){
+      if(value !== null){
         let valObj = JSON.parse(value);
         setDirectories([valObj]);
       }
