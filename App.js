@@ -1,10 +1,8 @@
-import { StatusBar } from 'expo-status-bar';
-import {TextInput, Button, StyleSheet, Text, View, ScrollView , Pressable, Image, Modal} from 'react-native';
+import {TextInput, StyleSheet, Text, View, ScrollView , Pressable, Image, Modal} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { Dropdown } from 'react-native-element-dropdown';
 import * as ImagePicker from 'expo-image-picker';
-import Checkbox from 'expo-checkbox';
 import {decodeEntity, decode} from 'html-entities';
 
 export default function App() {
@@ -108,28 +106,165 @@ export default function App() {
     setDropdownInput(null);
     setBooleanInput(true);
   }
-  function addChildCheck(parentKey, name, order, type, color, image, text){ // Checks if the child is valid
-    if(name == "" || name.length == 0){ // Name cannot be blank
-      setErrorMessage('Name cannot be blank.');
-      return;
+
+  // Directory Functions
+  function saveDirectory(saveDirectory){
+    let tempDirectories = directories;
+    let index = directories.findIndex((e) => e.key == saveDirectory.key);
+    tempDirectories[index] = saveDirectory;
+    setDirectories(tempDirectories);
+    AsyncStorage.setItem(saveDirectory.key, JSON.stringify(saveDirectory));
+  }
+  function openDirectory(child){
+    setUpdateItem(null);
+    let tempDirectories = directories;
+    if(tempDirectories.findIndex((e) => e.key == child.key) == -1){ // Directory already exists
+      tempDirectories.push(child);
+      setDirectories(tempDirectories);
+      console.log("Open: ", child.name);
+      const value = AsyncStorage.getItem(child.key).then((value) => {
+        if(value !== null){
+          tempDirectories = directories;
+          const index = tempDirectories.findIndex((e) => e.key == child.key);
+          tempDirectories[index] = JSON.parse(value);
+          console.log(JSON.parse(value).name, ' : ', JSON.parse(value).showCompleted);
+          setDirectories(tempDirectories);
+        }
+      });
     }
-    else if(type == null){
-      setErrorMessage('Please define a type.');
-      return;
-    }
-    else if(type == 'Directory' && name == 'Idea Manager' || type == 'Directory' && directories.find((e) => e.key == parentKey).children.findIndex((e) => e.type == 'Directory' && e.name == name) !== -1 ){ // Dose not allow 2 directories of the same name to exist in the same directories
-      const directory = directories.find((e) => e.key == parentKey);
-      setErrorMessage('Directory Name is Taken.');
-      return;
-    }
-    else if(type == 'Image' && image == null){
-      setErrorMessage('Image cannot be empty.');
-      return;
+    
+    setModalView(directories.findIndex((e) => e.key == child.key));
+  }
+  function closeDirectory(child){
+    setUpdateItem(null);
+    if(child.parentKey == directories[0].key){
+      setModalView(null);
     }
     else{
-      addChild(parentKey, name, order, type, color, image, text);
-      return;
+      setModalView(directories.findIndex((e) => e.key == child.parentKey));
     }
+  }
+  function sortChildren(children){
+    console.log("Sort children");
+    let tempChildren = [];
+    for(let i=0; i<children.length; i++){
+      tempChildren.push(children[children.findIndex((e) => e.order == i)]);
+    }
+    return tempChildren;
+  }
+
+  // Child Functions
+  function toggleTask(child){Button
+      console.log("Toggle: ", child.name, " : ", child.isComplete);
+      let tempDirectory;
+      if(child.parentKey.constructor === Array){ // Checks if is a nested item
+        tempDirectory = directories.find((e) => e.key == child.parentKey[3]);
+  
+        const nestIndex = tempDirectory.children.findIndex((e) => e.name == child.parentKey[0] && e.order == child.parentKey[1]);
+        const childIndex = tempDirectory.children[nestIndex].children.findIndex((e) => e == child);
+        tempDirectory.children[nestIndex].children[childIndex].isComplete = !child.isComplete;
+      }
+      else{
+        tempDirectory = directories.find((e) => e.key == child.parentKey);
+        const index = tempDirectory.children.findIndex((e) => e == child);
+        tempDirectory.children[index].isComplete = !child.isComplete;
+      }
+      saveDirectory(tempDirectory);
+  }
+  function expandChild(child){
+      if(child.type == 'Note' && expandItems.findIndex((e) => e.type == 'Note') > -1){
+        setExpandedItems(expandItems.filter((e) => e.type !== 'Note'));
+      }
+      setExpandedItems(expandItems => [...expandItems, {name: child.name, order: child.order, type: child.type, parentKey: child.parentKey}])
+  }
+  const pickImage = async () => {
+      // No permissions request is necessary for launching the image library
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        allowsEditing: true,
+        quality: 1,
+      });
+      if(!result.canceled){
+        setImageInput(result);
+      }
+  }
+  function addChildCheck(parentKey, name, order, type, color, image, text){ // Checks if the child is valid
+      if(name == "" || name.length == 0){ // Name cannot be blank
+        setErrorMessage('Name cannot be blank.');
+        return;
+      }
+      else if(type == null){
+        setErrorMessage('Please define a type.');
+        return;
+      }
+      else if(type == 'Directory' && name == 'Idea Manager' || type == 'Directory' && directories.find((e) => e.key == parentKey).children.findIndex((e) => e.type == 'Directory' && e.name == name) !== -1 ){ // Dose not allow 2 directories of the same name to exist in the same directories
+        const directory = directories.find((e) => e.key == parentKey);
+        setErrorMessage('Directory Name is Taken.');
+        return;
+      }
+      else if(type == 'Image' && image == null){
+        setErrorMessage('Image cannot be empty.');
+        return;
+      }
+      else{
+        addChild(parentKey, name, order, type, color, image, text);
+        return;
+      }
+  }
+  function addChild(parentKey, name, order, type, color, image, text){ // Makes child object and makes sure it is saved
+      console.log("add: ", name, " : ", type, " To : ", parentKey);
+      let tempMoveable;
+      let newChild = {name: name, order: order, parentKey: parentKey, color: color, type: type, isNested: false};
+      switch(type){
+        case "Task":
+          newChild.style = styles.Task;
+          newChild.isComplete = false;
+          break;
+        case "Note":
+          newChild.style = styles.Note;
+          newChild.text = text;
+          break;
+        case 'Image':
+          newChild.style = styles.Picture;
+          newChild.image = image;
+          break;
+        case 'Nested Tasks':
+          tempMoveable = {name: name, type: type, order: order};
+          newChild.style = styles.nestedTasks;
+          newChild.isComplete = false;
+          newChild.showCompleted = true;
+          newChild.children = [];
+          break;
+        case 'Nested Images':
+          tempMoveable = {name: name, type: type, order: order};
+          newChild.style = styles.nestedImages;
+          newChild.children = [];
+          break;
+        case 'Directory':
+          tempMoveable = {name: name, type: type, order: order, parentKey: parentKey};
+          newChild.style = styles.childDirectory;
+          newChild.children = [];
+          newChild.key = parentKey + "/" +  name;
+          newChild.showCompleted = true;
+          saveDirectory(newChild);
+          break;
+      }
+  
+      let tempDirectory;
+      if(parentKey.constructor === Array){ // Adding to a nested item
+        tempDirectory = directories.find((e) => e.key == parentKey[3]);
+        const index = tempDirectory.children.findIndex((e) => e.name == parentKey[0] && e.order == parentKey[1]);
+        tempDirectory.children[index].children.push(newChild);
+      }
+      else{ // Adding to a directory
+        tempDirectory = directories.find((e) => e.key == parentKey);
+        tempDirectory.children.push(newChild);
+        if(tempMoveable !== undefined){
+          tempDirectory.moveable.push(tempMoveable);
+        }
+      }
+      saveDirectory(tempDirectory);
+      clearInputs();
   }
   function updateChildCheck(child, updateName, updateOrder, updateColor, updateImage, updateBoolean){
       if(updateName == '' || updateName == null){
@@ -149,262 +284,151 @@ export default function App() {
         updateChild(child, updateName, updateOrder, updateColor, updateImage, updateBoolean);
       }
   }
-  function saveDirectory(saveDirectory){
-    let tempDirectories = directories;
-    let index = directories.findIndex((e) => e.key == saveDirectory.key);
-    tempDirectories[index] = saveDirectory;
-    setDirectories(tempDirectories);
-    AsyncStorage.setItem(saveDirectory.key, JSON.stringify(saveDirectory));
-  }
-
-  function sortChildren(children){
-    console.log("Sort children");
-    let tempChildren = [];
-    for(let i=0; i<children.length; i++){
-      tempChildren.push(children[children.findIndex((e) => e.order == i)]);
-    }
-    return tempChildren;
-  }
-  function expandChild(child){
-    if(child.type == 'Note' && expandItems.findIndex((e) => e.type == 'Note') > -1){
-      setExpandedItems(expandItems.filter((e) => e.type !== 'Note'));
-    }
-    setExpandedItems(expandItems => [...expandItems, {name: child.name, order: child.order, type: child.type, parentKey: child.parentKey}])
-  }
-  
-  function addChild(parentKey, name, order, type, color, image, text){ // Makes child object and makes sure it is saved
-    console.log("add: ", name, " : ", type, " To : ", parentKey);
-    let tempMoveable;
-    let newChild = {name: name, order: order, parentKey: parentKey, color: color, type: type, isNested: false};
-    switch(type){
-      case "Task":
-        newChild.style = styles.Task;
-        newChild.isComplete = false;
-        break;
-      case "Note":
-        newChild.style = styles.Note;
-        newChild.text = text;
-        break;
-      case 'Image':
-        newChild.style = styles.Picture;
-        newChild.image = image;
-        break;
-      case 'Nested Tasks':
-        tempMoveable = {name: name, type: type, order: order};
-        newChild.style = styles.nestedTasks;
-        newChild.isComplete = false;
-        newChild.showCompleted = true;
-        newChild.children = [];
-        break;
-      case 'Nested Images':
-        tempMoveable = {name: name, type: type, order: order};
-        newChild.style = styles.nestedImages;
-        newChild.children = [];
-        break;
-      case 'Directory':
-        tempMoveable = {name: name, type: type, order: order, parentKey: parentKey};
-        newChild.style = styles.childDirectory;
-        newChild.children = [];
-        newChild.key = parentKey + "/" +  name;
-        newChild.showCompleted = true;
-        saveDirectory(newChild);
-        break;
-    }
-
-    let tempDirectory;
-    if(parentKey.constructor === Array){ // Adding to a nested item
-      tempDirectory = directories.find((e) => e.key == parentKey[3]);
-      const index = tempDirectory.children.findIndex((e) => e.name == parentKey[0] && e.order == parentKey[1]);
-      tempDirectory.children[index].children.push(newChild);
-    }
-    else{ // Adding to a directory
-      tempDirectory = directories.find((e) => e.key == parentKey);
-      tempDirectory.children.push(newChild);
-      if(tempMoveable !== undefined){
-        tempDirectory.moveable.push(tempMoveable);
-      }
-    }
-    saveDirectory(tempDirectory);
-    clearInputs();
-  }
   function updateChild(child, updateName, updateOrder, updateColor, updateImage, updateBoolean){
-    const oldName = child.name;
-    const oldOrder = child.order;
-    let tempDirChildren;
-    let updateChild = child;
-    if(child.type == 'Directory'){
-      tempDirChildren = directories[directories.findIndex((e) => e.key == child.key)].children;
-      console.log("Work Pls ", tempDirChildren);
-      updateChild.children = [];
-      updateChild.key = child.parentKey + '/'+updateName;
-    }
-    console.log("Update: ", child.name, " : ", updateName, child.order, ' From: ', child.parentKey);
-    updateChild.name = updateName;
-    updateChild.order = updateOrder;
-    updateChild.color = updateColor;
-
-    if(updateImage !== null){
-      updateChild.image = updateImage; 
-    }
-    else if(updateBoolean !== null){
-      updateChild.showCompleted = updateBoolean;
-    }
-
-    let tempDirectory;;
-    let tempChildren;
-    let nestIndex = -1;
-    if(updateChild.parentKey.constructor === Array){ // Is updating a nested item
-      tempDirectory = directories.find((e) => e.key == updateChild.parentKey[3]);
-      nestIndex = tempDirectory.children.findIndex((e) => e.name == updateChild.parentKey[0] && e.order == updateChild.parentKey[1]);
-      tempChildren = tempDirectory.children[nestIndex].children;
-    }
-    else{
-      if(child.parentKey == ''){
-        console.log("Updating Root Directory", updateChild);
-        saveDirectory(updateChild);
-        clearInputs();
-        return;
+      const oldName = child.name;
+      const oldOrder = child.order;
+      let tempDirChildren;
+      let updateChild = child;
+      if(child.type == 'Directory'){
+        tempDirChildren = directories[directories.findIndex((e) => e.key == child.key)].children;
+        console.log("Work Pls ", tempDirChildren);
+        updateChild.children = [];
+        updateChild.key = child.parentKey + '/'+updateName;
       }
-      tempDirectory = directories.find((e) => e.key == child.parentKey);
-      tempChildren = tempDirectory.children;
-    }
-
-    const index = tempChildren.findIndex((e) => e.name == oldName && e.order == oldOrder);
-    tempChildren[index] = updateChild;
-    tempChildren[index].name = updateName;
-
-    if(oldOrder > updateOrder){
-      for(let i=updateOrder; i<oldOrder;i++){
-        tempChildren[i].order++;
+      console.log("Update: ", child.name, " : ", updateName, child.order, ' From: ', child.parentKey);
+      updateChild.name = updateName;
+      updateChild.order = updateOrder;
+      updateChild.color = updateColor;
+  
+      if(updateImage !== null){
+        updateChild.image = updateImage; 
       }
-      tempChildren = sortChildren(tempChildren);
-    }
-    else if(oldOrder < updateOrder){
-      for(let i=oldOrder+1; i<=updateOrder; i++){
+      else if(updateBoolean !== null){
+        updateChild.showCompleted = updateBoolean;
+      }
+  
+      let tempDirectory;;
+      let tempChildren;
+      let nestIndex = -1;
+      if(updateChild.parentKey.constructor === Array){ // Is updating a nested item
+        tempDirectory = directories.find((e) => e.key == updateChild.parentKey[3]);
+        nestIndex = tempDirectory.children.findIndex((e) => e.name == updateChild.parentKey[0] && e.order == updateChild.parentKey[1]);
+        tempChildren = tempDirectory.children[nestIndex].children;
+      }
+      else{
+        if(child.parentKey == ''){
+          console.log("Updating Root Directory", updateChild);
+          saveDirectory(updateChild);
+          clearInputs();
+          return;
+        }
+        tempDirectory = directories.find((e) => e.key == child.parentKey);
+        tempChildren = tempDirectory.children;
+      }
+  
+      const index = tempChildren.findIndex((e) => e.name == oldName && e.order == oldOrder);
+      tempChildren[index] = updateChild;
+      tempChildren[index].name = updateName;
+  
+      if(oldOrder > updateOrder){
+        for(let i=updateOrder; i<oldOrder;i++){
+          tempChildren[i].order++;
+        }
+        tempChildren = sortChildren(tempChildren);
+      }
+      else if(oldOrder < updateOrder){
+        for(let i=oldOrder+1; i<=updateOrder; i++){
+          tempChildren[i].order--;
+        }
+        tempChildren = sortChildren(tempChildren);
+      }
+      tempChildren[index].name = updateName;
+      if(nestIndex > -1){
+        tempDirectory.children[nestIndex].children = tempChildren;
+      }
+      else{
+        tempChildren[index].name = updateName;
+        console.log("Test", tempChildren[0].name);
+        tempDirectory.children = tempChildren;
+        console.log(tempDirectory.children[0].name);
+      }
+      if(child.type == 'Directory'){
+        let tempDirectories = directories;
+        const directoryIndex = tempDirectories.findIndex((e) => e.key == child.key);
+        updateChild.children = tempDirChildren;
+        if(oldName.name !== updateName){
+          for(let i=0; i< updateChild.children.length; i++){
+            updateChild.children[i].parentKey = updateChild.key;
+          }
+          AsyncStorage.removeItem(child.key);
+          updateChild.key = child.parentKey + '/' + updateName;
+        }
+        AsyncStorage.setItem(updateChild.key, JSON.stringify(updateChild));
+        tempDirectories.splice(directoryIndex, 1, updateChild);
+        setDirectories(tempDirectories);
+      }
+  
+      if(child.type == 'Directory' || child.type == 'Nested Tasks' || child.type == 'Nested Images'){
+        const moveIndex = tempDirectory.moveable.findIndex((e) => e.name == oldName && e.order == oldOrder);
+        tempDirectory.moveable[moveIndex].name = updateName;
+        tempDirectory.moveable[moveIndex].order = updateOrder;
+      }
+  
+      saveDirectory(tempDirectory);
+      clearInputs();
+      setUpdateItem(null);
+  }
+  function deleteChild(name, order, parentKey, key){ // Deletes Child
+      let tempDirectory;
+      let tempChildren;
+      let nestIndex = -1;
+      if(parentKey.constructor === Array){
+        tempDirectory = directories.find((e) => e.key == parentKey[3]);
+        nestIndex = tempDirectory.children.findIndex((e) => e.name == parentKey[0] && e.order == parentKey[1]);
+        tempChildren = tempDirectory.children[nestIndex].children;
+      }
+      else{
+        tempDirectory = directories.find((e) => e.key == parentKey);
+        tempChildren = tempDirectory.children;
+      }
+  
+      const index = tempChildren.findIndex((e) => e.name == name && e.order == order );
+      tempChildren.splice(index, 1);
+      for(let i=tempChildren.length-1; i>=index; i--){
         tempChildren[i].order--;
       }
       tempChildren = sortChildren(tempChildren);
-    }
-    tempChildren[index].name = updateName;
-    if(nestIndex > -1){
-      tempDirectory.children[nestIndex].children = tempChildren;
-    }
-    else{
-      tempChildren[index].name = updateName;
-      console.log("Test", tempChildren[0].name);
-      tempDirectory.children = tempChildren;
-      console.log(tempDirectory.children[0].name);
-    }
-    if(child.type == 'Directory'){
-      let tempDirectories = directories;
-      const directoryIndex = tempDirectories.findIndex((e) => e.key == child.key);
-      updateChild.children = tempDirChildren;
-      if(oldName.name !== updateName){
-        for(let i=0; i< updateChild.children.length; i++){
-          updateChild.children[i].parentKey = updateChild.key;
-        }
-        AsyncStorage.removeItem(child.key);
-        updateChild.key = child.parentKey + '/' + updateName;
+      if(nestIndex > -1){
+        tempDirectory.children[nestIndex].children = tempChildren;
       }
-      AsyncStorage.setItem(updateChild.key, JSON.stringify(updateChild));
-      tempDirectories.splice(directoryIndex, 1, updateChild);
-      setDirectories(tempDirectories);
-    }
-
-    if(child.type == 'Directory' || child.type == 'Nested Tasks' || child.type == 'Nested Images'){
-      const moveIndex = tempDirectory.moveable.findIndex((e) => e.name == oldName && e.order == oldOrder);
-      tempDirectory.moveable[moveIndex].name = updateName;
-      tempDirectory.moveable[moveIndex].order = updateOrder;
-    }
-
-    saveDirectory(tempDirectory);
-    clearInputs();
-    setUpdateItem(null);
+      else{
+        tempDirectory.children = tempChildren;
+      }
+      if(key !== null && key !== undefined){
+        AsyncStorage.removeItem(key);
+        tempDirectories = directories;
+        const directoryIndex = tempDirectories.findIndex((e) => e.key == key);
+        closeDirectory(directories[directoryIndex]);
+        tempDirectories.splice(directoryIndex, 1);
+        setDirectories(tempDirectories);
+      }
+      if(child.type == 'Directory' || child.type == 'Nested Tasks' || child.type == 'Nested Images'){
+        const moveIndex = tempDirectory.moveable.findIndex((e) => e.name == name && e.order == order);
+        tempDirectory.moveable.splice(moveIndex, 1);
+      }
+  
+      saveDirectory(tempDirectory);
+      clearInputs();
   }
-  function deleteChild(name, order, parentKey, key){ // Deletes Child
-    let tempDirectory;
-    let tempChildren;
-    let nestIndex = -1;
-    if(parentKey.constructor === Array){
-      tempDirectory = directories.find((e) => e.key == parentKey[3]);
-      nestIndex = tempDirectory.children.findIndex((e) => e.name == parentKey[0] && e.order == parentKey[1]);
-      tempChildren = tempDirectory.children[nestIndex].children;
-    }
-    else{
-      tempDirectory = directories.find((e) => e.key == parentKey);
-      tempChildren = tempDirectory.children;
-    }
-
-    const index = tempChildren.findIndex((e) => e.name == name && e.order == order );
-    tempChildren.splice(index, 1);
-    for(let i=tempChildren.length-1; i>=index; i--){
-      tempChildren[i].order--;
-    }
-    tempChildren = sortChildren(tempChildren);
-    if(nestIndex > -1){
-      tempDirectory.children[nestIndex].children = tempChildren;
-    }
-    else{
-      tempDirectory.children = tempChildren;
-    }
-    if(key !== null && key !== undefined){
-      AsyncStorage.removeItem(key);
-      tempDirectories = directories;
-      const directoryIndex = tempDirectories.findIndex((e) => e.key == key);
-      closeDirectory(directories[directoryIndex]);
-      tempDirectories.splice(directoryIndex, 1);
-      setDirectories(tempDirectories);
-    }
-    if(child.type == 'Directory' || child.type == 'Nested Tasks' || child.type == 'Nested Images'){
-      const moveIndex = tempDirectory.moveable.findIndex((e) => e.name == name && e.order == order);
-      tempDirectory.moveable.splice(moveIndex, 1);
-    }
-
-    saveDirectory(tempDirectory);
-    clearInputs();
+  function moveChildCheck(name, order, moveTo){
+    
   }
   function moveChild(name, order, moveTo){
-    console.log('Move ', name, ' To ', moveTo.name);
-    clearInputs();
-  }
-  function toggleTask(child){
-    console.log("Toggle: ", child.name, " : ", child.isComplete);
-    let tempDirectory;
-    if(child.parentKey.constructor === Array){ // Checks if is a nested item
-      tempDirectory = directories.find((e) => e.key == child.parentKey[3]);
-
-      const nestIndex = tempDirectory.children.findIndex((e) => e.name == child.parentKey[0] && e.order == child.parentKey[1]);
-      const childIndex = tempDirectory.children[nestIndex].children.findIndex((e) => e == child);
-      tempDirectory.children[nestIndex].children[childIndex].isComplete = !child.isComplete;
-    }
-    else{
-      tempDirectory = directories.find((e) => e.key == child.parentKey);
-      const index = tempDirectory.children.findIndex((e) => e == child);
-      tempDirectory.children[index].isComplete = !child.isComplete;
-    }
-    saveDirectory(tempDirectory);
-  }
-  const pickImage = async () => {
-    // No permissions request is necessary for launching the image library
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      quality: 1,
-    });
-    if(!result.canceled){
-      setImageInput(result);
-    }
+      console.log('Move ', name, ' To ', moveTo.name);
+      clearInputs();
   }
 
-  function displayButton(title, onPress){
-    return(
-      <Pressable style={styles.button} onPress={() => onPress()}>
-        <Text style={styles.inputText}>{title}</Text>
-      </Pressable>
-    );
-  }
-
-  // Display Directory
+  // Display Directory Functions
   function displayDirectory(directory){ // Displays directories at top
     return(
       <View style={styles.directory}>
@@ -446,6 +470,8 @@ export default function App() {
       </View>
     );
   }
+
+  // Display Form Functions
   function displaySettings(){
     return (
       <ScrollView contentContainerStyle={styles.settings}>
@@ -460,36 +486,6 @@ export default function App() {
         </ScrollView>
     );
   }
-  function openDirectory(child){
-    setUpdateItem(null);
-    let tempDirectories = directories;
-    if(tempDirectories.findIndex((e) => e.key == child.key) == -1){ // Directory already exists
-      tempDirectories.push(child);
-      setDirectories(tempDirectories);
-      console.log("Open: ", child.name);
-      const value = AsyncStorage.getItem(child.key).then((value) => {
-        if(value !== null){
-          tempDirectories = directories;
-          const index = tempDirectories.findIndex((e) => e.key == child.key);
-          tempDirectories[index] = JSON.parse(value);
-          console.log(JSON.parse(value).name, ' : ', JSON.parse(value).showCompleted);
-          setDirectories(tempDirectories);
-        }
-      });
-    }
-    
-    setModalView(directories.findIndex((e) => e.key == child.key));
-  }
-  function closeDirectory(child){
-    setUpdateItem(null);
-    if(child.parentKey == directories[0].key){
-      setModalView(null);
-    }
-    else{
-      setModalView(directories.findIndex((e) => e.key == child.parentKey));
-    }
-  }
-  // directories Forms
   function displayAddForm(isDirectory){ // Displays add child form
     if(addItem !== null){
       let key;
@@ -524,7 +520,89 @@ export default function App() {
     );
     }
   }
-// Display Children
+  function displayUpdateChildForm(child, displayDelete, displayMove){ // Displays item update form
+    let tempNum;
+    if(updateItem !== null){
+      tempNum = parseInt(numberInput);
+      const limit = directories[directories.length-1].children.length;
+      if(tempNum < 0){
+        setNumberInput('0');
+      }
+      else if(tempNum >= limit){
+        setNumberInput('' + limit-1);
+      }
+      else if(numberInput == null || numberInput == ''){
+        tempNum = child.order;
+      }
+
+    }
+    return(
+      <View style={styles.form}>
+        <Text style={styles.text}>Update {child.name}</Text>
+        <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Updated Name'/>
+        <Text style={styles.text}>Select Color</Text>
+        <Dropdown style={styles.dropdown} data={colors} labelField='label' valueField='value' value={colorInput} onChange={setColorInput}/>
+        <View style={styles.formBtns}>
+          {displayButton('Submit', () => updateChildCheck(child, nameInput, tempNum, colorInput, imageInput))}
+          {displayMove && displayButton('Move', () => {clearInputs(); setMoveItem([child.name, child.order, child.parentKey])})}
+          {child.type == 'Image' && displayButton(icons.Image, () => pickImage())}
+
+          {displayButton('Cancel', () => clearInputs())}
+          {displayDelete &&  displayButton(icons.Trash, () => setDeleteItem([child.name, child.order, child.parentKey])) /* Delete Btn */}
+        </View>
+      </View>
+    );
+  }
+  function displayMoveChildForm(child){
+    let index;
+    let moveOptions;
+    if(child.parentKey.constructor !== Array){
+      index = directories.findIndex((e) => e.key == child.parentKey);
+      moveOptions =  directories[index].moveable.filter((e) => e.key !== child.parentKey);
+    }
+    else{
+      index = directories.findIndex((e) => e.key == child.parentKey[3]);
+      moveOptions = directories[index].moveable.filter((e) => e.parentKey !== child.parentKey[3] && e.name !== child.parentKey[0] && e.order !== child.parentKey[1]);
+    }
+
+    if(moveOptions.length > 0 && child.type !== 'Task' && child.type !== 'Image'){
+      moveOptions = moveOptions.filter((e) => e.type == 'Directory');
+    }
+    else if(moveOptions.length > 0 && child.type == 'Task'){
+      moveOptions = moveOptions.filter((e) => e.type !== 'Nested Images');
+    }
+    else if(moveOptions.length > 0 && child.type == 'Image'){
+      moveOptions = moveOptions.filter((e) => e.type !== 'Nested Tasks');
+    }
+    return(
+      <View style={styles.form}>
+        <Text style={styles.text}>Select where to move the item</Text>
+        <Dropdown style={styles.dropdown} data={moveOptions} labelField='name' valueField='name' value={moveInput} onChange={setMoveInput} />
+        <View style={styles.formBtns}>
+          {displayButton('Submit', () => moveChildCheck(child.name, child.order, moveInput))}
+          {displayButton('Cancel', () => clearInputs())}
+        </View>
+      </View>
+    );
+  }
+  function displayDeleteChildForm(child, key){ // Displays item delete form
+    return(
+      <View>
+        <Text style={styles.text}>Delete {child.name}?</Text>
+        {displayButton('Confirm', () => deleteChild(child.name, child.order, child.parentKey, key))}
+        {displayButton('Cancel', () => {if(updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order){setDeleteItem(null)}else{clearInputs()}})}
+      </View>
+    );
+  }
+  function displayButton(title, onPress){
+    return(
+      <Pressable style={styles.button} onPress={() => onPress()}>
+        <Text style={styles.inputText}>{title}</Text>
+      </Pressable>
+    );
+  }
+
+// Display Children Functions
   function displayChildren(children, showCompleted){ // Displays children of directories
     return children.map((child) => {
       switch(child.type){
@@ -580,6 +658,21 @@ export default function App() {
     else{
       return displayNoteForm(child);
     }
+  }
+  function displayNoteForm(child){
+    return(
+      <View key={child.name+child.order} style={styles.child}>  
+        <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder={child.name}/>
+        <Dropdown style={styles.dropdown} data={colors} labelField='label' valueField='value' value={colorInput} onChange={setColorInput}/>
+        <View style={styles.formBtns}>
+          {displayButton(icons.Left, () => {clearInputs(); setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))}) /* Back Btn */}
+          {displayButton('Update', () => {updateChildCheck(child, nameInput, child.order, colorInput); setTextInput(child.text); setUpdateItem([child.name, child.order, child.parentKey, child.type])})}
+          {displayButton(icons.Trash, () => setDeleteItem([child.name, child.order])) /* Delete btn */ }
+        </View>
+        {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
+        <TextInput style={styles.textInput} value={textInput} onChangeText={setTextInput} multiline={true} placeholder='Enter Note Here'/>
+      </View>
+    );
   }
   function displayImage(child){
     const color = child.color.value;
@@ -677,96 +770,6 @@ export default function App() {
         <Pressable onPress={() => openDirectory(child)}>
           <Text style={styles.text}>{child.name}</Text>
         </Pressable>
-      </View>
-    );
-  }
-  // Child Forms
-  function displayNoteForm(child){
-    return(
-      <View key={child.name+child.order} style={styles.child}>  
-        <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder={child.name}/>
-        <Dropdown style={styles.dropdown} data={colors} labelField='label' valueField='value' value={colorInput} onChange={setColorInput}/>
-        <View style={styles.formBtns}>
-          {displayButton(icons.Left, () => {clearInputs(); setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))}) /* Back Btn */}
-          {displayButton('Update', () => {updateChildCheck(child, nameInput, child.order, colorInput); setTextInput(child.text); setUpdateItem([child.name, child.order, child.parentKey, child.type])})}
-          {displayButton(icons.Trash, () => setDeleteItem([child.name, child.order])) /* Delete btn */ }
-        </View>
-        {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
-        <TextInput style={styles.textInput} value={textInput} onChangeText={setTextInput} multiline={true} placeholder='Enter Note Here'/>
-      </View>
-    );
-  }
-  function displayUpdateChildForm(child, displayDelete, displayMove){ // Displays item update form
-    let tempNum;
-    if(updateItem !== null){
-      tempNum = parseInt(numberInput);
-      const limit = directories[directories.length-1].children.length;
-      if(tempNum < 0){
-        setNumberInput('0');
-      }
-      else if(tempNum >= limit){
-        setNumberInput('' + limit-1);
-      }
-      else if(numberInput == null || numberInput == ''){
-        tempNum = child.order;
-      }
-
-    }
-    return(
-      <View style={styles.form}>
-        <Text style={styles.text}>Update {child.name}</Text>
-        <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Updated Name'/>
-        <Text style={styles.text}>Select Color</Text>
-        <Dropdown style={styles.dropdown} data={colors} labelField='label' valueField='value' value={colorInput} onChange={setColorInput}/>
-        <View style={styles.formBtns}>
-          {displayButton('Submit', () => updateChildCheck(child, nameInput, tempNum, colorInput, imageInput))}
-          {displayMove && displayButton('Move', () => {clearInputs(); setMoveItem([child.name, child.order, child.parentKey])})}
-          {child.type == 'Image' && displayButton(icons.Image, () => pickImage())}
-
-          {displayButton('Cancel', () => clearInputs())}
-          {displayDelete &&  displayButton(icons.Trash, () => setDeleteItem([child.name, child.order, child.parentKey])) /* Delete Btn */}
-        </View>
-      </View>
-    );
-  }
-  function displayMoveChildForm(child){
-    let index;
-    let moveOptions;
-    if(child.parentKey.constructor !== Array){
-      index = directories.findIndex((e) => e.key == child.parentKey);
-      moveOptions =  directories[index].moveable.filter((e) => e.key !== child.parentKey);
-    }
-    else{
-      index = directories.findIndex((e) => e.key == child.parentKey[3]);
-      moveOptions = directories[index].moveable.filter((e) => e.parentKey !== child.parentKey[3] && e.name !== child.parentKey[0] && e.order !== child.parentKey[1]);
-    }
-
-    if(moveOptions.length > 0 && child.type !== 'Task' && child.type !== 'Image'){
-      moveOptions = moveOptions.filter((e) => e.type == 'Directory');
-    }
-    else if(moveOptions.length > 0 && child.type == 'Task'){
-      moveOptions = moveOptions.filter((e) => e.type !== 'Nested Images');
-    }
-    else if(moveOptions.length > 0 && child.type == 'Image'){
-      moveOptions = moveOptions.filter((e) => e.type !== 'Nested Tasks');
-    }
-    return(
-      <View style={styles.form}>
-        <Text style={styles.text}>Select where to move the item</Text>
-        <Dropdown style={styles.dropdown} data={moveOptions} labelField='name' valueField='name' value={moveInput} onChange={setMoveInput} />
-        <View style={styles.formBtns}>
-          {displayButton('Submit', () => moveChild(child.name, child.order, moveInput))}
-          {displayButton('Cancel', () => clearInputs())}
-        </View>
-      </View>
-    );
-  }
-  function displayDeleteChildForm(child, key){ // Displays item delete form
-    return(
-      <View>
-        <Text style={styles.text}>Delete {child.name}?</Text>
-        {displayButton('Confirm', () => deleteChild(child.name, child.order, child.parentKey, key))}
-        {displayButton('Cancel', () => {if(updateItem !== null && updateItem[0] == child.name && updateItem[1] == child.order){setDeleteItem(null)}else{clearInputs()}})}
       </View>
     );
   }
