@@ -217,34 +217,30 @@ export default function App() {
       let newChild = {name: name, order: order, parentKey: parentKey, color: color, type: type, isNested: false};
       switch(type){
         case "Task":
-          newChild.style = styles.Task;
           newChild.isComplete = false;
           break;
         case "Note":
-          newChild.style = styles.Note;
           newChild.text = text;
           break;
         case 'Image':
-          newChild.style = styles.Picture;
           newChild.image = image;
           break;
         case 'Nested Tasks':
-          tempMoveable = {name: name, type: type, order: order};
-          newChild.style = styles.nestedTasks;
+          tempMoveable = {name: name, type: type, order: order, parentKey: parentKey};
           newChild.isComplete = false;
           newChild.showCompleted = true;
           newChild.children = [];
           break;
         case 'Nested Images':
           tempMoveable = {name: name, type: type, order: order};
-          newChild.style = styles.nestedImages;
           newChild.children = [];
           break;
         case 'Directory':
-          tempMoveable = {name: name, type: type, order: order, parentKey: parentKey};
-          newChild.style = styles.childDirectory;
+          const tempKey = parentKey + "/" +  name;
+          newChild.moveable = directories.find((e) => e.key == parentKey).moveable.filter((e) => e.type == 'Directory');
+          tempMoveable = {name: name, type: type, order: order, parentKey: parentKey, key: tempKey};
           newChild.children = [];
-          newChild.key = parentKey + "/" +  name;
+          newChild.key = tempKey;
           newChild.showCompleted = true;
           saveDirectory(newChild);
           break;
@@ -379,6 +375,7 @@ export default function App() {
       setUpdateItem(null);
   }
   function deleteChild(name, order, parentKey, key){ // Deletes Child
+    console.log('Delete: ', name);
       let tempDirectory;
       let tempChildren;
       let nestIndex = -1;
@@ -393,6 +390,12 @@ export default function App() {
       }
   
       const index = tempChildren.findIndex((e) => e.name == name && e.order == order );
+      console.log(index, ' : ',  tempChildren[index]);
+      if(tempChildren[index].type == 'Directory' || tempChildren[index].type == 'Nested Tasks' || tempChildren[index].type == 'Nested Images'){
+        console.log('Edit Moveable');
+        const moveIndex = tempDirectory.moveable.findIndex((e) => e.name == name && e.order == order);
+        tempDirectory.moveable.splice(moveIndex, 1);
+      }
       tempChildren.splice(index, 1);
       for(let i=tempChildren.length-1; i>=index; i--){
         tempChildren[i].order--;
@@ -412,20 +415,43 @@ export default function App() {
         tempDirectories.splice(directoryIndex, 1);
         setDirectories(tempDirectories);
       }
-      if(child.type == 'Directory' || child.type == 'Nested Tasks' || child.type == 'Nested Images'){
-        const moveIndex = tempDirectory.moveable.findIndex((e) => e.name == name && e.order == order);
-        tempDirectory.moveable.splice(moveIndex, 1);
-      }
   
       saveDirectory(tempDirectory);
       clearInputs();
   }
-  function moveChildCheck(name, order, moveTo){
-    
+  function moveChildCheck(child, moveTo){ // moveTo: name, order, type, key: for directories, parentKey: unless it is root directory
+    if(child.type == 'Directory'){
+      AsyncStorage.getItem(moveTo.key).then((value) => {
+        if(value !== null){
+          const moveable = JSON.parse(value).moveable;
+          if(moveable.findIndex((e) => e.type == 'Directory' &&  e.name == child.name) == -1){ // If no directory of the same name exists in this directory
+            moveChild(child, moveTo);
+          }
+          else{
+            setErrorMessage('Two directories of the same name cannot be stored in the same directory.');
+            return;
+          }
+        }
+      });
+    }
+    if(child.parentKey.constructor === Array){ // Move from Nest Which also means it cannot be a directory
+      console.log('Move From Nest');
+    }
+    else{ // Move from Directory
+      console.log('Move From Directory');
+    }
+
+    if(moveTo.key == undefined){ // Move to Nest Which also means it cannot be a directory
+      console.log('Move to Nest');
+    }
+    else{ // Move to Directory
+      console.log('Move to Directory');
+    }
+
   }
   function moveChild(name, order, moveTo){
       console.log('Move ', name, ' To ', moveTo.name);
-      clearInputs();
+      //clearInputs();
   }
 
   // Display Directory Functions
@@ -452,6 +478,9 @@ export default function App() {
     );
   }
   function displayUpdateDirectory(directory){
+    const index = directories.findIndex((e) => e.key == directory.parentKey);
+    let moveOptions =  directories[index].moveable.filter((e) => e.key !== directory.parentKey && e.key !== directory.key);
+    moveOptions = moveOptions.filter((e) => e.type == 'Directory');
     const color = directory.color.value;
     return(
       <View style={styles.form}>
@@ -465,6 +494,9 @@ export default function App() {
         <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Name to Update'/>}
           {directory.parentKey !== '' &&
           <Dropdown style={styles.dropdown} data={colors} labelField='label' valueField='value' value={colorInput} onChange={setColorInput}/>}
+                  <Dropdown style={styles.dropdown} data={moveOptions} labelField='name' valueField='name' value={moveInput} onChange={setMoveInput} />
+                  {displayButton('Move', () => moveChildCheck(directory, moveInput))}
+
         {displayButton('Submit', () => updateChildCheck(directory, nameInput, numberInput, colorInput, imageInput, booleanInput))}
           {deleteItem !== null && deleteItem[0] == directory.name && deleteItem[1] == directory.order && deleteItem[2] == directory.parentKey && displayDeleteChildForm(directory, directory.key)}
       </View>
@@ -579,7 +611,7 @@ export default function App() {
         <Text style={styles.text}>Select where to move the item</Text>
         <Dropdown style={styles.dropdown} data={moveOptions} labelField='name' valueField='name' value={moveInput} onChange={setMoveInput} />
         <View style={styles.formBtns}>
-          {displayButton('Submit', () => moveChildCheck(child.name, child.order, moveInput))}
+          {displayButton('Submit', () => moveChildCheck(child, moveInput))}
           {displayButton('Cancel', () => clearInputs())}
         </View>
       </View>
