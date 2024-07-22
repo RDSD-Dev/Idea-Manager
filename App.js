@@ -93,6 +93,7 @@ export default function App() {
 
   function clearInputs(){ // Clears all inputs
     console.log("Clear");
+    setErrorMessage('');
     setAddItem(null);
     setUpdateItem(null);
     setMoveItem(null);
@@ -423,17 +424,20 @@ export default function App() {
     if(child.type == 'Directory'){
       AsyncStorage.getItem(moveTo.key).then((value) => {
         if(value !== null){
-          const moveable = JSON.parse(value).moveable;
+          const moveable = JSON.parse(value).children;
           if(moveable.findIndex((e) => e.type == 'Directory' &&  e.name == child.name) == -1){ // If no directory of the same name exists in this directory
             moveChild(child, moveTo);
           }
           else{
             setErrorMessage('Two directories of the same name cannot be stored in the same directory.');
+            console.log('Two directories of the same name cannot be stored in the same directory.')
             return;
           }
         }
       });
     }
+
+    let oldChild;
     if(child.parentKey.constructor === Array){ // Move from Nest Which also means it cannot be a directory
       console.log('Move From Nest');
     }
@@ -441,17 +445,60 @@ export default function App() {
       console.log('Move From Directory');
     }
 
+
+
     if(moveTo.key == undefined){ // Move to Nest Which also means it cannot be a directory
       console.log('Move to Nest');
+      AsyncStorage.getItem(moveTo.parentKey).then((value) => {
+        if(value !== null){
+          const insertDirectory = JSON.parse(value);
+          moveChild(child, insertDirectory, [moveTo.name, moveTo.order]);
+        }
+      });
     }
     else{ // Move to Directory
       console.log('Move to Directory');
+      AsyncStorage.getItem(moveTo.key).then((value) => {
+        if(value !== null){
+          const insertDirectory = JSON.parse(value);
+          moveChild(child, insertDirectory);
+        }
+      });
+    }
+  }
+  function moveChild(child, insertDirectory, nest){ // insertDirectory: directory object, nest: [name, order]
+    console.log('Move ', child.name, ' To ', moveTo.name);
+    // Get copy of directory to delete from
+    let oldChild;
+    if(child.parentKey.constructor === Array){
+      oldChild = directories.find((e) => e.key == child.parentKey[3]).children.find((e) => e.name == nest[0] && e.order == nest[1]).children.find((e) => e.name == child.name && e.order == child.order);
+    }
+    else{
+      oldChild = directories.find((e) => e.key == child.parentKey).children.find((e) => e.name == child.name && e.order == child.order);
     }
 
-  }
-  function moveChild(name, order, moveTo){
-      console.log('Move ', name, ' To ', moveTo.name);
-      //clearInputs();
+    // Insert Child
+    if(nest == undefined){ // Insert to Directory
+      oldChild.order = insertDirectory.children.length;
+      insertDirectory.children.push(oldChild);
+    }
+    else{ // Insert to Nest
+      oldChild.order = insertDirectory.children.find((e) => e.name == nest[0] && e.order == nest[1]).length;
+      insertDirectory.children.find((e) => e.name == nest[0] && e.order == nest[1]).push(oldChild);
+    }
+    saveDirectory(insertDirectory);
+
+    // Delete Child
+    if(child.type == 'Directory'){
+      deleteChild(child.name, child.order, child.parentKey, child.key);
+      oldChild.key = insertDirectory.key + '/'+ oldChild.name;
+      oldChild.order = insertDirectory.children.length;
+      AsyncStorage.setItem(oldChild.key, JSON.stringify(oldChild));
+
+    }
+    else{
+      deleteChild(child.name, child.order, child.parentKey);
+    }
   }
 
   // Display Directory Functions
@@ -479,8 +526,11 @@ export default function App() {
   }
   function displayUpdateDirectory(directory){
     const index = directories.findIndex((e) => e.key == directory.parentKey);
-    let moveOptions =  directories[index].moveable.filter((e) => e.key !== directory.parentKey && e.key !== directory.key);
-    moveOptions = moveOptions.filter((e) => e.type == 'Directory');
+    let moveOptions;
+    if(directory.parentKey !== ''){
+      moveOptions =  directories[index].moveable.filter((e) => e.key !== directory.parentKey && e.key !== directory.key);
+      moveOptions = moveOptions.filter((e) => e.type == 'Directory');
+    }
     const color = directory.color.value;
     return(
       <View style={styles.form}>
@@ -490,12 +540,13 @@ export default function App() {
         {directory.showCompleted && <Pressable onPress={() => {setBooleanInput(!booleanInput); updateChildCheck(directory, null, null, null, null, false); setNameInput(directory.name); setColorInput(directory.color); setUpdateItem([directory.name, directory.order, directory.parentKey, directory.type])}}><Text style={[styles.symbol, {color: color}]}>{icons.FilledCircle}</Text></Pressable>}
         {directory.parentKey !== '' &&  displayButton(icons.Trash, () => setDeleteItem([directory.name, directory.order, directory.parentKey])) /* Delete Btn */}
         </View>
+        {directory.parentKey !== '' && <Text>{errorMessage}</Text>}
         {directory.parentKey !== '' && 
         <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Name to Update'/>}
           {directory.parentKey !== '' &&
           <Dropdown style={styles.dropdown} data={colors} labelField='label' valueField='value' value={colorInput} onChange={setColorInput}/>}
-                  <Dropdown style={styles.dropdown} data={moveOptions} labelField='name' valueField='name' value={moveInput} onChange={setMoveInput} />
-                  {displayButton('Move', () => moveChildCheck(directory, moveInput))}
+                  {directory.parentKey !== '' && <Dropdown style={styles.dropdown} data={moveOptions} labelField='name' valueField='name' value={moveInput} onChange={setMoveInput} />}
+                  {directory.parentKey !== '' && displayButton('Move', () => moveChildCheck(directory, moveInput))}
 
         {displayButton('Submit', () => updateChildCheck(directory, nameInput, numberInput, colorInput, imageInput, booleanInput))}
           {deleteItem !== null && deleteItem[0] == directory.name && deleteItem[1] == directory.order && deleteItem[2] == directory.parentKey && displayDeleteChildForm(directory, directory.key)}
