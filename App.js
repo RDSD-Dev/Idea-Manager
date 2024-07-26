@@ -565,6 +565,11 @@ export default function App() {
       moveOptions =  directories[index].moveable.filter((e) => e.key !== directory.parentKey && e.key !== directory.key);
       moveOptions = moveOptions.filter((e) => e.type == 'Directory');
     }
+    if(moveInput == null){
+      if(moveOptions.length > 0){
+        setMoveInput(moveOptions[0]);
+      }
+    }
     const color = directory.color.value;
     return(
       <View style={styles.form}>
@@ -579,8 +584,8 @@ export default function App() {
         <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder='Enter Name to Update'/>}
           {directory.parentKey !== '' &&
           <Dropdown style={styles.dropdown} data={colors} labelField='label' valueField='value' value={colorInput} onChange={setColorInput}/>}
-                  {directory.parentKey !== '' && <Dropdown style={styles.dropdown} data={moveOptions} labelField='name' valueField='name' value={moveInput} onChange={setMoveInput} />}
-                  {directory.parentKey !== '' && displayButton('Move', () => moveChildCheck(directory, moveInput))}
+          {directory.parentKey !== '' && moveOptions.length > 0 && <Dropdown style={styles.dropdown} data={moveOptions} labelField='name' valueField='name' value={moveInput} onChange={setMoveInput} />}
+          {directory.parentKey !== '' && moveOptions.length > 0 && displayButton('Move', () => moveChildCheck(directory, moveInput))}
 
         {displayButton('Submit', () => updateChildCheck(directory, nameInput, numberInput, colorInput, imageInput, booleanInput))}
           {deleteItem !== null && deleteItem[0] == directory.name && deleteItem[1] == directory.order && deleteItem[2] == directory.parentKey && displayDeleteChildForm(directory, directory.key)}
@@ -690,6 +695,10 @@ export default function App() {
     }
     else if(moveOptions.length > 0 && child.type == 'Image'){
       moveOptions = moveOptions.filter((e) => e.type !== 'Nested Tasks');
+    }
+
+    if(moveInput == null){
+      setMoveInput(moveOptions[0]);
     }
     return(
       <View style={styles.form}>
