@@ -221,7 +221,7 @@ export default function App() {
         return;
       }
   }
-  function addChild(parentKey, name, order, type, color, image, text){ // Makes child object and makes sure it is saved
+  function addChild(parentKey, name, order, type, color, image, text, children){ // Makes child object and makes sure it is saved
       console.log("add: ", name, " : ", type, " To : ", parentKey);
       let tempMoveable;
       let newChild = {name: name, order: order, parentKey: parentKey, color: color, type: type, isNested: false};
@@ -252,6 +252,20 @@ export default function App() {
           newChild.children = [];
           newChild.key = tempKey;
           newChild.showCompleted = true;
+          if(children !== null){
+            for(let i=0; i<children.length; i++){
+              let child = children[i];
+              if(child.type == 'Nested Tasks' || child.type == 'Nested Images'){
+                for(let t=0; t<child.children.length; t++){
+                  let nestedChild = child.children[t];
+                  nestedChild.parentKey[3] = newChild.key;
+                }
+              }
+              child.parentKey = newChild.key
+            }
+            newChild.children = children;
+          }
+          
           saveDirectory(newChild);
           break;
       }
@@ -508,8 +522,14 @@ export default function App() {
 
     }
     else{ // Insert to Directory
-      addChild(insertDirectory.key, child.name, insertDirectory.children.length, child.type, child.color, child.image, child.text);
-      deleteChild(child.name, child.order, child.parentKey, child.key);
+      if(child.type == 'Directory'){
+        addChild(insertDirectory.key, child.name, insertDirectory.children.length, child.type, child.color, child.image, child.text, child.children);
+        deleteChild(child.name, child.order, child.parentKey, child.key);
+      }
+      else{
+        addChild(insertDirectory.key, child.name, insertDirectory.children.length, child.type, child.color, child.image, child.text);
+        deleteChild(child.name, child.order, child.parentKey, child.key);
+      }
     }
     setErrorMessage('Refresh');
     clearInputs();
