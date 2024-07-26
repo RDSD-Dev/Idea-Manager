@@ -777,6 +777,7 @@ export default function App() {
     }
   }
   function displayNoteForm(child){
+    const color = child.color.value;
     return(
       <View key={child.name+child.order} style={styles.child}>  
         <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder={child.name}/>
@@ -787,7 +788,7 @@ export default function App() {
           {displayButton(icons.Trash, () => setDeleteItem([child.name, child.order])) /* Delete btn */ }
         </View>
         {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
-        <TextInput style={styles.textInput} value={textInput} onChangeText={setTextInput} multiline={true} placeholder='Enter Note Here'/>
+        <TextInput style={[styles.textInput, {borderColor: color}]} value={textInput} onChangeText={setTextInput} multiline={true} placeholder='Enter Note Here'/>
       </View>
     );
   }
