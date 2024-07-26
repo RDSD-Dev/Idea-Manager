@@ -112,14 +112,19 @@ export default function App() {
   function saveDirectory(saveDirectory){
     let tempDirectories = directories;
     let index = directories.findIndex((e) => e.key == saveDirectory.key);
-    tempDirectories[index] = saveDirectory;
-    setDirectories(tempDirectories);
+    if(index > -1){ // Directory has been open
+      console.log("saved open");
+      tempDirectories[index] = saveDirectory;
+      setDirectories(tempDirectories);
+    }
     AsyncStorage.setItem(saveDirectory.key, JSON.stringify(saveDirectory));
   }
   function openDirectory(child){
     setUpdateItem(null);
     let tempDirectories = directories;
-    if(tempDirectories.findIndex((e) => e.key == child.key) == -1){ // Directory already exists
+    let isFound = true;
+    if(tempDirectories.findIndex((e) => e.key == child.key) == -1){ // Directory hasn't been opened
+      isFound = false;
       tempDirectories.push(child);
       setDirectories(tempDirectories);
       console.log("Open: ", child.name);
@@ -130,11 +135,15 @@ export default function App() {
           tempDirectories[index] = JSON.parse(value);
           console.log(JSON.parse(value).name, ' : ', JSON.parse(value).showCompleted);
           setDirectories(tempDirectories);
+          setModalView(directories.findIndex((e) => e.key == child.key));
+
         }
       });
     }
     
-    setModalView(directories.findIndex((e) => e.key == child.key));
+    if(isFound){
+      setModalView(directories.findIndex((e) => e.key == child.key));
+    }
   }
   function closeDirectory(child){
     setUpdateItem(null);
@@ -155,7 +164,7 @@ export default function App() {
   }
 
   // Child Functions
-  function toggleTask(child){Button
+  function toggleTask(child){
       console.log("Toggle: ", child.name, " : ", child.isComplete);
       let tempDirectory;
       if(child.parentKey.constructor === Array){ // Checks if is a nested item
@@ -376,7 +385,7 @@ export default function App() {
       setUpdateItem(null);
   }
   function deleteChild(name, order, parentKey, key){ // Deletes Child
-    console.log('Delete: ', name);
+    console.log('Delete: ', name, ' ', order, ' From :', parentKey);
       let tempDirectory;
       let tempChildren;
       let nestIndex = -1;
@@ -391,6 +400,7 @@ export default function App() {
       }
   
       const index = tempChildren.findIndex((e) => e.name == name && e.order == order );
+
       console.log(index, ' : ',  tempChildren[index]);
       if(tempChildren[index].type == 'Directory' || tempChildren[index].type == 'Nested Tasks' || tempChildren[index].type == 'Nested Images'){
         console.log('Edit Moveable');
@@ -422,11 +432,29 @@ export default function App() {
   }
   function moveChildCheck(child, moveTo){ // moveTo: name, order, type, key: for directories, parentKey: unless it is root directory
     if(child.type == 'Directory'){
+      console.log('Move Directory');
       AsyncStorage.getItem(moveTo.key).then((value) => {
         if(value !== null){
           const moveable = JSON.parse(value).children;
           if(moveable.findIndex((e) => e.type == 'Directory' &&  e.name == child.name) == -1){ // If no directory of the same name exists in this directory
-            moveChild(child, moveTo);
+            if(directories.findIndex((e) => e.key == moveTo.key) > -1){
+              moveChild(child, directories.find((e) => e.key == moveTo.key));
+              clearInputs();
+              return;
+            }
+            else{
+              let tempDirectories = directories;
+              AsyncStorage.getItem(moveTo.key).then((value) => {
+                if(value !== null){
+                  tempDirectories.push(JSON.parse(value));
+                  setDirectories(tempDirectories);
+                  moveChild(child, JSON.parse(value));
+                  clearInputs();
+                  return;
+                }
+              });
+              
+            }
           }
           else{
             setErrorMessage('Two directories of the same name cannot be stored in the same directory.');
@@ -437,7 +465,6 @@ export default function App() {
       });
     }
 
-    let oldChild;
     if(child.parentKey.constructor === Array){ // Move from Nest Which also means it cannot be a directory
       console.log('Move From Nest');
     }
@@ -445,60 +472,47 @@ export default function App() {
       console.log('Move From Directory');
     }
 
-
-
-    if(moveTo.key == undefined){ // Move to Nest Which also means it cannot be a directory
-      console.log('Move to Nest');
-      AsyncStorage.getItem(moveTo.parentKey).then((value) => {
-        if(value !== null){
-          const insertDirectory = JSON.parse(value);
-          moveChild(child, insertDirectory, [moveTo.name, moveTo.order]);
-        }
-      });
+    if(moveTo.type !== 'Directory' && child.type !== 'Directory'){ // Move to Nest Which also means it cannot be a directory
+      console.log('Move to Nest', child);
+      moveChild(child, directories.find((e) => e.key == moveTo.parentKey), [moveTo.name, moveTo.order, moveTo.parentKey])
     }
-    else{ // Move to Directory
+    else if(child.type !== 'Directory'){ // Move to Directory
       console.log('Move to Directory');
-      AsyncStorage.getItem(moveTo.key).then((value) => {
-        if(value !== null){
-          const insertDirectory = JSON.parse(value);
-          moveChild(child, insertDirectory);
-        }
-      });
+      if(directories.findIndex((e) => e.key == moveTo.key) == -1){
+        AsyncStorage.getItem(moveTo.key).then((value) => {
+          if(value !== null){
+            const insertDirectory = JSON.parse(value);
+            let tempDirectories = directories;
+            tempDirectories.push(insertDirectory);
+            setDirectories(tempDirectories);
+            moveChild(child, insertDirectory);
+          }
+        });
+      }
+      else{
+        moveChild(child, directories.find((e) => e.key == moveTo.key));
+      }
     }
   }
   function moveChild(child, insertDirectory, nest){ // insertDirectory: directory object, nest: [name, order]
-    console.log('Move ', child.name, ' To ', moveTo.name);
-    // Get copy of directory to delete from
-    let oldChild;
-    if(child.parentKey.constructor === Array){
-      oldChild = directories.find((e) => e.key == child.parentKey[3]).children.find((e) => e.name == nest[0] && e.order == nest[1]).children.find((e) => e.name == child.name && e.order == child.order);
-    }
-    else{
-      oldChild = directories.find((e) => e.key == child.parentKey).children.find((e) => e.name == child.name && e.order == child.order);
-    }
+    console.log('Move ', child.name, ' To ', insertDirectory.name);
+    
+    if(nest !== undefined){ // Insert to nest
+      console.log('Insert to Nest');
+      const newOrder = insertDirectory.children.find((e) => e.name == nest[0] && e.order == nest[1]).children.length;
 
-    // Insert Child
-    if(nest == undefined){ // Insert to Directory
-      oldChild.order = insertDirectory.children.length;
-      insertDirectory.children.push(oldChild);
-    }
-    else{ // Insert to Nest
-      oldChild.order = insertDirectory.children.find((e) => e.name == nest[0] && e.order == nest[1]).length;
-      insertDirectory.children.find((e) => e.name == nest[0] && e.order == nest[1]).push(oldChild);
-    }
-    saveDirectory(insertDirectory);
-
-    // Delete Child
-    if(child.type == 'Directory'){
+      const parentKey = [nest[0], nest[1], newOrder, insertDirectory.key];
+      addChild(parentKey, child.name, newOrder, child.type, child.color, child.image, child.text);
       deleteChild(child.name, child.order, child.parentKey, child.key);
-      oldChild.key = insertDirectory.key + '/'+ oldChild.name;
-      oldChild.order = insertDirectory.children.length;
-      AsyncStorage.setItem(oldChild.key, JSON.stringify(oldChild));
+      console.log(child);
 
     }
-    else{
-      deleteChild(child.name, child.order, child.parentKey);
+    else{ // Insert to Directory
+      addChild(insertDirectory.key, child.name, insertDirectory.children.length, child.type, child.color, child.image, child.text);
+      deleteChild(child.name, child.order, child.parentKey, child.key);
     }
+    setErrorMessage('Refresh');
+    clearInputs();
   }
 
   // Display Directory Functions
