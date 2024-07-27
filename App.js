@@ -565,7 +565,7 @@ export default function App() {
       moveOptions =  directories[index].moveable.filter((e) => e.key !== directory.parentKey && e.key !== directory.key);
       moveOptions = moveOptions.filter((e) => e.type == 'Directory');
     }
-    if(moveInput == null){
+    if(moveInput == null && directory.parentKey !== ''){
       if(moveOptions.length > 0){
         setMoveInput(moveOptions[0]);
       }
@@ -787,12 +787,22 @@ export default function App() {
   }
   function displayNoteForm(child){
     const color = child.color.value;
+
+    const index = directories.findIndex((e) => e.key == child.parentKey);
+    let moveOptions =  directories[index].moveable.filter((e) => e.key !== child.parentKey && e.type == 'Directory');
+    if(moveInput == null && moveOptions.length > 0){
+      setMoveInput(moveOptions[0]);
+    }
+
     return(
       <View key={child.name+child.order} style={styles.child}>  
         <TextInput style={styles.textInput} value={nameInput} onChangeText={setNameInput} placeholder={child.name}/>
         <Dropdown style={styles.dropdown} data={colors} labelField='label' valueField='value' value={colorInput} onChange={setColorInput}/>
+        <Dropdown style={styles.dropdown} data={moveOptions} labelField='name' valueField='name' value={moveInput} onChange={setMoveInput} />
+
         <View style={styles.formBtns}>
           {displayButton(icons.Left, () => {clearInputs(); setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name))}) /* Back Btn */}
+          {displayButton('Move', () => {clearInputs(); setExpandedItems(expandItems.filter((e) => e.order !== child.order || e.name !== child.name)); moveChildCheck(child, moveInput)})}
           {displayButton('Update', () => {updateChildCheck(child, nameInput, child.order, colorInput); setTextInput(child.text); setUpdateItem([child.name, child.order, child.parentKey, child.type])})}
           {displayButton(icons.Trash, () => setDeleteItem([child.name, child.order])) /* Delete btn */ }
         </View>
