@@ -74,9 +74,9 @@ export default function App() {
     if(errorMessage == 'Refresh'){
       setErrorMessage(errorMessage + ' ');
     }
-  }, [directories, errorMessage, addItem, updateItem, deleteItem, numberInput, textInput, imageInput, expandItems]);
+  }, [directories, errorMessage, addItem, updateItem, deleteItem, numberInput, textInput, imageInput, expandItems, settings]);
 
-  if(directories == null){
+  if(directories == null){ // Getting directories
     AsyncStorage.getItem("Idea Manager").then((value) => {
       if(value !== null){
         let valObj = JSON.parse(value);
@@ -87,6 +87,19 @@ export default function App() {
         let temp = {name: 'Idea Manager', order: 0, parentKey: '', color: 'Grey', key: 'Idea Manager', children: [], showCompleted: true, moveable: [{name: 'Idea Manager', order: 0, type: 'Directory', key: 'Idea Manager'}]};
         setDirectories([temp]);
         AsyncStorage.setItem(temp.key, JSON.stringify(temp));
+      }
+    });
+  }
+  if(settings == null){ // Getting Settings
+    AsyncStorage.getItem("Idea Manager Settings").then((value) => {
+      if(value !== null){
+        setSettings(JSON.parse(value));
+      }
+      else{
+        console.log("Making Settings");
+        let temp = {theme: 'Dark'};
+        setSettings(temp);
+        AsyncStorage.setItem('Idea Manager Settings', JSON.stringify(temp));
       }
     });
   }
@@ -133,7 +146,6 @@ export default function App() {
           tempDirectories = directories;
           const index = tempDirectories.findIndex((e) => e.key == child.key);
           tempDirectories[index] = JSON.parse(value);
-          console.log(JSON.parse(value).name, ' : ', JSON.parse(value).showCompleted);
           setDirectories(tempDirectories);
           setModalView(directories.findIndex((e) => e.key == child.key));
 
@@ -203,11 +215,11 @@ export default function App() {
         setErrorMessage('Name cannot be blank.');
         return;
       }
-      else if(type == null){
+      else if(type == null){ // Type cannot be null
         setErrorMessage('Please define a type.');
         return;
       }
-      else if(type == 'Directory' && name == 'Idea Manager' || type == 'Directory' && directories.find((e) => e.key == parentKey).children.findIndex((e) => e.type == 'Directory' && e.name == name) !== -1 ){ // Dose not allow 2 directories of the same name to exist in the same directories
+      else if(type == 'Directory' && name == 'Idea Manager' || type == 'Directory' && name == 'Idea Manager Settings' || type == 'Directory' && directories.find((e) => e.key == parentKey).children.findIndex((e) => e.type == 'Directory' && e.name == name) !== -1 ){ // Dose not allow 2 directories of the same name to exist in the same directories
         const directory = directories.find((e) => e.key == parentKey);
         setErrorMessage('Directory Name is Taken.');
         return;
