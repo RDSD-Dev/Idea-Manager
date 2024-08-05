@@ -24,13 +24,20 @@ export default function App() {
   const [booleanInput, setBooleanInput] = useState(true);
   
   const [themes, setThemes] = useState([
-    {
-      theme: 'Dark', backgroundColor: "#0D1B2A", modalBackgroundColor: '#14273E', 
+  {theme: 'Dark', backgroundColor: "#0D1B2A", modalBackgroundColor: '#14273E', 
       childrenBackgroundColor: '#18324E', itemBackgroundColor: '#26507D', nestBackgroundColor: '#285585',
       inputBackgroundColor: '#2F649D', textColor: '#E0E1DD', inputTextColor: '#E0E1DD', 
-      borderColor: '#000000',borderWidth: 2, borderStyle: 'solid', fontSize: 16, symbolSize: 32, headerFontSize: 20, inputFontSize: 18, borderRadius: 20}
+      borderColor: '#000000',borderWidth: 2, borderStyle: 'solid', fontSize: 16, symbolSize: 32, headerFontSize: 20, inputFontSize: 18, borderRadius: 20},
+  {theme: 'Light', backgroundColor: "#4D6A6D", modalBackgroundColor: '#798478', 
+    childrenBackgroundColor: '#A0A083', itemBackgroundColor: '#95D7AE', nestBackgroundColor: '#8D927E',
+    inputBackgroundColor: '#C9ADA1', textColor: '#000000', inputTextColor: '#000000', 
+    borderColor: '#000000',borderWidth: 2, borderStyle: 'solid', fontSize: 16, symbolSize: 32, headerFontSize: 20, inputFontSize: 18, borderRadius: 20},
+  {theme: 'Purple', backgroundColor: "#2F004F", modalBackgroundColor: '#47056B', 
+    childrenBackgroundColor: '#711C88', itemBackgroundColor: '#822D89', nestBackgroundColor: '#5F0A87',
+    inputBackgroundColor: '#933F8A', textColor: '#E0E1DD', inputTextColor: '#E0E1DD', 
+    borderColor: '#000000',borderWidth: 2, borderStyle: 'solid', fontSize: 16, symbolSize: 32, headerFontSize: 20, inputFontSize: 18, borderRadius: 20},
   ]);
-  const [settings, setSettings] = useState({theme: 'Dark'});
+  const [settings, setSettings] = useState({theme: 'Dark', default: true});
 
   const childTypes = [
     {type: 'Task'},
@@ -90,7 +97,7 @@ export default function App() {
       }
     });
   }
-  if(settings == null){ // Getting Settings
+  if(settings.default){ // Getting Settings
     AsyncStorage.getItem("Idea Manager Settings").then((value) => {
       if(value !== null){
         setSettings(JSON.parse(value));
@@ -119,6 +126,10 @@ export default function App() {
     setImageInput(null);
     setDropdownInput(null);
     setBooleanInput(true);
+  }
+  function saveSettings(tempSettings){
+    setSettings(tempSettings);
+    AsyncStorage.setItem('Idea Manager Settings', JSON.stringify(tempSettings));
   }
 
   // Directory Functions
@@ -552,7 +563,7 @@ export default function App() {
     return(
       <View style={styles.directory}>
         <View style={styles.header}>
-          {directory.parentKey == '' && displayButton(icons.Gear, () => {setDropdownInput(theme); setModalView('Settings')})/* Settings Btn */}
+          {directory.parentKey == '' && displayButton(icons.Gear, () => {setModalView('Settings')})/* Settings Btn */}
 
           {directory.parentKey !== directories[0].key && directory.parentKey !== '' && <View style={styles.headerBack}>{displayButton(icons.Left, () => closeDirectory(directory))}{displayButton(icons.DoubleLeft, () => setModalView(null))}</View> /* Exit Btn */}
 
@@ -607,12 +618,23 @@ export default function App() {
 
   // Display Form Functions
   function displaySettings(){
+    if(modalView == 'Settings'){
+      console.log(dropdownInput, " : ", settings.theme);
+      if(dropdownInput == null){
+        setDropdownInput(themes.find((e) => e.theme == settings.theme));
+      }
+      else if(settings.theme !== dropdownInput.theme && dropdownInput.theme !== null){
+        let tempSettings = settings;
+        tempSettings.theme = dropdownInput.theme;
+        saveSettings(tempSettings);
+      }
+    } 
     return (
       <ScrollView contentContainerStyle={styles.settings}>
         <View style={styles.header}>
-          {displayButton('Back', () => setModalView(null))}
+          {displayButton(icons.Left, () => setModalView(null))}
           <Text style={styles.text}>Settings</Text>
-          {displayButton(decodeEntity('&#x1F5D1;'), () => setModalView(null))}
+          {displayButton(icons.Trash, () => setModalView(null))}
         </View>
         <Text style={styles.text}>{errorMessage}</Text>
         <Text style={styles.text}>Theme:      </Text>
