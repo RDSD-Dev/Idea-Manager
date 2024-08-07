@@ -1,4 +1,4 @@
-import {TextInput, StyleSheet, Text, View, ScrollView , Pressable, Image, Modal} from 'react-native';
+import {TextInput, StyleSheet, Text, View, ScrollView , Pressable, Image, Modal, KeyboardAvoidingView} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { Dropdown } from 'react-native-element-dropdown';
@@ -629,6 +629,7 @@ export default function App() {
         saveSettings(tempSettings);
       }
     } 
+    colorz = [colors[0].value, colors[1].value, colors[2].value, colors[3].value];
     return (
       <ScrollView contentContainerStyle={styles.settings}>
         <View style={styles.header}>
@@ -639,6 +640,26 @@ export default function App() {
         <Text style={styles.text}>{errorMessage}</Text>
         <Text style={styles.text}>Theme:      </Text>
         <Dropdown style={styles.dropdown} data={themes} labelField='theme' valueField='theme' value={dropdownInput} onChange={setDropdownInput}/>
+
+        <View style={{borderRadius: 20, backgroundColor: themes[0].childrenBackgroundColor, alignItems: 'center', padding: 8, margin: 32, marginHorizontal: 72}}>
+          <View style={{flexDirection: 'row'}}>
+            <Text style={[styles.symbol, {color: colorz[0], paddingRight: 12}]}>
+              {icons.Circle}
+            </Text>
+            <Text style={[styles.symbol, {color: colorz[1]}]}>
+              {icons.DashedSquare}
+            </Text>
+          </View>
+          <View style={{flexDirection: 'row'}}>
+            <Text style={[styles.symbol, {color: colorz[2], paddingRight: 4}]}>
+              {icons.Diamond}
+            </Text>
+            <Text style={[styles.symbol, {color: colorz[3]}]}>
+              {icons.Triangle}
+            </Text>
+          </View>
+        </View>
+
         </ScrollView>
     );
   }
@@ -841,7 +862,9 @@ export default function App() {
           {displayButton(icons.Trash, () => setDeleteItem([child.name, child.order])) /* Delete btn */ }
         </View>
         {deleteItem !== null && deleteItem[0] == child.name && deleteItem[1] == child.order && displayDeleteChildForm(child)}
-        <TextInput style={[styles.textInput, {borderColor: color}]} value={textInput} onChangeText={setTextInput} multiline={true} placeholder='Enter Note Here'/>
+        <KeyboardAvoidingView style={styles.keyboardAvoid} keyboardVerticalOffset={12} enabled={true}>
+          <TextInput style={[styles.textInput, {borderColor: color}]} value={textInput} onChangeText={setTextInput} multiline={true} placeholder='Enter Note Here'/>
+        </KeyboardAvoidingView>
       </View>
     );
   }
@@ -1045,6 +1068,9 @@ export default function App() {
     symbol: {
       fontSize: theme.symbolSize,
       verticalAlign: 'middle',
+    },
+    keyboardAvoid: {
+      
     },
 
     header: {
