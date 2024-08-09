@@ -275,7 +275,7 @@ export default function App() {
           newChild.children = [];
           newChild.key = tempKey;
           newChild.showCompleted = true;
-          if(children !== null){
+          if(children !== undefined){
             for(let i=0; i<children.length; i++){
               let child = children[i];
               if(child.type == 'Nested Tasks' || child.type == 'Nested Images'){
