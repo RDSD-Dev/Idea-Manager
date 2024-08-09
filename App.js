@@ -635,9 +635,20 @@ export default function App() {
         <View style={styles.header}>
           {displayButton(icons.Left, () => setModalView(null))}
           <Text style={styles.text}>Settings</Text>
-          {displayButton(icons.Trash, () => setModalView(null))}
+          {displayButton(icons.Trash, () => {setDeleteItem('Settings')})}
         </View>
         <Text style={styles.text}>{errorMessage}</Text>
+        {deleteItem == 'Settings' && <View>
+            <Text style={styles.text}>Delete all data?</Text>
+            {displayButton('Delete', () => {
+              let temp = {name: 'Idea Manager', order: 0, parentKey: '', color: 'Grey', key: 'Idea Manager', children: [], showCompleted: true, moveable: [{name: 'Idea Manager', order: 0, type: 'Directory', key: 'Idea Manager'}]};
+              setDirectories([temp]);
+              AsyncStorage.setItem(temp.key, JSON.stringify(temp));
+              clearInputs();
+              setModalView(null);
+            })}
+            {displayButton('Cancel', () => {setDeleteItem(null)})}
+          </View>}
         <Text style={styles.text}>Theme:      </Text>
         <Dropdown style={styles.dropdown} data={themes} labelField='theme' valueField='theme' value={dropdownInput} onChange={setDropdownInput}/>
 
