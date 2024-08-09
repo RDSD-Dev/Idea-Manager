@@ -65,8 +65,10 @@ export default function App() {
     Image: decodeEntity('&#9783;'),
   };
   const colors = [
-    {label: 'Light Blue',value: '#04A6E5'}, {label: 'Forest Green', value: '#045C34'}, {label: 'Grey', value: '#7C7C7C'},
-    {label: 'Red', value: '#EC161D'}
+    {label: 'Light Blue',value: '#04A6E5'}, {label: 'Forest Green', value: '#045C34'},
+    {label: 'Grey', value: '#7C7C7C'}, {label: 'Red', value: '#EC161D'},
+    {label: 'Yellow', value: '#dbee11'}, {label: 'Orange', value: '#f07d0f'},
+    {label: 'Pink', value: '#f10e94'}, {label: 'Purple', value: '#cb00a2'}
   ];
 
   useEffect(() => {
@@ -651,25 +653,28 @@ export default function App() {
           </View>}
         <Text style={styles.text}>Theme:      </Text>
         <Dropdown style={styles.dropdown} data={themes} labelField='theme' valueField='theme' value={dropdownInput} onChange={setDropdownInput}/>
-
-        <View style={{borderRadius: 20, backgroundColor: themes[0].childrenBackgroundColor, alignItems: 'center', padding: 8, margin: 32, marginHorizontal: 72}}>
-          <View style={{flexDirection: 'row'}}>
-            <Text style={[styles.symbol, {color: colorz[0], paddingRight: 12}]}>
-              {icons.Circle}
-            </Text>
-            <Text style={[styles.symbol, {color: colorz[1]}]}>
-              {icons.DashedSquare}
-            </Text>
+        {
+            /*
+          <View style={{borderRadius: 20, backgroundColor: themes[0].childrenBackgroundColor, padding: 8, margin: 32, marginHorizontal: 72, width: 128, height: 128, justifyContent: 'center', alignItems: 'center', alignSelf: 'center', alignContent: 'center'}}>
+            <View style={{flexDirection: 'row', justifyContent: 'center', flex: 1, alignItems: 'center', paddingLeft: 16}}>
+              <Text style={[styles.symbol, {color: colorz[0], flex: 1}]}>
+                {icons.Circle}
+              </Text>
+              <Text style={[styles.symbol, {color: colorz[1], flex: 1}]}>
+                {icons.DashedSquare}
+              </Text>
+            </View>
+            <View style={{flexDirection: 'row', justifyContent: 'center', flex: 1, alignItems: 'center', paddingLeft: 16}}>
+              <Text style={[styles.symbol, {color: colorz[2], flex: 1}]}>
+                {icons.Diamond}
+              </Text>
+              <Text style={[styles.symbol, {color: colorz[3], flex: 1}]}>
+                {icons.Triangle}
+              </Text>
+            </View>
           </View>
-          <View style={{flexDirection: 'row'}}>
-            <Text style={[styles.symbol, {color: colorz[2], paddingRight: 4}]}>
-              {icons.Diamond}
-            </Text>
-            <Text style={[styles.symbol, {color: colorz[3]}]}>
-              {icons.Triangle}
-            </Text>
-          </View>
-        </View>
+          */
+        }
 
         </ScrollView>
     );
